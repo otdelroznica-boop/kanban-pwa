@@ -26,6 +26,27 @@ body[data-theme="dark"]{
   --card:#212538;--chip-bg:#262b40;--block:#202439;--soft:#242a40;--hover:#252b44;
   --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.35);
 }
+body[data-theme="mac"]{
+  --accent:#0a84ff;--accent-dark:#0060df;--bg:#f2f2f7;--panel:#ffffff;
+  --text:#1d1d1f;--muted:#86868b;--border:#e2e2ea;
+  --danger:#ff453a;--ok:#34c759;--warn:#ff9f0a;
+  --card:#ffffff;--chip-bg:#f2f2f7;--block:#fafafa;--soft:#f5f5f7;--hover:#f0f0f5;
+  --radius:11px;--shadow:0 1px 3px rgba(0,0,0,.08),0 6px 20px rgba(0,0,0,.06);
+}
+body[data-theme="mac"] .org-head.active,body[data-theme="mac"] .project-item.active,body[data-theme="mac"] .all-item.active{background:#e8f0fe}
+body[data-theme="mac"] .icon-btn.on{background:#e6f9ee;color:var(--ok)}
+body[data-theme="mac"] .icon-btn.off{background:#ffe9e7;color:var(--danger)}
+body[data-theme="linux"]{
+  --accent:#e95420;--accent-dark:#c73d10;--bg:#262320;--panel:#2f2b27;
+  --text:#ece7e3;--muted:#a49c92;--border:#49433b;
+  --danger:#f87171;--ok:#3ddc84;--warn:#fbbf24;
+  --card:#37322d;--chip-bg:#2f2b27;--block:#332e29;--soft:#332e29;--hover:#3b352f;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.4);
+}
+body[data-theme="linux"] .org-head.active,body[data-theme="linux"] .project-item.active,body[data-theme="linux"] .all-item.active{background:#4a3327}
+body[data-theme="linux"] .icon-btn.on{background:#2c4637;color:var(--ok)}
+body[data-theme="linux"] .icon-btn.off{background:#4a2f2b;color:var(--danger)}
+body[data-theme="linux"] input,body[data-theme="linux"] select,body[data-theme="linux"] textarea{color-scheme:dark}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;overflow:hidden;display:flex;flex-direction:column}
@@ -453,8 +474,8 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
   <button class="icon-btn" id="btnBell" title="Включить системные уведомления">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
   </button>
-  <button class="icon-btn" id="btnTheme" title="Светлая / тёмная тема">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+  <button class="icon-btn" id="btnSettings" title="Настройки">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5h.1a1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
   </button>
   <button class="icon-btn" id="btnLogin" title="Войти через Google">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
@@ -599,7 +620,8 @@ function normalize(s){
   if(!s.settings||typeof s.settings!=='object') s.settings={sound:true,notifications:false,theme:'light'};
   if(typeof s.settings.sound!=='boolean') s.settings.sound=true;
   if(typeof s.settings.notifications!=='boolean') s.settings.notifications=false;
-  if(!['light','dark'].includes(s.settings.theme)) s.settings.theme='light';
+  if(!['light','dark','mac','linux'].includes(s.settings.theme)) s.settings.theme='light';
+  if(!['classic','alarm','bell','siren'].includes(s.settings.soundType)) s.settings.soundType='classic';
   if(!['cards','list'].includes(s.settings.view)) s.settings.view='cards';
   if(typeof s.respFilter!=='string') s.respFilter='';
   if(typeof s.tagFilter!=='string') s.tagFilter='';
@@ -622,7 +644,7 @@ function normalize(s){
   return s;
 }
 function load(){ try{ const raw=localStorage.getItem(LS_KEY); return raw?normalize(JSON.parse(raw)):defaultState(); }catch(e){ return defaultState(); } }
-function save(){ localStorage.setItem(LS_KEY,JSON.stringify(state)); scheduleBackupSave(); }
+function save(){ state._updatedAt=Date.now(); localStorage.setItem(LS_KEY,JSON.stringify(state)); scheduleBackupSave(); }
 
 /* ---- облачный бэкенд (Supabase): аккаунты и свои данные у каждого пользователя ----
    Чтобы включить:
@@ -640,7 +662,32 @@ let authUser=null;
 let lastBackendSavedAt='';
 let backupTimer=null;
 let realtimeChannel=null;
+let syncTimer=null;
 const BACKEND_BUSY={skip:false};
+
+function startSyncPolling(){
+  stopSyncPolling();
+  syncTimer=setInterval(pullRemote,25000);
+  setTimeout(pullRemote,3000);
+}
+function stopSyncPolling(){ if(syncTimer){clearInterval(syncTimer);syncTimer=null;} }
+async function pullRemote(){
+  if(!supabaseClient||!authUser||BACKEND_BUSY.skip)return;
+  try{
+    const {data,error}=await supabaseClient.from('profiles').select('data,updated_at').eq('user_id',authUser.id).maybeSingle();
+    if(error||!data||!data.data)return;
+    const ts=data.updated_at||'';
+    if(ts<=lastBackendSavedAt)return;
+    const remote=normalize(JSON.parse(data.data));
+    if(typeof remote._updatedAt==='number'&&typeof state._updatedAt==='number'&&remote._updatedAt<state._updatedAt)return;
+    lastBackendSavedAt=ts;
+    BACKEND_BUSY.skip=true;
+    state=remote;
+    save();
+    render();
+    setTimeout(()=>{BACKEND_BUSY.skip=false;},1000);
+  }catch(e){}
+}
 
 function scheduleBackupSave(){
   if(!supabaseClient||!authUser)return;
@@ -708,6 +755,7 @@ async function signOut(){
   try{ if(supabaseClient)await supabaseClient.auth.signOut(); }catch(e){}
   if(realtimeChannel){ try{ supabaseClient.removeChannel(realtimeChannel); }catch(e){} }
   realtimeChannel=null;
+  stopSyncPolling();
   authUser=null;
   lastBackendSavedAt='';
   updateAuthUI();
@@ -725,7 +773,14 @@ async function initAuth(){
       if(err)throw err;
       if(row&&row.data){
         lastBackendSavedAt=row.updated_at||'';
-        state=normalize(JSON.parse(row.data));
+        const cloudTs=new Date(row.updated_at||0).getTime();
+        const localTs=typeof state._updatedAt==='number'?state._updatedAt:0;
+        if(localTs>cloudTs&&localStorage.getItem(LS_KEY)){
+          toast('Локальные данные новее — загружены в облако');
+          await saveToBackend();
+        }else{
+          state=normalize(JSON.parse(row.data));
+        }
       }else if(localStorage.getItem(LS_KEY)){
         toast('Привет, '+((u.email||'').split('@')[0])+'! Локальные данные загружены в ваш аккаунт');
         await saveToBackend();
@@ -733,6 +788,7 @@ async function initAuth(){
         toast('Привет, '+((u.email||'').split('@')[0])+'! Добро пожаловать');
       }
       enableRealtime(u.id);
+      startSyncPolling();
       applyTheme(); updateAuthUI(); render();
     }else{
       updateAuthUI();
@@ -821,23 +877,33 @@ function toast(msg,type){
   setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),350); },3200);
 }
 let audioCtx=null;
-function beep(){
+const SOUND_PATTERNS={
+  classic:[[880,0],[1174,0.22],[1568,0.44]],
+  bell:[[1318,0],[1318,0.14],[1975,0.28]],
+  alarm:[[988,0],[988,0.16],[988,0.32],[1319,0.5],[1319,0.68]],
+  siren:[[740,0],[622,0.28],[740,0.56],[622,0.84],[880,1.12]],
+};
+function playTone(freq,delay,dur){
+  const ctx=audioCtx;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='square';o.frequency.value=freq;
+  const t0=ctx.currentTime+delay;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(0.2,t0+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+(dur||0.18));
+  o.connect(g);g.connect(ctx.destination);
+  o.start(t0);o.stop(t0+(dur||0.18)+0.05);
+}
+function beep(type){
   if(!state.settings.sound)return;
   try{
     audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
     const ctx=audioCtx; if(ctx.state==='suspended')ctx.resume();
-    [880,1174,1568].forEach((f,i)=>{
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type='sine';o.frequency.value=f;
-      const t0=ctx.currentTime+i*0.22;
-      g.gain.setValueAtTime(0.0001,t0);
-      g.gain.exponentialRampToValueAtTime(0.22,t0+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
-      o.connect(g);g.connect(ctx.destination);
-      o.start(t0);o.stop(t0+0.22);
-    });
+    const pat=SOUND_PATTERNS[type]||SOUND_PATTERNS[state.settings.soundType||'classic']||SOUND_PATTERNS.classic;
+    pat.forEach(([f,d])=>playTone(f,d));
   }catch(e){}
 }
+function closeBanner(el){ if(el._loop){clearInterval(el._loop);el._loop=null;} el.remove(); }
 function showBanner(job){
   const wrap=$('#banners');
   const el=document.createElement('div');
@@ -858,18 +924,21 @@ function showBanner(job){
     const a=e.target.closest('[data-a]');
     if(a){
       e.stopPropagation();
-      if(a.dataset.a==='open'){ el.remove(); openCardModal(job.tid,job.ctxKey); }
-      else if(a.dataset.a==='off'){ el.remove(); dismissReminder(job); }
+      if(a.dataset.a==='open'){ closeBanner(el); openCardModal(job.tid,job.ctxKey); }
+      else if(a.dataset.a==='off'){ closeBanner(el); dismissReminder(job); }
       else if(a.dataset.a==='snooze'){ const s=el.querySelector('.b-snooze'); s.style.display=s.style.display==='none'?'inline-block':'none'; }
       return;
     }
     if(e.target.closest('.b-snooze'))return;
-    el.remove();
+    closeBanner(el);
     if(job.tid&&job.ctxKey)openCardModal(job.tid,job.ctxKey);
   };
-  el.querySelector('.b-snooze').onchange=()=>{ const s=el.querySelector('.b-snooze'); el.remove(); snoozeReminder(job,s.value); };
+  el.querySelector('.b-snooze').onchange=()=>{ const s=el.querySelector('.b-snooze'); closeBanner(el); snoozeReminder(job,s.value); };
   wrap.appendChild(el);
-  if(state.settings.sound)for(let k=0;k<4;k++)setTimeout(beep,k*900);
+  if(state.settings.sound){
+    beep();
+    el._loop=setInterval(()=>beep(),1400);
+  }
   if(navigator.vibrate){ try{ navigator.vibrate([350,120,350,120,350]); }catch(e){} }
 }
 function dismissReminder(job){
@@ -905,9 +974,35 @@ function toggleSound(){
   toast(state.settings.sound?'Звук включён':'Звук выключен');
   if(state.settings.sound)beep();
 }
-function toggleTheme(){
-  state.settings.theme=state.settings.theme==='dark'?'light':'dark';
-  save(); applyTheme();
+function openSettingsModal(){
+  const themes=[['light','Светлая'],['dark','Тёмная'],['mac','macOS'],['linux','Linux']];
+  const sounds=[['classic','Классический'],['alarm','Будильник'],['bell','Звонок'],['siren','Тревога']];
+  openModal(`
+    <div class="modal-head"><h3>Настройки</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Тема оформления</label>
+        <select id="setTheme">${themes.map(([v,l])=>`<option value="${v}" ${(state.settings.theme||'light')===v?'selected':''}>${l}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Звук напоминаний</label>
+        <div style="display:flex;gap:8px">
+          <select id="setSound" style="flex:1">${sounds.map(([v,l])=>`<option value="${v}" ${(state.settings.soundType||'classic')===v?'selected':''}>${l}</option>`).join('')}</select>
+          <button class="btn ghost" id="setSoundPrev" style="flex-shrink:0">${ICON.play} Прослушать</button>
+        </div>
+        <div class="field-hint">Пока напоминание не закрыто, звук повторяется непрерывно.</div>
+      </div>
+      <div class="field"><label>Системные уведомления</label>
+        <button class="btn ${state.settings.notifications?'primary':'ghost'}" id="setNotif" style="width:100%;justify-content:center">${state.settings.notifications?'Включены — нажмите, чтобы проверить':'Включить уведомления'}</button>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
+    modal=>{
+      const th=modal.querySelector('#setTheme');
+      th.onchange=()=>{ state.settings.theme=th.value; save(); applyTheme(); };
+      const sd=modal.querySelector('#setSound');
+      sd.onchange=()=>{ state.settings.soundType=sd.value; save(); };
+      modal.querySelector('#setSoundPrev').onclick=()=>beep(state.settings.soundType||'classic');
+      modal.querySelector('#setNotif').onclick=enableNotifs;
+    });
 }
 function applyTheme(){ document.body.dataset.theme=state.settings.theme; }
 function updateHeader(){
@@ -2304,7 +2399,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('#btnImport').onclick=()=>$('#importFile').click();
   $('#btnSound').onclick=toggleSound;
   $('#btnBell').onclick=enableNotifs;
-  $('#btnTheme').onclick=toggleTheme;
+  $('#btnSettings').onclick=openSettingsModal;
   $('#btnLogin').onclick=signIn;
   document.querySelectorAll('#tabs button').forEach(b=>{ b.onclick=()=>setTab(b.dataset.t); });
   $('#repBuild').onclick=buildReport;

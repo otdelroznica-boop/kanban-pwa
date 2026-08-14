@@ -1,4 +1,4 @@
-const VERSION = 'kanban-v4';
+const VERSION = 'kanban-v5';
 const ASSETS = [
   './',
   './index.html',
