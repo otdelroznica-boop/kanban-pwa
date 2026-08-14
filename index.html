@@ -250,7 +250,7 @@ body[data-theme="dark"] .lrow:hover{border-color:#3a4162}
 .cal-item:hover{background:var(--soft)}
 .cal-item .i-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .cal-item .i-t{font-weight:700;flex-shrink:0;color:var(--muted)}
-.cal-item .i-x{overflow:hidden;text-overflow:ellipsis}
+.cal-item .i-x{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .cal-item.done{opacity:.5;text-decoration:line-through}
 .cal-item.dl{background:#fff8ee;border:1px solid #f0dcae}
 body[data-theme="dark"] .cal-item.dl{background:#33291a;border-color:#4a3c22}
@@ -413,6 +413,7 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
   .cal-cell{min-height:58px;padding:4px;border-radius:7px}
   .cal-cell .cn{font-size:11px;margin-bottom:2px}
   .cal-item{font-size:10.5px;padding:2px 3px;border-radius:4px}
+  .cal-cell .i-t,.cal-week-cell .i-t{display:none}
   .cal-week-cell{min-height:100px}
   .cal-head{gap:8px}
   .report-bar{flex-wrap:wrap;padding:10px 12px}
@@ -436,8 +437,12 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
   .logo span{display:none}
 }
 @media print{
-  body.print-report header, body.print-report .layout{display:none!important}
-  body.print-report #tabReport{display:block!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.print-report header,body.print-report .sidebar{display:none!important}
+  body.print-report .layout{display:block!important;overflow:visible;height:auto}
+  body.print-report .main-area{display:block!important;overflow:visible;height:auto}
+  body.print-report #tabReport{display:block!important;overflow:visible;height:auto}
+  body.print-report .report-body{overflow:visible;height:auto;padding:8mm 10mm}
   .report-bar .no-print,.charts .no-print{display:none!important}
   .report-table th{position:static}
 }
