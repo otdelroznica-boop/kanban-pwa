@@ -550,7 +550,7 @@ function save(){ localStorage.setItem(LS_KEY,JSON.stringify(state)); scheduleBac
    4) Поставьте BACKEND.enabled = true
    Таблицу profiles и правила создайте в SQL Editor (инструкция в README).
 ------------------------------------------------------------------------------- */
-const BACKEND={url:'',anonKey:'',enabled:false};
+const BACKEND={url:'https://lkwpgxjholevvovhrmna.supabase.co',anonKey:'sb_publishable_09zMpfyh6smARWMNxfH-AQ_cg_t2s5k',enabled:true};
 const supabaseClient=(BACKEND.enabled&&window.supabase&&BACKEND.url&&BACKEND.anonKey)
   ?window.supabase.createClient(BACKEND.url,BACKEND.anonKey)
   :null;
