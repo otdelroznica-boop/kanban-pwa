@@ -118,8 +118,9 @@ body[data-theme="dark"] .column{background:rgba(27,30,44,.6)}
 .column-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 .column-head .col-name{font-weight:700;font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .column-head .col-count{font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:0 8px}
-.column-head .add-card{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
-.column-head .add-card:hover{background:var(--accent);color:#fff}
+.column-head .add-card{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--accent);flex-shrink:0;box-shadow:0 2px 6px rgba(79,70,229,.35)}
+.column-head .add-card:hover{filter:brightness(1.12)}
+.column-head .add-card svg{width:15px;height:15px}
 .column-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:60px}
 .column-body.drag-over{background:#eef0ff;border-radius:6px}
 .add-col-btn{width:60px;min-width:60px;height:44px;border:1px dashed #c6cbe0;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;margin-top:28px}
@@ -757,8 +758,8 @@ function ctxTasks(c){ return c.proj?c.proj.tasks:c.org.tasks; }
 function ctxLabel(c){ return c.proj?(c.org.name+' — '+c.proj.name):c.org.name; }
 function ctxShort(c){ return c.proj?c.proj.name:c.org.name; }
 function ctxColor(c){ return c.proj?c.proj.color:c.org.color; }
-function ctxOpenCount(c){ return ctxTasks(c).filter(t=>t.columnId!==doneColId()).length; }
-function ctxTotalCount(c){ return ctxTasks(c).length; }
+function ctxOpenCount(c){ return ctxTasks(c).filter(t=>!t.parentId&&t.columnId!==doneColId()).length; }
+function ctxTotalCount(c){ return ctxTasks(c).filter(t=>!t.parentId).length; }
 function findTaskRef(tid,key){
   if(!key)return null;
   const c=ctxFromKey(key); if(!c)return null;
@@ -912,7 +913,7 @@ function closeModal(){
 function renderProjects(){
   const list=$('#projectList');
   let html='';
-  const allOpen=countAllOpen(),allTotal=allTasks().length;
+  const allOpen=countAllOpen(),allTotal=allTasks().filter(t=>!t.parentId).length;
   html+=`<div class="all-item ${view.type==='all'?'active':''}" onclick="setView('all')">
     <span style="width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);flex-shrink:0"></span>
     <span class="name">Все задачи</span><span class="count" title="Открыто / всего">${allOpen}/${allTotal}</span></div>`;
@@ -954,7 +955,7 @@ function renderProjects(){
   });
   list.innerHTML=html;
 }
-function countAllOpen(){ return allTasks().filter(t=>t.columnId!==doneColId()).length; }
+function countAllOpen(){ return allTasks().filter(t=>!t.parentId&&t.columnId!==doneColId()).length; }
 function toggleOrg(id){
   const i=state.expandedOrgs.indexOf(id);
   if(i>=0)state.expandedOrgs.splice(i,1);else state.expandedOrgs.push(id);
@@ -1118,7 +1119,7 @@ function renderTabs(){
 /* ============================================================ board */
 function tasksForCol(colId){
   const q=search.trim().toLowerCase();
-  const cList=view.type==='all'?contexts():[ctxFromKey(view.key)].filter(Boolean);
+  const cList=viewContexts();
   const out=[];
   cList.forEach(c=>{
     ctxTasks(c).forEach(t=>{
@@ -1133,14 +1134,24 @@ function tasksForCol(colId){
   return out;
 }
 function currentCtx(){ return view.type==='ctx'?ctxFromKey(view.key):null; }
+function viewContexts(){
+  if(view.type==='all')return contexts();
+  const c=ctxFromKey(view.key);
+  if(!c)return [];
+  if(c.proj)return [c];
+  return [c,...c.org.projects.map(p=>({org:c.org,proj:p,key:'p:'+p.id}))];
+}
 function renderToolbar(){
   const tb=$('#boardToolbar');
   const c=currentCtx();
   let html='';
   if(c){
-    const spent=ctxTasks(c).reduce((s,t)=>s+totalSpent(t),0);
+    const vcs=viewContexts();
+    const spent=vcs.reduce((s,x)=>s+ctxTasks(x).reduce((a,t)=>a+totalSpent(t),0),0);
+    const total=vcs.reduce((s,x)=>s+ctxTotalCount(x),0);
+    const open=vcs.reduce((s,x)=>s+ctxOpenCount(x),0);
     html+=`<div><div class="board-title" style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:4px;background:${ctxColor(c)}"></span>${esc(ctxLabel(c))}</div>
-      <div class="board-sub">${c.proj?`Проект компании «${esc(c.org.name)}» · `:'Компания · '}Задач: ${ctxTotalCount(c)} · Открыто: ${ctxOpenCount(c)} · Затрачено: ${fmtDur(spent)}</div></div>`;
+      <div class="board-sub">${c.proj?`Проект компании «${esc(c.org.name)}» · `:'Компания (с проектами) · '}Задач: ${total} · Открыто: ${open} · Затрачено: ${fmtDur(spent)}</div></div>`;
   } else {
     html+=`<div><div class="board-title">Все задачи</div><div class="board-sub">${state.orgs.length} компаний · ${contexts().length} разделов · открыто: ${countAllOpen()}</div></div>`;
   }
@@ -1713,13 +1724,14 @@ function todayRowHtml(ref,timeHtml,sub){
 function renderToday(){
   const el=$('#tabToday');
   const now=Date.now();
-  const running=allRefs().filter(r=>r.t.timer);
-  const overdue=allRefs().filter(r=>isOverdue(r.t)).sort((a,b)=>(a.t.deadline<b.t.deadline?-1:1));
-  const dueToday=allRefs().filter(r=>r.t.deadline===todayISO()&&!isDone(r.t));
-  const eventsToday=allRefs().filter(r=>r.t.dueDateTime&&dayKeyOf(r.t.dueDateTime)===todayISO()).sort((a,b)=>a.t.dueDateTime<b.t.dueDateTime?-1:1);
-  const eventsSoon=allRefs().filter(r=>r.t.dueDateTime&&dayKeyOf(r.t.dueDateTime)>todayISO()&&!isDone(r.t)).sort((a,b)=>a.t.dueDateTime<b.t.dueDateTime?-1:1).slice(0,8);
-  const rems=allRefs().map(r=>({r,nr:nextRemindersOf(r.t)})).filter(x=>x.nr).sort((a,b)=>a.nr.at-b.nr.at).slice(0,8);
-  const backlog=allRefs().filter(r=>!isDone(r.t)&&!r.t.deadline&&!r.t.timer).sort((a,b)=>(b.t.created||0)-(a.t.created||0)).slice(0,12);
+  const refs=allRefs().filter(r=>!r.t.parentId);
+  const running=refs.filter(r=>r.t.timer);
+  const overdue=refs.filter(r=>isOverdue(r.t)).sort((a,b)=>(a.t.deadline<b.t.deadline?-1:1));
+  const dueToday=refs.filter(r=>r.t.deadline===todayISO()&&!isDone(r.t));
+  const eventsToday=refs.filter(r=>r.t.dueDateTime&&dayKeyOf(r.t.dueDateTime)===todayISO()).sort((a,b)=>a.t.dueDateTime<b.t.dueDateTime?-1:1);
+  const eventsSoon=refs.filter(r=>r.t.dueDateTime&&dayKeyOf(r.t.dueDateTime)>todayISO()&&!isDone(r.t)).sort((a,b)=>a.t.dueDateTime<b.t.dueDateTime?-1:1).slice(0,8);
+  const rems=refs.map(r=>({r,nr:nextRemindersOf(r.t)})).filter(x=>x.nr).sort((a,b)=>a.nr.at-b.nr.at).slice(0,8);
+  const backlog=refs.filter(r=>!isDone(r.t)&&!r.t.deadline&&!r.t.timer).sort((a,b)=>(b.t.created||0)-(a.t.created||0)).slice(0,12);
   let html='<div class="today-grid">';
   html+='<div class="today-col">';
   html+=`<div class="today-head">Что сейчас${running.length?` <span class="badge b-warn">${running.length}</span>`:''}</div>`;
@@ -2124,7 +2136,7 @@ function importData(file){
 function renderStats(runningCount){
   const el=$('#stats');
   if(!el)return;
-  const all=allTasks();
+  const all=allTasks().filter(t=>!t.parentId);
   const overdue=all.filter(isOverdue);
   const today=all.filter(isToday);
   const eventsToday=all.filter(t=>t.dueDateTime&&dayKeyOf(t.dueDateTime)===todayISO()).length;
