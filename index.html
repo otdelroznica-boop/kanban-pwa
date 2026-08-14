@@ -165,6 +165,18 @@ body[data-theme="dark"] .chip.today{background:#3a3020}
 .card-footer .who{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card-footer .due{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
 .card-footer .due.overdue{color:var(--danger)}
+.lrow{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 11px;cursor:pointer;box-shadow:0 1px 2px rgba(20,25,50,.04)}
+.lrow:hover{border-color:#c3c9e8;box-shadow:var(--shadow)}
+body[data-theme="dark"] .lrow:hover{border-color:#3a4162}
+.lrow .l-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.lrow .l-flag{display:flex;align-items:center;flex-shrink:0}
+.lrow .l-main{flex:1;min-width:0}
+.lrow .l-title{font-weight:600;font-size:13.5px;line-height:1.35;word-break:break-word}
+.lrow.l-done .l-title{color:var(--muted);text-decoration:line-through}
+.lrow .l-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.lrow .l-chips .chip{font-size:11.5px;padding:1px 7px}
+.lrow .l-run{color:var(--warn);font-size:13px;flex-shrink:0;animation:pulse 1.6s infinite}
+.lrow .l-who{font-size:12px;color:var(--muted);flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cli{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;padding:3px 2px;border-radius:5px;cursor:pointer}
 .cli:hover{background:var(--soft)}
 .cli .cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;margin-top:1px}
@@ -356,9 +368,9 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
   .sidebar{position:fixed;top:0;bottom:0;left:0;z-index:70;width:min(288px,86vw);transform:translateX(-103%);transition:transform .22s ease;box-shadow:0 0 44px rgba(10,15,40,.35)}
   body.sb-open .sidebar{transform:none}
   body.sb-open::after{content:'';position:fixed;inset:0;background:rgba(20,25,50,.45);z-index:65}
-  .board{overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;-webkit-overflow-scrolling:touch}
-  .column{min-width:min(300px,88vw);width:min(300px,88vw);max-width:min(300px,88vw);scroll-snap-align:start;max-height:calc(100vh - 260px);max-height:calc(100dvh - 260px)}
-  .column-body{overscroll-behavior:contain}
+  .board{display:block;padding-bottom:10px}
+  .column{min-width:0;width:100%;max-width:100%;margin-bottom:14px;max-height:none;scroll-snap-align:none}
+  .column-body{max-height:none;overflow:visible;overscroll-behavior:contain}
   .card .card-title{font-size:15px}
   .card .card-desc{font-size:13px;line-height:1.45}
   .card .card-del{display:flex;width:30px;height:30px}
@@ -546,6 +558,7 @@ const ICON={
   cmt:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
   copy:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
   archive:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>',
+  list:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>',
 };
 const COLUMN_COLORS=['#4f46e5','#0ea5e9','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#14b8a6','#f97316','#64748b'];
 const LIGHT_BG=['#f0f1ff','#e9f6ff','#f4f0ff','#fdeef9','#fff6e6','#e6f8ef','#fdeeef','#e5fafb','#fdf0e4','#eff2f7'];
@@ -573,6 +586,7 @@ function normalize(s){
   if(typeof s.settings.sound!=='boolean') s.settings.sound=true;
   if(typeof s.settings.notifications!=='boolean') s.settings.notifications=false;
   if(!['light','dark'].includes(s.settings.theme)) s.settings.theme='light';
+  if(!['cards','list'].includes(s.settings.view)) s.settings.view='cards';
   if(typeof s.respFilter!=='string') s.respFilter='';
   if(typeof s.tagFilter!=='string') s.tagFilter='';
   if(typeof s.selPrio!=='string') s.selPrio='';
@@ -764,8 +778,9 @@ function subsOf(c,t){ return ctxTasks(c).filter(x=>x.parentId===t.id); }
 function syncSubs(c,t){ const col=t.columnId; subsOf(c,t).forEach(s=>s.columnId=col); }
 function totalSpent(t){
   const closed=(t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0);
+  const man=(typeof t.actual==='number'&&t.actual>=0)?t.actual:0;
   const running=t.timer?(Date.now()-t.timer.start):0;
-  return Math.floor((closed+running)/1000);
+  return Math.floor((closed+man*1000+running)/1000);
 }
 function isDone(t){ return t.columnId===doneColId(); }
 function isOverdue(t){
@@ -1150,12 +1165,17 @@ function renderToolbar(){
     <button data-s="deadline" class="${sortBy==='deadline'?'active':''}">Срок</button>
     <button data-s="start" class="${sortBy==='start'?'active':''}">Начало</button>
   </div>`;
+  html+=`<div class="seg" id="viewSeg">
+    <button data-v="cards" class="${(state.settings.view||'cards')==='cards'?'active':''}">Карточки</button>
+    <button data-v="list" class="${(state.settings.view||'cards')==='list'?'active':''}">Список</button>
+  </div>`;
   html+=`<button class="icon-btn" id="btnAddCardTop" style="background:var(--accent);color:#fff">${ICON.plus} Задача</button>`;
   tb.innerHTML=html;
   $('#prioFilter').onchange=e=>{ state.selPrio=e.target.value; save(); render(); };
   $('#tagFilter').onchange=e=>{ state.tagFilter=e.target.value; save(); render(); };
   $('#respFilter').onchange=e=>{ state.respFilter=e.target.value; save(); render(); };
   tb.querySelectorAll('#sortSeg button').forEach(b=>{ b.onclick=()=>{ sortBy=b.dataset.s; render(); }; });
+  tb.querySelectorAll('#viewSeg button').forEach(b=>{ b.onclick=()=>{ state.settings.view=b.dataset.v; save(); render(); }; });
   $('#btnAddCardTop').onclick=()=>openCardModal(null,c?c.key:null);
 }
 function renderBoard(){
@@ -1179,9 +1199,10 @@ function renderBoard(){
   board.querySelectorAll('.column-body').forEach(body=>{
     const colId=body.dataset.col;
     const items=tasksForCol(colId);
+    const listMode=(state.settings.view||'cards')==='list';
     if(!items.length){
       body.innerHTML=`<div class="empty-col">${search||state.respFilter||state.tagFilter||state.selPrio?'Ничего не найдено':'Нет задач — нажмите +'}</div>`;
-    } else body.innerHTML=items.map(({c,t})=>cardHTML(c,t)).join('');
+    } else body.innerHTML=items.map(({c,t})=>listMode?listRowHTML(c,t):cardHTML(c,t)).join('');
     bindDnD(body,colId);
   });
   bindBoardEvents();
@@ -1202,7 +1223,8 @@ function cardHTML(c,t){
   if(t.startDate)chips.push(`<span class="chip" title="Начало">${ICON.calendar} ${fmtDate(t.startDate)}</span>`);
   chips.push(`<span class="chip ${overdue?'overdue':today?'today':done?'done':''}" title="${done?'Завершено: '+fmtDate(t.completedDate):overdue?'Просрочено':''}">${ICON.calendar} Дедлайн: ${fmtDate(t.deadline)}</span>`);
   if(t.dueDateTime)chips.push(`<span class="chip ${t.dueDateTime<new Date().toISOString().slice(0,16)?'overdue':''}" title="Событие/встреча">${ICON.clock} ${fmtDT(t.dueDateTime)}</span>`);
-  if(t.estimate)chips.push(`<span class="chip" title="Оценка">${ICON.clock} ${fmtDur(t.estimate*3600)}</span>`);
+  if(t.estimate)chips.push(`<span class="chip" title="План (оценка) — ставится вручную">${ICON.clock} План: ${fmtDur(t.estimate*3600)}</span>`);
+  if(spent>0)chips.push(`<span class="chip" title="Факт — из таймера, можно править">${ICON.clock} Факт: ${fmtDur(spent)}</span>`);
   if(spent>0)chips.push(`<span class="chip ${running?'running':''}" title="Затрачено${running?' — идёт замер':''}">${ICON.clock} ${fmtDur(spent)}</span>`);
   if(t.reminder)chips.push(`<span class="chip" title="Напоминание">${ICON.bell} ${t.reminder<60?t.reminder+'м':t.reminder/60>=24?Math.round(t.reminder/1440)+'дн':Math.round(t.reminder/60)+'ч'}</span>`);
   if((t.tags||[]).length)chips.push(...t.tags.map(tg=>`<span class="chip" style="color:#fff;background:${tagColor(tg)};border:none" title="Метка">${ICON.tag} ${esc(tg)}</span>`));
@@ -1246,13 +1268,38 @@ function cardHTML(c,t){
     <div class="card-meta">${chips.join('')}</div>
     ${prog}
     ${running||spent>0||t.estimate?`<div class="card-timer">
-      <span class="tt ${running?'running':''}" id="tt-${t.id}">${running?'Идёт замер: ':'Время: '}${fmtDur(spent)}</span>
+      <span class="tt ${running?'running':''}" id="tt-${t.id}">${running?'Идёт замер: ':'Факт: '}${fmtDur(spent)}</span>
       <button class="timer-btn ${running?'stop':'start'}" title="${running?'Остановить':'Запустить таймер'}" onclick="event.stopPropagation();toggleTimer('${c.key}','${t.id}')">${running?ICON.pause:ICON.play}</button>
     </div>`:''}
     <div class="card-footer">
       ${who}
       <span class="due ${overdue?'overdue':''}" title="${overdue?'Просрочено':''}">Дедлайн: ${fmtDate(t.deadline)} ${overdue?'· просрочено':today?'· сегодня':''}</span>
     </div>
+  </div>`;
+}
+function listRowHTML(c,t){
+  const spent=totalSpent(t);
+  const overdue=isOverdue(t);
+  const done=isDone(t);
+  const cc=colColor(t.columnId);
+  const pr=PRIO[t.priority||'med'];
+  const subs=subsOf(c,t);
+  const cl=(t.checklist||[]).filter(i=>i.done).length;
+  const chips=[];
+  if(t.deadline)chips.push(`<span class="chip ${overdue?'overdue':done?'done':''}">${ICON.calendar} ${fmtDate(t.deadline)}</span>`);
+  if(t.estimate)chips.push(`<span class="chip" title="План (оценка)">${ICON.clock} План: ${fmtDur(t.estimate*3600)}</span>`);
+  if(spent>0)chips.push(`<span class="chip ${t.timer?'running':''}">${ICON.clock} Факт: ${fmtDur(spent)}</span>`);
+  if(cl>0)chips.push(`<span class="chip">${ICON.check} ${cl}/${(t.checklist||[]).length}</span>`);
+  if(subs.length)chips.push(`<span class="chip">${ICON.list} ${subs.length}</span>`);
+  return `<div class="lrow ${done?'l-done':''}" data-ctx="${c.key}" data-tid="${t.id}" onclick="openCardModal('${t.id}','${c.key}')">
+    <span class="l-dot" style="background:${cc}"></span>
+    <span class="l-flag" style="color:${pr.color}">${ICON.flag}</span>
+    <div class="l-main">
+      <div class="l-title">${esc(t.title)}</div>
+      ${chips.length?`<div class="l-chips">${chips.join('')}</div>`:''}
+    </div>
+    ${t.timer?`<span class="l-run" title="Идёт замер">●</span>`:''}
+    ${t.responsible?`<span class="l-who">${esc(t.responsible)}</span>`:''}
   </div>`;
 }
 function bindDnD(body,colId){
@@ -1371,14 +1418,16 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
       </div>
       <div class="field-hint">Событие — для встреч, попадёт в календарь. Напоминание сработает и для события, и для срока.</div></div>
       <div class="field"><div class="row">
-        <div><label>Оценка (часы)</label><input type="number" id="tkEst" min="0" step="0.5" value="${t&&t.estimate?t.estimate:''}" placeholder="0"></div>
-        <div style="flex:2"><label>Время</label>
+        <div><label>План (часы)</label><input type="number" id="tkEst" min="0" step="0.5" value="${t&&t.estimate?t.estimate:''}" placeholder="0"></div>
+        <div><label>Факт (часы)</label><input type="number" id="tkFact" min="0" step="0.5" value="${t&&totalSpent(t)>0?Math.max(0,Math.round(totalSpent(t)/36)/100).toFixed(2):''}" placeholder="из таймера"></div>
+        <div style="flex:2"><label>Замер</label>
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums" id="tkSpent">${fmtDur(spent)}</span>
             <button class="btn ${running?'danger':'primary'}" id="tkTimerBtn" style="padding:6px 12px">${running?'Остановить таймер':'Запустить таймер'}</button>
             <span id="tkTimerLive" style="color:var(--warn);font-weight:700;font-variant-numeric:tabular-nums">${running?'Идёт замер…':''}</span>
           </div></div>
-      </div></div>
+      </div>
+      <div class="field-hint">План — ставите сами. Факт заполняется из таймера; можно поправить вручную в часах.</div></div>
       ${t&&!t.parentId?`<div class="field"><label>Чек-лист</label><div class="log-block">${clRows}</div>
         <div class="add-inline"><input type="text" id="tkCheckInput" placeholder="Новый пункт чек-листа..."><button class="btn ghost" onclick="addCheck('${ctxKey}','${t.id}')">${ICON.plus} Добавить</button></div></div>
       <div class="field"><label>Подзадачи</label><div class="log-block">${subRows}</div>
@@ -1414,6 +1463,7 @@ function collectTaskInputs(){
   const title=$('#tkTitle').value.trim();
   if(!title){ toast('Укажите название задачи','error'); return null; }
   const est=parseFloat($('#tkEst').value);
+  const fact=parseFloat($('#tkFact').value);
   const tags=$('#tkTags').value.split(',').map(s=>s.trim()).filter(Boolean);
   return {
     title,
@@ -1423,6 +1473,7 @@ function collectTaskInputs(){
     priority:$('#tkPrio').value,
     tags:[...new Set(tags)],
     estimate:isFinite(est)&&est>0?est:null,
+    actualHours:isFinite(fact)&&fact>=0?fact:null,
     startDate:$('#tkStart').value||todayISO(),
     deadline:$('#tkDeadline').value||null,
     completedDate:$('#tkDone').value||null,
@@ -1433,17 +1484,25 @@ function collectTaskInputs(){
 function saveTask(ctxKey,tid){
   const data=collectTaskInputs();
   if(!data)return;
+  const applyFact=t=>{
+    const closed=Math.floor((t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0)/1000);
+    t.actual=data.actualHours!=null?Math.max(0,Math.round(data.actualHours*3600)-closed):undefined;
+  };
+  delete data.actualHours;
   if(tid){
     const ref=findTaskRef(tid,ctxKey);
     if(!ref){ toast('Задача не найдена','error'); return; }
     Object.assign(ref.t,data);
+    applyFact(ref.t);
     syncSubs(ref.c,ref.t);
     toast('Задача сохранена');
   } else {
     let c=ctxKey?ctxFromKey(ctxKey):null;
     if(!c){ const sel=$('#tkCtx'); if(!sel||!sel.value){ toast('Выберите раздел','error'); return; } c=ctxFromKey(sel.value); }
     if(!c){ toast('Раздел не найден','error'); return; }
-    ctxTasks(c).push({id:uid(),...data,created:Date.now(),checklist:[],comments:[],attachments:[],intervals:[],timer:null,notified:{}});
+    const nt={id:uid(),...data,created:Date.now(),checklist:[],comments:[],attachments:[],intervals:[],timer:null,notified:{}};
+    applyFact(nt);
+    ctxTasks(c).push(nt);
     toast('Задача создана');
   }
   save(); closeModal(); render();
