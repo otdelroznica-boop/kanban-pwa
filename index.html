@@ -97,7 +97,7 @@ body[data-theme="dark"] .icon-btn.on{background:#1c3b2a;color:var(--ok)}
 body[data-theme="dark"] .icon-btn.off{background:#3a2226;color:var(--danger)}
 
 .layout{display:flex;flex:1;min-height:0}
-.sidebar{width:288px;min-width:288px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar{width:320px;min-width:320px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .sidebar-head{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between}
 .sidebar-head span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .project-list{flex:1;overflow-y:auto;padding:4px 8px 12px}
@@ -109,7 +109,7 @@ body[data-theme="dark"] .org-head.active{background:#2a2f4a}
 .org-head .twist{width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;border-radius:4px}
 .org-head .twist:hover{background:var(--soft);color:var(--text)}
 .org-head .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
-.org-head .name{flex:1;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.org-head .name{flex:1;min-width:0;font-weight:700;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .org-head .count{font-size:12px;color:var(--muted);background:var(--bg);border-radius:10px;padding:1px 8px;flex-shrink:0}
 .org-head .mini-actions{display:flex;gap:2px}
 .org-children{padding:2px 0 6px;border-top:1px dashed var(--border)}
@@ -525,7 +525,7 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
   .icon-btn{padding:9px;font-size:0;min-width:44px;min-height:44px;justify-content:center}
   .icon-btn svg{width:19px;height:19px}
   .btn-burger{display:inline-flex!important}
-  .sidebar{position:fixed;top:0;bottom:0;left:0;z-index:70;width:min(288px,86vw);transform:translateX(-103%);transition:transform .22s ease;box-shadow:0 0 44px rgba(10,15,40,.35)}
+  .sidebar{position:fixed;top:0;bottom:0;left:0;z-index:70;width:min(320px,86vw);transform:translateX(-103%);transition:transform .22s ease;box-shadow:0 0 44px rgba(10,15,40,.35)}
   body.sb-open .sidebar{transform:none}
   body.sb-open::after{content:'';position:fixed;inset:0;background:rgba(20,25,50,.45);z-index:65}
   .board{display:block;padding-bottom:10px}
@@ -1467,7 +1467,6 @@ function renderProjects(){
     }).join('');
     html+=`<div class="org-block">
       <div class="org-head ${view.type==='ctx'&&view.key==='o:'+o.id?'active':''}" onclick="setView('o:${o.id}')" style="border-left:4px solid ${o.color}">
-        <span class="twist" ${o.projects.length?'':'style="visibility:hidden"'}>${expanded?'▾':'▸'}</span>
         <span class="dot" style="background:${o.color}"></span>
         <span class="name">${esc(o.name)}</span>
         <span class="count" title="Открыто / всего">${open}/${total}</span>
@@ -1626,10 +1625,13 @@ function openArchiveModal(){
       <button class="btn ghost" style="padding:5px 10px" onclick="restoreArchive(${state.archive.indexOf(a)})">Восстановить</button>
       <button class="btn danger" style="padding:5px 10px" onclick="deleteArchive(${state.archive.indexOf(a)})">${ICON.trash}</button>
     </div>`;
-  }).join(''):'<div class="log-empty">Архив пуст. Выполненные задачи можно архивировать из карточки.</div>';
+  }).join(''):'<div class="log-empty">Архив пуст.</div>';
   openModal(`
     <div class="modal-head"><h3>Архив <span class="h3sub">${state.archive.length}</span></h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
-    <div class="modal-body"><div class="log-block">${rows}</div></div>`);
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Удалённые задачи попадают сюда. Полное удаление — только из архива.</div>
+      <div class="log-block">${rows}</div>
+    </div>`);
 }
 function archiveTask(ctxKey,tid){
   const ref=findTaskRef(tid,ctxKey); if(!ref)return;
@@ -1639,7 +1641,7 @@ function archiveTask(ctxKey,tid){
   grp.forEach(g=>{ const i=arr.indexOf(g); if(i>=0)arr.splice(i,1); });
   grp.forEach(g=>state.archive.push({ctxKey,ctxLabel:ctxLabel(c),task:g}));
   save(); closeModal(); render();
-  toast('Задача в архиве');
+  toast('Задача в архиве — полное удаление только из архива');
 }
 function restoreArchive(i){
   const a=state.archive[i]; if(!a)return;
@@ -1828,7 +1830,7 @@ function cardHTML(c,t){
     onclick="openCardModal('${t.id}','${c.key}')">
     <div class="card-top">
       <div class="card-title">${prFlag} ${esc(t.title)}</div>
-      <button class="card-del" title="Удалить задачу" onclick="event.stopPropagation();deleteTask('${c.key}','${t.id}')">${ICON.trash}</button>
+      <button class="card-del" title="В архив" onclick="event.stopPropagation();deleteTask('${c.key}','${t.id}')">${ICON.trash}</button>
     </div>
     ${t.desc?`<div class="card-desc">${esc(t.desc)}</div>`:''}
     ${cli}${subRows}
@@ -1967,7 +1969,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
     return `<div class="log-row"><span class="td-dot" style="background:${sd?'var(--ok)':'var(--border)'}"></span><span class="log-note" style="${sd?'text-decoration:line-through;color:var(--muted)':''}">${esc(s.title)}</span>
       <button class="log-del" onclick="openCardModal('${s.id}','${ctxKey}')" title="Открыть">${ICON.settings}</button>
       <button class="log-del" onclick="toggleSubDone('${ctxKey}','${t.id}','${s.id}')" title="Выполнено">${ICON.check}</button>
-      <button class="log-del" title="Удалить подзадачу" onclick="deleteTask('${ctxKey}','${s.id}')">${ICON.trash}</button></div>`;
+      <button class="log-del" title="В архив" onclick="deleteTask('${ctxKey}','${s.id}')">${ICON.trash}</button></div>`;
   }).join('')||'<div class="log-empty">Подзадач нет.</div>'):'';
   const attRows=t&&(t.attachments||[]).length?t.attachments.map(a=>`<div class="att-row">
     <a class="att-name" href="${a.dataUrl}" download="${esc(a.name)}">${ICON.attach} ${esc(a.name)}</a>
@@ -2030,7 +2032,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
     <div class="modal-foot">
       ${t?`<button class="btn ghost" onclick="duplicateTask('${ctxKey}','${t.id}')">${ICON.copy} Дублировать</button>`:''}
       ${t&&isDone(t)?`<button class="btn ghost" onclick="archiveTask('${ctxKey}','${t.id}')">${ICON.archive} В архив</button>`:''}
-      ${t?`<button class="btn danger" style="margin-right:auto" onclick="deleteTask('${ctxKey}','${t.id}')">${ICON.trash} Удалить</button>`:''}
+      ${t?`<button class="btn danger" style="margin-right:auto" onclick="deleteTask('${ctxKey}','${t.id}')">${ICON.archive} В архив</button>`:''}
       <button class="btn ghost" onclick="closeModal()">Отмена</button>
       <button class="btn primary" onclick="saveTask('${ctxKey||''}','${t?t.id:''}')">${ICON.check} ${t?'Сохранить':'Создать'}</button>
     </div>`,modal=>{
@@ -2117,14 +2119,7 @@ function saveTask(ctxKey,tid){
   save(); closeModal(); render();
 }
 function deleteTask(ctxKey,tid){
-  const ref=findTaskRef(tid,ctxKey); if(!ref)return;
-  const subs=subsOf(ref.c,ref.t);
-  if(!confirm(subs.length?`Удалить задачу и ${subs.length} подзадач(и)?`:'Удалить задачу?'))return;
-  const arr=ctxTasks(ref.c);
-  arr.splice(arr.indexOf(ref.t),1);
-  subs.forEach(s=>{ const i=arr.indexOf(s); if(i>=0)arr.splice(i,1); });
-  save(); closeModal(); render();
-  toast('Задача удалена');
+  archiveTask(ctxKey,tid);
 }
 function duplicateTask(ctxKey,tid){
   const ref=findTaskRef(tid,ctxKey); if(!ref)return;
