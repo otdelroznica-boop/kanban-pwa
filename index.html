@@ -135,6 +135,15 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .mini{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;opacity:.85}
 .mini:hover{background:var(--panel);color:var(--text);opacity:1}
 .mini.danger:hover{color:var(--danger)}
+.mini.dots{font-size:16px;font-weight:700;letter-spacing:1px;line-height:1}
+.row-menu{position:fixed;z-index:120;display:none;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(20,25,50,.28);padding:5px;min-width:200px}
+.row-menu.open{display:block}
+.row-menu button{display:flex;width:100%;align-items:center;gap:9px;padding:8px 11px;border:none;background:none;border-radius:7px;cursor:pointer;font-size:13px;color:var(--text);text-align:left}
+.row-menu button:hover{background:var(--bg)}
+.row-menu button svg{color:var(--accent);flex-shrink:0}
+.row-menu button.danger{color:var(--danger)}
+.row-menu button.danger svg{color:var(--danger)}
+.row-menu hr{margin:4px 0;border:none;border-top:1px solid var(--border)}
 .card-pct{display:flex;align-items:center;gap:7px;margin:8px 0 2px}
 .pct-track{flex:1;height:5px;border-radius:3px;background:var(--bg);overflow:hidden}
 .pct-bar{height:100%;border-radius:3px;background:var(--accent)}
@@ -680,6 +689,7 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
 
 <input type="file" id="importFile" accept="application/json,.json" style="display:none">
 <div class="modal-overlay" id="modalOverlay" style="display:none"></div>
+<div class="row-menu" id="rowMenu"></div>
 <div class="banners" id="banners"></div>
 <div class="toasts" id="toasts"></div>
 
@@ -1395,7 +1405,35 @@ function closeModal(){
   const ov=$('#modalOverlay');
   ov.style.display='none'; ov.innerHTML='';
   currentModal=null;
+  hideRowMenu();
 }
+function toggleRowMenu(e,key){
+  e.stopPropagation();
+  const m=$('#rowMenu');
+  let items='';
+  if(key.startsWith('p:')){
+    const pid=key.slice(2); let oid=null;
+    state.orgs.forEach(o=>{ if(o.projects.some(p=>p.id===pid))oid=o.id; });
+    if(oid)items=`<button onclick="hideRowMenu();openDocsFor('${key}')">${ICON.book} Документация проекта</button>
+      <button onclick="hideRowMenu();openProjectModal('${oid}','${pid}')">${ICON.settings} Настроить проект</button>
+      <button class="danger" onclick="hideRowMenu();deleteProject('${oid}','${pid}')">${ICON.trash} Удалить проект</button>`;
+  }else if(key.startsWith('o:')){
+    const oid=key.slice(2); const o=state.orgs.find(x=>x.id===oid);
+    if(o&&!o.general)items=`<button onclick="hideRowMenu();openDocsFor('${key}')">${ICON.book} Документация компании</button>
+      <button onclick="hideRowMenu();openProjectModal('${oid}',null)">${ICON.plus} Добавить проект</button>
+      <button onclick="hideRowMenu();openOrgModal('${oid}')">${ICON.settings} Настроить компанию</button>
+      <button class="danger" onclick="hideRowMenu();deleteOrg('${oid}')">${ICON.trash} Удалить компанию</button>`;
+  }
+  if(!items){ hideRowMenu(); return; }
+  if(m.classList.contains('open')){ hideRowMenu(); return; }
+  m.innerHTML=items;
+  m.classList.add('open');
+  const r=e.currentTarget.getBoundingClientRect();
+  const w=m.offsetWidth||200;
+  m.style.top=Math.round(r.bottom+4)+'px';
+  m.style.left=Math.max(8,Math.round(r.right-w))+'px';
+}
+function hideRowMenu(){ const m=$('#rowMenu'); if(m)m.classList.remove('open'); }
 
 /* ============================================================ sidebar */
 function renderProjects(){
@@ -1424,26 +1462,17 @@ function renderProjects(){
         <span class="rail"></span><span class="dot" style="background:${p.color}"></span>
         <span class="name">${esc(p.name)}</span>
         <span class="count" title="Открыто / всего">${ctxOpenCount(pc)}/${ctxTotalCount(pc)}</span>
-        <span class="mini-actions">
-          <span class="mini" title="Документация проекта" onclick="event.stopPropagation();openDocsFor('p:${p.id}')">${ICON.book}</span>
-          <span class="mini" title="Настроить проект" onclick="event.stopPropagation();openProjectModal('${o.id}','${p.id}')">${ICON.settings}</span>
-          <span class="mini danger" title="Удалить проект" onclick="event.stopPropagation();deleteProject('${o.id}','${p.id}')">${ICON.trash}</span>
-        </span>
+        <span class="mini dots" title="Действия" onclick="event.stopPropagation();toggleRowMenu(event,'p:${p.id}')">⋮</span>
         ${prog}</div>`;
     }).join('');
-    const acts = o.general ? '' : `<span class="mini-actions">
-      <span class="mini" title="Документация компании" onclick="event.stopPropagation();openDocsFor('o:${o.id}')">${ICON.book}</span>
-      <span class="mini" title="Добавить проект" onclick="event.stopPropagation();openProjectModal('${o.id}',null)">${ICON.plus}</span>
-      <span class="mini" title="Настроить компанию" onclick="event.stopPropagation();openOrgModal('${o.id}')">${ICON.settings}</span>
-      <span class="mini danger" title="Удалить компанию" onclick="event.stopPropagation();deleteOrg('${o.id}')">${ICON.trash}</span></span>`;
     html+=`<div class="org-block">
       <div class="org-head ${view.type==='ctx'&&view.key==='o:'+o.id?'active':''}" onclick="setView('o:${o.id}')" style="border-left:4px solid ${o.color}">
         <span class="twist" ${o.projects.length?'':'style="visibility:hidden"'}>${expanded?'▾':'▸'}</span>
         <span class="dot" style="background:${o.color}"></span>
         <span class="name">${esc(o.name)}</span>
         <span class="count" title="Открыто / всего">${open}/${total}</span>
+        ${o.general?'':`<span class="mini dots" title="Действия" onclick="event.stopPropagation();toggleRowMenu(event,'o:${o.id}')">⋮</span>`}
         ${o.general?'':`<span class="twist" onclick="event.stopPropagation();toggleOrg('${o.id}')" title="Свернуть/развернуть">${expanded?'▾':'▸'}</span>`}
-        ${acts}
       </div>
       ${expanded?`<div class="org-children">${children||'<div style="padding:8px 12px;font-size:12px;color:var(--muted)">Проектов нет — нажмите «+»</div>'}</div>`:''}
     </div>`;
@@ -3055,6 +3084,7 @@ function dailyRollover(){
   }));
 }
 function render(){
+  hideRowMenu();
   dailyRollover();
   renderProjects();
   renderTabs();
@@ -3085,6 +3115,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('#importFile').addEventListener('change',e=>{ if(e.target.files[0])importData(e.target.files[0]); e.target.value=''; });
   $('#searchInput').addEventListener('input',e=>{ search=e.target.value; render(); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeModal(); });
+  document.addEventListener('click',e=>{ if(!e.target.closest('.row-menu,.mini.dots'))hideRowMenu(); });
+  const sb=document.querySelector('.sidebar'); if(sb)sb.addEventListener('scroll',hideRowMenu);
   $('#btnBurger').onclick=()=>document.body.classList.toggle('sb-open');
   document.addEventListener('click',e=>{
     if(!document.body.classList.contains('sb-open'))return;
