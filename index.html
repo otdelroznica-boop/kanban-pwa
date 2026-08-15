@@ -41,14 +41,28 @@ body[data-theme="mac"] .org-head.active,body[data-theme="mac"] .project-item.act
 body[data-theme="mac"] .icon-btn.on{background:#e6f9ee;color:var(--ok)}
 body[data-theme="mac"] .icon-btn.off{background:#ffe9e7;color:var(--danger)}
 body[data-theme="linux"]{
-  --accent:#e95420;--accent-dark:#d04816;--bg:#221f1c;--panel:#2b2724;
-  --text:#f5efe9;--muted:#b8b0a4;--border:#4c453d;
+  --accent:#f56b2e;--accent-dark:#d04816;--bg:#1f1c19;--panel:#2b2724;
+  --text:#f7f2ec;--muted:#c0b8ab;--border:#57504a;
   --danger:#ff8f7d;--ok:#4ed98f;--warn:#ffc46b;
-  --card:#38322c;--chip-bg:#332e29;--block:#302b27;--soft:#2e2a26;--hover:#3a342e;
-  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.4);
+  --card:#403a34;--chip-bg:#37322d;--block:#312c28;--soft:#302b27;--hover:#3d3731;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.45);
   color-scheme:dark;
 }
-body[data-theme="linux"] ::placeholder{color:#8f877b}
+body[data-theme="linux"] ::placeholder{color:#9a9184}
+body[data-theme="linux"] .column{background:rgba(43,39,36,.62);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+body[data-theme="linux"] .card{background:var(--card)!important;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+body[data-theme="linux"] .chip{color:#e8e2da}
+body[data-theme="linux"] .chip.done{background:#2c4637}
+body[data-theme="linux"] .chip.overdue{background:#4a2f2b}
+body[data-theme="linux"] .chip.today{background:#46392a}
+body[data-theme="linux"] .chk{color:#e8e2da}
+body[data-theme="linux"] .field label{color:#e8e2da}
+body[data-theme="linux"] .lrow:hover{border-color:#5d564e}
+body[data-theme="linux"] .cal-item.dl{background:#3d3324;border-color:#57492e}
+body[data-theme="linux"] .cal-item.ev{background:#3c3429;border-color:#5a4d36}
+body[data-theme="linux"] .report-table tr.ctx-head td{background:#3d3327;color:#f0e9e0}
+body[data-theme="linux"] .report-table tr.total td{background:#3a3424}
+body[data-theme="linux"] .btn.danger{background:#4a2f2b}
 body[data-theme="linux"] .org-head.active,body[data-theme="linux"] .project-item.active,body[data-theme="linux"] .all-item.active{background:#4a3327}
 body[data-theme="linux"] .icon-btn.on{background:#2c4637;color:var(--ok)}
 body[data-theme="linux"] .icon-btn.off{background:#4a2f2b;color:var(--danger)}
