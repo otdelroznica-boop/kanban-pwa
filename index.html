@@ -286,17 +286,18 @@ body[data-theme="dark"] .card{background:var(--card)!important}
 .card .card-del:hover{background:#fde8e8;color:var(--danger)}
 .card .card-desc{font-size:12.5px;color:var(--muted);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#3b4252;background:var(--chip-bg);border-radius:6px;padding:2px 7px;max-width:100%}
-.chip svg{color:var(--muted);flex-shrink:0}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#3b4252;background:var(--chip-bg);border:1px solid var(--border);border-radius:7px;padding:2px 8px;max-width:100%}
+.chip svg{color:var(--accent);flex-shrink:0}
 body[data-theme="dark"] .chip{color:#d7dbf0}
-.chip.done{color:var(--ok);background:#e8f7ee}
-body[data-theme="dark"] .chip.done{background:#1c3b2a}
-.chip.overdue{color:var(--danger);background:#fde8e8}
-body[data-theme="dark"] .chip.overdue{background:#3a2226}
-.chip.today{color:var(--warn);background:#fdf1dc}
-body[data-theme="dark"] .chip.today{background:#3a3020}
-.chip.running{color:var(--warn);background:#fdf1dc;animation:pulse 1.6s infinite}
+.chip.done{color:var(--ok);background:#e8f7ee;border-color:#bce7cd}
+body[data-theme="dark"] .chip.done{background:#1c3b2a;border-color:#2e6b46}
+.chip.overdue{color:var(--danger);background:#fde8e8;border-color:#f5b5b5}
+body[data-theme="dark"] .chip.overdue{background:#3a2226;border-color:#7c3a3a}
+.chip.today{color:var(--warn);background:#fdf1dc;border-color:#f3d9a4}
+body[data-theme="dark"] .chip.today{background:#3a3020;border-color:#6b5525}
+.chip.running{color:var(--warn);background:#fdf1dc;border-color:#f3d9a4;animation:pulse 1.6s infinite}
 .chip.proj{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.nb svg{color:var(--muted)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .prog{margin-top:9px;display:flex;align-items:center;gap:8px;background:var(--chip-bg);border-radius:6px;padding:4px 8px}
 .prog-track{flex:1;height:6px;background:var(--soft);border-radius:4px;overflow:hidden}
@@ -304,12 +305,18 @@ body[data-theme="dark"] .chip.today{background:#3a3020}
 .prog-bar.warn{background:var(--warn)}
 .prog-bar.over{background:var(--danger)}
 .prog .pt{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.card-timer{margin-top:9px;display:flex;align-items:center;gap:8px;background:var(--chip-bg);border-radius:7px;padding:6px 8px}
+.card-timer{margin-top:9px;display:flex;align-items:center;gap:8px;background:var(--chip-bg);border:1px solid var(--border);border-radius:7px;padding:6px 8px}
 .card-timer .tt{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;flex:1}
 .card-timer .tt.running{color:var(--warn)}
 .timer-btn{width:28px;height:28px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--border);color:var(--text)}
 .timer-btn.start:hover{background:#e8f7ee;color:var(--ok)}
 .timer-btn.stop:hover{background:#fde8e8;color:var(--danger)}
+.card.running-card{animation:timerpulse 1s ease-in-out infinite;border:1.5px solid rgba(245,158,11,.55)}
+@keyframes timerpulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}50%{box-shadow:0 0 0 6px rgba(245,158,11,.18)}}
+.card.running-card .card-meta,.card.running-card .card-desc,.card.running-card .card-pct,.card.running-card .cli-block,.card.running-card .card-footer,.card.running-card .prog{display:none!important}
+.card.running-card .card-timer{margin-top:4px;padding:10px 12px;background:rgba(245,158,11,.13);border-color:rgba(245,158,11,.4)}
+.card.running-card .tt{font-size:17px;font-weight:800;letter-spacing:.6px;color:var(--warn)}
+.live-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;flex-shrink:0;animation:pulse 1s infinite;box-shadow:0 0 6px rgba(245,158,11,.8)}
 .card-footer{display:flex;align-items:center;margin-top:9px;gap:8px}
 .card-footer .who{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card-footer .due{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
@@ -1825,8 +1832,8 @@ function cardHTML(c,t){
   const who=t.responsible?`<span class="who">${ICON.user} ${esc(t.responsible)}</span>`:'';
   const prFlag=`<span class="chip" style="color:${pr.color};background:${pr.color}1f;border:none" title="Приоритет: ${pr.label}">${ICON.flag} ${pr.label}</span>`;
   const pct=taskPct(t);
-  return `<div class="card ${dragged&&dragged.t.id===t.id?'dragging':''}" draggable="true" data-ctx="${c.key}" data-tid="${t.id}"
-    style="background:${cb};border-left:4px solid ${cc}"
+  return `<div class="card ${dragged&&dragged.t.id===t.id?'dragging':''}${running?' running-card':''}" draggable="true" data-ctx="${c.key}" data-tid="${t.id}"
+    style="background:${cb};border-left:4px solid ${cc}${running?`;animation-delay:${-(Date.now()%1000)/1000}s`:''}"
     onclick="openCardModal('${t.id}','${c.key}')">
     <div class="card-top">
       <div class="card-title">${prFlag} ${esc(t.title)}</div>
@@ -1841,7 +1848,8 @@ function cardHTML(c,t){
     </div>
     ${prog}
     ${running||spent>0||t.estimate?`<div class="card-timer">
-      <span class="tt ${running?'running':''}" id="tt-${t.id}">${running?'Идёт замер: ':'Факт: '}${fmtDur(spent)}</span>
+      ${running?`<span class="live-dot" title="Идёт замер"></span>`:''}
+      <span class="tt ${running?'running':''}" id="tt-${t.id}">${running?'Идёт замер: '+fmtHMS(spent):'Факт: '+fmtDur(spent)}</span>
       <button class="timer-btn ${running?'stop':'start'}" title="${running?'Остановить':'Запустить таймер'}" onclick="event.stopPropagation();toggleTimer('${c.key}','${t.id}')">${running?ICON.pause:ICON.play}</button>
     </div>`:''}
     <div class="card-footer">
@@ -2234,7 +2242,7 @@ function refreshTimerLabels(){
     const card=el.closest('[data-tid]');
     if(!card)return;
     const ref=findTaskRef(tid,card.dataset.ctx);
-    if(ref&&ref.t.timer)el.textContent='Идёт замер: '+fmtDur(totalSpent(ref.t));
+    if(ref&&ref.t.timer)el.textContent='Идёт замер: '+fmtHMS(totalSpent(ref.t));
   });
   const live=$('#tkTimerLive');
   if(live&&currentModal){
