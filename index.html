@@ -111,28 +111,38 @@ body[data-theme="dark"] .org-head.active{background:#2a2f4a}
 .org-head .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
 .org-head .name{flex:1;font-weight:700;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .org-head .count{font-size:12px;color:var(--muted);background:var(--bg);border-radius:10px;padding:1px 8px;flex-shrink:0}
-.org-head .mini-actions{display:none;gap:2px;position:absolute;right:8px;top:6px}
-.org-head:hover .mini-actions{display:flex}
+.org-head .mini-actions{display:flex;gap:2px}
 .org-children{padding:2px 0 6px;border-top:1px dashed var(--border)}
-.project-item{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 26px;cursor:pointer;position:relative}
+.project-item{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 26px;cursor:pointer;position:relative;flex-wrap:wrap}
 .project-item:hover{background:var(--bg)}
 .project-item.active{background:#eef0ff}
 body[data-theme="dark"] .project-item.active{background:#2a2f4a}
 .project-item .rail{position:absolute;left:14px;top:0;bottom:0;width:2px;background:var(--border);border-radius:2px}
 .project-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.project-item .name{flex:1;font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-item .name{flex:1;min-width:0;font-weight:600;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .project-item .count{font-size:12px;color:var(--muted);background:var(--bg);border-radius:10px;padding:1px 8px;flex-shrink:0}
-.project-item .mini-actions{display:none;gap:2px;position:absolute;right:6px}
-.project-item:hover .mini-actions{display:flex}
+.project-item .mini-actions{display:flex;gap:2px}
+.pr-prog{flex:1 0 100%;display:flex;align-items:center;gap:7px;margin-top:5px;padding-left:18px}
+.pr-prog-track{flex:1;height:4px;border-radius:3px;background:var(--bg);overflow:hidden}
+.pr-prog-fill{height:100%;border-radius:3px;background:var(--accent)}
+.pr-prog-num{font-size:11px;color:var(--muted);font-weight:700;flex-shrink:0}
 .all-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;margin-bottom:8px;border:1px solid transparent}
 .all-item:hover{background:var(--bg)}
 .all-item.active{background:#eef0ff;border-color:#d7dbfb}
 body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162}
 .all-item .name{flex:1;font-weight:700;font-size:13.5px}
 .all-item .count{font-size:12px;color:var(--muted);background:var(--bg);border-radius:10px;padding:1px 8px}
-.mini{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
-.mini:hover{background:var(--panel);color:var(--text)}
+.mini{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;opacity:.85}
+.mini:hover{background:var(--panel);color:var(--text);opacity:1}
 .mini.danger:hover{color:var(--danger)}
+.card-pct{display:flex;align-items:center;gap:7px;margin:8px 0 2px}
+.pct-track{flex:1;height:5px;border-radius:3px;background:var(--bg);overflow:hidden}
+.pct-bar{height:100%;border-radius:3px;background:var(--accent)}
+.card-pct.done .pct-bar{background:#22c55e}
+.pct-num{font-size:11px;font-weight:700;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.chip.pct{color:var(--accent);border-color:var(--accent)}
+.ov-chip .ov-mini{display:inline-block;width:34px;height:5px;border-radius:3px;background:var(--bg);overflow:hidden;vertical-align:middle;margin-right:6px;position:relative;top:-1px}
+.ov-chip .ov-mini span{display:block;height:100%;background:var(--accent);border-radius:3px}
 .sidebar-foot{padding:10px 12px;border-top:1px solid var(--border)}
 .sidebar-foot .hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
 
@@ -1126,6 +1136,21 @@ function ctxShort(c){ return c.proj?c.proj.name:c.org.name; }
 function ctxColor(c){ return c.proj?c.proj.color:c.org.color; }
 function ctxOpenCount(c){ return ctxTasks(c).filter(t=>!t.parentId&&t.columnId!==doneColId()).length; }
 function ctxTotalCount(c){ return ctxTasks(c).filter(t=>!t.parentId).length; }
+function taskPct(t){
+  const subs=allTasks().filter(s=>s.parentId===t.id);
+  if(!subs.length)return isDone(t)?100:0;
+  return Math.round(subs.reduce((s,x)=>s+(isDone(x)?100:0),0)/subs.length);
+}
+function ctxPct(c){
+  const tasks=ctxTasks(c).filter(t=>!t.parentId);
+  if(!tasks.length)return null;
+  return Math.round(tasks.reduce((s,t)=>s+taskPct(t),0)/tasks.length);
+}
+function projPct(p){
+  const roots=p.tasks.filter(t=>!t.parentId);
+  if(!roots.length)return null;
+  return Math.round(roots.reduce((s,t)=>s+taskPct(t),0)/roots.length);
+}
 function findTaskRef(tid,key){
   if(!key)return null;
   const c=ctxFromKey(key); if(!c)return null;
@@ -1391,6 +1416,10 @@ function renderProjects(){
     const expanded=state.expandedOrgs.includes(o.id);
     const children=o.projects.map(p=>{
       const pc={org:o,proj:p,key:'p:'+p.id};
+      const pp=projPct(p);
+      const prog=pp===null?'':`<div class="pr-prog" title="Выполнение проекта: ${pp}% (пересчитывается по задачам и подзадачам)">
+        <div class="pr-prog-track"><div class="pr-prog-fill" style="width:${pp}%"></div></div>
+        <span class="pr-prog-num">${pp}%</span></div>`;
       return `<div class="project-item ${view.type==='ctx'&&view.key==='p:'+p.id?'active':''}" onclick="setView('p:${p.id}')">
         <span class="rail"></span><span class="dot" style="background:${p.color}"></span>
         <span class="name">${esc(p.name)}</span>
@@ -1399,7 +1428,8 @@ function renderProjects(){
           <span class="mini" title="Документация проекта" onclick="event.stopPropagation();openDocsFor('p:${p.id}')">${ICON.book}</span>
           <span class="mini" title="Настроить проект" onclick="event.stopPropagation();openProjectModal('${o.id}','${p.id}')">${ICON.settings}</span>
           <span class="mini danger" title="Удалить проект" onclick="event.stopPropagation();deleteProject('${o.id}','${p.id}')">${ICON.trash}</span>
-        </span></div>`;
+        </span>
+        ${prog}</div>`;
     }).join('');
     const acts = o.general ? '' : `<span class="mini-actions">
       <span class="mini" title="Документация компании" onclick="event.stopPropagation();openDocsFor('o:${o.id}')">${ICON.book}</span>
@@ -1639,10 +1669,14 @@ function renderToolbar(){
     const spent=vcs.reduce((s,x)=>s+ctxTasks(x).reduce((a,t)=>a+totalSpent(t),0),0);
     const total=vcs.reduce((s,x)=>s+ctxTotalCount(x),0);
     const open=vcs.reduce((s,x)=>s+ctxOpenCount(x),0);
+    const pctAll=vcs.map(ctxPct).filter(x=>x!==null);
+    const pct=pctAll.length?Math.round(pctAll.reduce((s,x)=>s+x,0)/pctAll.length):null;
     html+=`<div><div class="board-title" style="display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:4px;background:${ctxColor(c)}"></span>${esc(ctxLabel(c))}</div>
-      <div class="board-sub">${c.proj?`Проект компании «${esc(c.org.name)}» · `:'Компания (с проектами) · '}Задач: ${total} · Открыто: ${open} · Затрачено: ${fmtDur(spent)}</div></div>`;
+      <div class="board-sub">${c.proj?`Проект компании «${esc(c.org.name)}» · `:'Компания (с проектами) · '}Задач: ${total} · Открыто: ${open} · Затрачено: ${fmtDur(spent)}${pct===null?'':` · Выполнение: <b>${pct}%</b>`}</div></div>`;
   } else {
-    html+=`<div><div class="board-title">Все задачи</div><div class="board-sub">${state.orgs.length} компаний · ${contexts().length} разделов · открыто: ${countAllOpen()}</div></div>`;
+    const allPcts=contexts().map(ctxPct).filter(x=>x!==null);
+    const allPct=allPcts.length?Math.round(allPcts.reduce((s,x)=>s+x,0)/allPcts.length):null;
+    html+=`<div><div class="board-title">Все задачи</div><div class="board-sub">${state.orgs.length} компаний · ${contexts().length} разделов · открыто: ${countAllOpen()}${allPct===null?'':` · Выполнение: <b>${allPct}%</b>`}</div></div>`;
   }
   html+='<div class="spacer"></div>';
   const respList=[...new Set(allTasks().map(t=>t.responsible).filter(Boolean))];
@@ -1759,6 +1793,7 @@ function cardHTML(c,t){
   }
   const who=t.responsible?`<span class="who">${ICON.user} ${esc(t.responsible)}</span>`:'';
   const prFlag=`<span class="chip" style="color:${pr.color};background:${pr.color}1f;border:none" title="Приоритет: ${pr.label}">${ICON.flag} ${pr.label}</span>`;
+  const pct=taskPct(t);
   return `<div class="card ${dragged&&dragged.t.id===t.id?'dragging':''}" draggable="true" data-ctx="${c.key}" data-tid="${t.id}"
     style="background:${cb};border-left:4px solid ${cc}"
     onclick="openCardModal('${t.id}','${c.key}')">
@@ -1769,6 +1804,10 @@ function cardHTML(c,t){
     ${t.desc?`<div class="card-desc">${esc(t.desc)}</div>`:''}
     ${cli}${subRows}
     <div class="card-meta">${chips.join('')}</div>
+    <div class="card-pct ${pct===100?'done':''}" title="Выполнение: ${pct}% — пересчитывается по подзадачам">
+      <div class="pct-track"><div class="pct-bar" style="width:${pct}%"></div></div>
+      <span class="pct-num">${pct}%</span>
+    </div>
     ${prog}
     ${running||spent>0||t.estimate?`<div class="card-timer">
       <span class="tt ${running?'running':''}" id="tt-${t.id}">${running?'Идёт замер: ':'Факт: '}${fmtDur(spent)}</span>
@@ -1788,6 +1827,7 @@ function listRowHTML(c,t){
   const pr=PRIO[t.priority||'med'];
   const subs=subsOf(c,t);
   const cl=(t.checklist||[]).filter(i=>i.done).length;
+  const pct=taskPct(t);
   const chips=[];
   if(t.type==='event')chips.push(`<span class="chip evt">${ICON.calendar} Событие</span>`);
   if(t.repeat==='daily')chips.push(`<span class="chip rep">${ICON.clock} Ежедневно ${t.repeatTime||'09:00'}</span>`);
@@ -1797,6 +1837,7 @@ function listRowHTML(c,t){
   if(spent>0)chips.push(`<span class="chip ${t.timer?'running':''}">${ICON.clock} Факт: ${fmtDur(spent)}</span>`);
   if(cl>0)chips.push(`<span class="chip">${ICON.check} ${cl}/${(t.checklist||[]).length}</span>`);
   if(subs.length)chips.push(`<span class="chip">${ICON.list} ${subs.length}</span>`);
+  chips.push(`<span class="chip pct" title="Выполнение: ${pct}% — пересчитывается по подзадачам">${pct}%</span>`);
   return `<div class="lrow ${done?'l-done':''}" data-ctx="${c.key}" data-tid="${t.id}" onclick="openCardModal('${t.id}','${c.key}')">
     <span class="l-dot" style="background:${cc}"></span>
     <span class="l-flag" style="color:${pr.color}">${ICON.flag}</span>
@@ -2587,7 +2628,8 @@ function buildReport(){
   contexts().forEach(c=>{
     const gr=grouped.get(c.key); if(!gr)return;
     const sub=gr.reduce((s,r)=>s+r.spent,0);
-    html+=`<tr class="ctx-head"><td colspan="7">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}</span></td></tr>`;
+    const pct=ctxPct(c);
+    html+=`<tr class="ctx-head"><td colspan="7">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}${pct===null?'':` · Выполнение: ${pct}%`}</span></td></tr>`;
     gr.forEach(r=>{
       const pr=PRIO[r.t.priority||'med'];
       html+=`<tr>
@@ -2753,6 +2795,7 @@ function docOverviewHtml(c){
   const overdue=open.filter(t=>t.deadline&&t.deadline<todayISO());
   const done=tasks.filter(t=>t.columnId===doneColId()).length;
   const spent=tasks.reduce((s,t)=>s+totalSpent(t),0);
+  const pct=ctxPct(c);
   const cols=state.columns.map(col=>{
     const n=open.filter(t=>t.columnId===col.id).length;
     return `<span class="ov-chip" style="--dc:${colColor(col.id)}">${esc(col.name)}: <b>${n}</b></span>`;
@@ -2765,6 +2808,7 @@ function docOverviewHtml(c){
       <span class="ov-chip ${overdue.length?'ov-bad':''}">Просрочено: <b>${overdue.length}</b></span>
       <span class="ov-chip ov-ok">Готово: <b>${done}</b></span>
       <span class="ov-chip">Затрачено: <b>${fmtDur(spent)}</b></span>
+      <span class="ov-chip" title="Пересчитывается по задачам и подзадачам"><span class="ov-mini"><span style="width:${pct===null?0:pct}%"></span></span>Выполнение: <b>${pct===null?'—':pct+'%'}</b></span>
       ${cols}
     </div>
     <div class="doc-overview-acts"><button class="btn ghost" onclick="openDocsBoard()">Открыть доску</button></div>
