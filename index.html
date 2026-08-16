@@ -158,6 +158,8 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .main-area{flex:1;min-width:0;display:flex;flex-direction:column}
 .tab-page{display:none;flex:1;min-height:0}
 .tab-page.active{display:flex;flex-direction:column}
+#tabPersonal{overflow:auto}
+#tabBrain{overflow:auto}
 #tabBoard{overflow:auto;padding:16px}
 #tabToday{overflow:auto;padding:18px 22px}
 #tabCalendar{overflow:auto;padding:18px 22px}
@@ -657,6 +659,7 @@ body[data-theme="dark"] .med-item{background:#1a1e33}
 .med-item.off{opacity:.55}
 .med-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .med-dose{font-weight:500;color:var(--muted);font-size:12px}
+.med-note{flex-basis:100%;font-size:12px;color:var(--muted);line-height:1.45}
 .med-times{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:200px}
 .med-time{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;background:#fff;border:1px solid var(--border);border-radius:7px;padding:3px 8px}
 body[data-theme="dark"] .med-time{background:#232944}
@@ -755,25 +758,24 @@ body[data-theme="dark"] .bg-card{background:#1a1e33}
 .brain-stats b{color:var(--text)}
 .bg-big{font-size:44px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
 .bg-example{font-size:30px;font-weight:700;text-align:center;margin:14px 0;font-variant-numeric:tabular-nums}
-.bg-pad{background:#0f9d63;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;height:120px;cursor:pointer;text-align:center;padding:10px;transition:background .2s}
-.bg-pad.waiting{background:#64748b;cursor:default}
-.bg-pad.go{background:#ef4444;cursor:pointer}
-.bg-pad.nope{background:#94a3b8}
-.bg-mem-nums{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:30px;font-weight:800;letter-spacing:2px;margin:16px 0;font-variant-numeric:tabular-nums}
 .duck-hud{display:flex;gap:16px;justify-content:center;font-size:14px;margin-bottom:8px}
-.sol-top{display:flex;gap:10px;align-items:flex-start;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
-.sol-card{width:64px;height:88px;border-radius:8px;background:#fff;border:1px solid #cbd5e1;box-shadow:0 1px 2px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;position:relative;cursor:pointer;user-select:none;color:#0f172a;font-size:15px;line-height:1.2}
-.sol-card.red{color:#dc2626}
-.sol-card.down{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:#1e3a8a;color:#fff}
-.sol-back{font-size:20px}
-.sol-card.sel{outline:3px solid var(--accent);outline-offset:-2px}
-.sol-stock,.sol-base{width:64px;height:88px}
-.sol-base{display:flex;align-items:center;justify-content:center}
-.sol-base-sym{font-size:26px;color:var(--muted)}
-.sol-cols{display:flex;gap:10px;justify-content:center;overflow-x:auto;padding-bottom:6px}
-.sol-col{width:64px;min-height:88px;position:relative;display:flex;flex-direction:column;align-items:center}
-.sol-col .sol-empty{position:absolute;inset:0;border:1.5px dashed var(--border);border-radius:8px}
-.sol-wrap{width:64px;height:88px;position:relative}
+.sol-board{background:linear-gradient(180deg,#0b7a5c,#096b50);border-radius:10px;padding:12px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12),0 2px 8px rgba(0,0,0,.2)}
+.sol-top{display:flex;gap:10px;align-items:flex-start;justify-content:flex-start;margin-bottom:12px;min-height:96px}
+.win-card{width:64px;height:88px;border-radius:6px;background:#fff;border:1px solid #b6b6b6;box-shadow:0 1px 3px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;position:relative;cursor:pointer;user-select:none;color:#1a1a1a;font-size:15px;line-height:1.2}
+.win-card.red{color:#c70000}
+.win-card.up{cursor:grab}
+.win-card.up:active{cursor:grabbing}
+.win-card.down{background:repeating-linear-gradient(45deg,#1e4fd8 0 6px,#1a43b8 6px 12px);border-color:#12308a;color:#dbe6ff}
+.win-back{font-size:20px}
+.win-card.sel{outline:3px solid #f5c542;outline-offset:-2px}
+.sol-stock,.sol-waste,.sol-base{width:64px;height:88px}
+.sol-waste,.sol-base{display:flex;align-items:center;justify-content:center;position:relative}
+.sol-base-sym{font-size:26px;color:rgba(255,255,255,.75);font-weight:700}
+.sol-stock{position:relative}
+.sol-slot{position:absolute;left:0;width:64px;height:88px;border:1.5px dashed rgba(255,255,255,.55);border-radius:6px;box-sizing:border-box}
+.sol-cols{display:flex;gap:10px;justify-content:flex-start;overflow:visible;padding-bottom:6px;min-height:112px}
+.sol-col{width:64px;position:relative}
+.sol-wrap{width:64px;height:88px;position:absolute;left:0}
 </style>
 </head>
 <body>
@@ -1192,6 +1194,7 @@ function normalize(s){
     if(typeof m.id!=='string'||!m.id) m.id=uid();
     if(typeof m.name!=='string'||!m.name) m.name='Препарат';
     if(typeof m.dose!=='string') m.dose='';
+    if(typeof m.note!=='string') m.note='';
     if(!Array.isArray(m.times)) m.times=[];
     if(!m.taken||typeof m.taken!=='object') m.taken={};
     if(typeof m.active!=='boolean') m.active=true;
@@ -3768,14 +3771,57 @@ function waterSetWeight(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=20&&n<=25
 function waterSetAge(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=10&&n<=110){ state.water.age=n; if(state.water.auto){ const g=waterCalcGoal(); if(g)state.water.goal=g; } save(); renderPersonal(); } }
 
 /* ---- препараты ---- */
+const MEDS_LIB=[
+  {n:'Витамин D3',d:'500–2000 МЕ',t:'08:00',desc:'Поддержка иммунитета, костей и настроения. Жирорастворимый — лучше принимать с едой, содержащей жир.'},
+  {n:'Омега-3 (рыбий жир)',d:'1–2 капсулы',t:'09:00',desc:'Сердце, сосуды, мозг и суставы. Принимайте во время еды.'},
+  {n:'Магний (B6)',d:'1 таблетка',t:'21:00',desc:'Нервы, сон, снятие усталости и мышечных спазмов. Вечером — помогает расслабиться и заснуть.'},
+  {n:'Железо',d:'1 таблетка',t:'08:00',desc:'Кровь, энергия, профилактика анемии. Лучше натощак с витамином C, не вместе с кальцием, чаем и кофе.'},
+  {n:'Витамин C',d:'500–1000 мг',t:'09:00',desc:'Иммунитет, кожа, усвоение железа. Утром — для бодрости.'},
+  {n:'Витамины группы B',d:'1 таблетка',t:'09:00',desc:'Энергия, нервная система, обмен веществ. Утром — чтобы не мешать сну.'},
+  {n:'Цинк',d:'15–25 мг',t:'19:00',desc:'Иммунитет, кожа, гормональный фон. Вечером усваивается лучше, но не натощак.'},
+  {n:'Кальций + D3',d:'1 таблетка',t:'12:00',desc:'Кости и зубы. Принимайте отдельно от железа, лучше днём.'},
+  {n:'Пробиотики',d:'1 капсула',t:'08:00',desc:'Здоровье кишечника и пищеварения. Натощак или перед едой.'},
+  {n:'Коллаген',d:'5–10 г',t:'08:00',desc:'Кожа, суставы, связки. Натощак или просто с водой.'},
+  {n:'L-карнитин',d:'500–1000 мг',t:'08:00',desc:'Энергия и жировой обмен. За 30 минут до тренировки или утром.'},
+  {n:'Мультивитамины',d:'1 таблетка',t:'09:00',desc:'Общий баланс витаминов и минералов. Утром после завтрака.'}
+];
+const MED_TIMES_LIB=['08:00','09:00','12:00','15:00','18:00','20:00','21:00','22:00','08:00, 20:00','09:00, 21:00','07:00, 13:00, 19:00','09:00, 15:00, 21:00'];
+function medLibApply(idx){
+  const it=MEDS_LIB[idx];
+  if(!it)return;
+  const n=$('#medName'); if(n)n.value=it.n;
+  const d=$('#medDose'); if(d)d.value=it.d;
+  const t=$('#medTimes'); if(t)t.value=it.t;
+  const nt=$('#medNote'); if(nt)nt.value=it.desc;
+  const de=$('#medLibDesc'); if(de)de.textContent=it.desc;
+}
+function medTimeApply(idx){
+  const v=MED_TIMES_LIB[idx];
+  if(!v)return;
+  const t=$('#medTimes'); if(t)t.value=v;
+}
 function openMedModal(mid){
   const m=mid?state.meds.find(x=>x.id===mid):null;
   openModal(`
     <div class="modal-head"><h3>${m?'Препарат':'Новый препарат'}</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
     <div class="modal-body">
+      <div class="field"><label>Из справочника (необязательно)</label>
+        <select id="medLib" onchange="medLibApply(this.value)">
+          <option value="">Свой препарат…</option>
+          ${MEDS_LIB.map((x,i)=>`<option value="${i}">${esc(x.n)}</option>`).join('')}
+        </select>
+        <div id="medLibDesc" class="field-hint" style="margin-top:6px;min-height:16px">${m&&m.note?esc(m.note):'Выберите препарат — подставится дозировка, время и описание.'}</div>
+      </div>
       <div class="field"><label>Название</label><input id="medName" maxlength="80" value="${m?esc(m.name):''}" placeholder="Например: Витамин D3"></div>
       <div class="field"><label>Дозировка</label><input id="medDose" maxlength="40" value="${m?esc(m.dose):''}" placeholder="Например: 500 мг, 1 таблетка"></div>
-      <div class="field"><label>Время приёма, чч:мм (через запятую)</label><input id="medTimes" maxlength="80" value="${m?m.times.join(', '):'09:00'}" placeholder="08:00, 20:00"></div>
+      <div class="field"><label>Время приёма, чч:мм (через запятую)</label>
+        <input id="medTimes" maxlength="80" value="${m?m.times.join(', '):'09:00'}" placeholder="08:00, 20:00">
+        <select id="medTimeLib" style="margin-top:6px" onchange="medTimeApply(this.value)">
+          <option value="">Варианты времени…</option>
+          ${MED_TIMES_LIB.map((x,i)=>`<option value="${i}">${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Заметка — на что влияет, когда лучше</label><textarea id="medNote" maxlength="300" placeholder="Например: утром до еды, влияет на…">${m?esc(m.note||''):''}</textarea></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="saveMed('${mid||''}')">Сохранить</button></div>`,
     modal=>{ const i=modal.querySelector('#medName'); if(i)i.focus(); });
@@ -3786,11 +3832,12 @@ function saveMed(mid){
   const times=$('#medTimes').value.split(/[,;]+/).map(s=>s.trim()).filter(s=>/^\d{1,2}:\d{2}$/.test(s));
   if(!times.length){ toast('Укажите время в формате чч:мм','error'); return; }
   const dose=$('#medDose').value.trim();
+  const note=$('#medNote').value.trim();
   if(mid){
     const m=state.meds.find(x=>x.id===mid);
-    if(m){ m.name=name; m.dose=dose; m.times=times; }
+    if(m){ m.name=name; m.dose=dose; m.times=times; m.note=note; }
   } else {
-    state.meds.push({id:uid(),name,dose,times,taken:{},active:true});
+    state.meds.push({id:uid(),name,dose,times,note,taken:{},active:true});
   }
   save(); closeModal(); renderPersonal();
   toast('«'+name+'» сохранён','ok');
@@ -3864,6 +3911,7 @@ function medHTML(m){
         <span class="mini" title="Удалить" onclick="deleteMed('${m.id}')">${ICON.trash}</span>
       </span>
     </div>
+    ${m.note?`<div class="med-note">${esc(m.note)}</div>`:''}
     <div class="med-times">${rows.join('')}</div>
   </div>`;
 }
@@ -4228,7 +4276,6 @@ function renderBrain(){
     <div class="bg-grid">
       <div class="bg-card"><h4>${ICON.brain} Математика</h4><p>Решите как можно больше примеров за 30 секунд.</p><div class="bg-score">Рекорд: <b>${s.math.best}</b> · последний: ${s.math.last}</div><button class="btn primary" onclick="brainMath()">Играть</button></div>
       <div class="bg-card"><h4>${ICON.brain} Память</h4><p>Запомните ряд чисел — с каждым раундом длиннее.</p><div class="bg-score">Рекорд: <b>${s.mem.best}</b> чисел · последний: ${s.mem.last}</div><button class="btn primary" onclick="brainMem()">Играть</button></div>
-      <div class="bg-card"><h4>${ICON.brain} Реакция</h4><p>Нажмите, как только поле станет красным. 5 раундов.</p><div class="bg-score">Рекорд: <b>${s.react.best}</b> мс · последний: ${s.react.last}</div><button class="btn primary" onclick="brainReact()">Играть</button></div>
       <div class="bg-card"><h4>${ICON.brain} Охотник на уток</h4><p>Стреляйте по уткам за 60 секунд — уровень растёт.</p><div class="bg-score">Рекорд: <b>${s.duck.best}</b> · последний: ${s.duck.last}</div><button class="btn primary" onclick="brainDuck()">Играть</button></div>
       <div class="bg-card"><h4>${ICON.brain} Тетрис</h4><p>Классика: собирайте линии, не дайте стакану заполниться.</p><div class="bg-score">Рекорд: <b>${s.tetris.best}</b> · последний: ${s.tetris.last}</div><button class="btn primary" onclick="brainTetris()">Играть</button></div>
       <div class="bg-card"><h4>${ICON.brain} Косынка</h4><p>Пасьянс: разложите карты по мастям от туза.</p><div class="bg-score">Побед: <b>${s.solitaire.wins}</b> · лучший: ${s.solitaire.best?s.solitaire.best+' мин':'—'}</div><button class="btn primary" onclick="brainSolitaire()">Играть</button></div>
@@ -4379,67 +4426,6 @@ function brainMem(){
       });
     });
 }
-function brainReact(){
-  let ready=false,t0=0,round=0,total=5,times=[],tooEarly=false;
-  openModal(`
-    <div class="modal-head"><h3>${ICON.brain} Реакция — 5 раундов</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
-    <div class="modal-body" style="text-align:center">
-      <div class="bg-pad waiting" id="bgPad">Ждите зелёного…</div>
-      <div id="bgRound" style="font-size:13px;color:var(--muted);margin-top:8px">Раунд 1 из 5</div>
-      <div id="bgRes" style="font-size:15px;margin-top:6px"></div>
-    </div>
-    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
-    modal=>{
-      const pad=modal.querySelector('#bgPad');
-      const roundEl=modal.querySelector('#bgRound');
-      const resEl=modal.querySelector('#bgRes');
-      let delay=null;
-      const arm=()=>{
-        clearTimeout(delay);
-        delay=setTimeout(()=>{
-          ready=true; t0=Date.now();
-          pad.className='bg-pad go';
-          pad.textContent='ЖМИ!';
-        },1200+Math.random()*2800);
-        brainTimers.push(delay);
-      };
-      const finish=()=>{
-        ready=false;
-        const best=Math.min(...times);
-        const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
-        brainSaveScore('react',best);
-        resEl.textContent='Итог: лучший '+best+' мс · средний '+avg+' мс · рекорд: '+state.brain.scores.react.best+' мс';
-        roundEl.textContent='Готово — 5 раундов';
-        pad.className='bg-pad waiting';
-        pad.textContent='Готово';
-        toast('Реакция: лучший '+best+' мс — рекорд '+state.brain.scores.react.best+' мс');
-        const st=state.sensei;
-        if(st.enabled)senseiSay(best<250?'Молниеносно!':'Неплохо. Внимание — навык, который можно натренировать.',st.kind?'kind':'calm',true);
-      };
-      pad.onclick=()=>{
-        if(ready){
-          ready=false;
-          const ms=Date.now()-t0;
-          times.push(ms);
-          round++;
-          resEl.textContent='Раунд '+round+': '+ms+' мс';
-          pad.className='bg-pad waiting';
-          pad.textContent='Ждите зелёного…';
-          if(round>=total){ finish(); return; }
-          roundEl.textContent='Раунд '+(round+1)+' из '+total;
-          brainTimers.push(setTimeout(()=>{ if(round<total)arm(); },1200));
-        } else if(!tooEarly){
-          tooEarly=true;
-          clearTimeout(delay);
-          pad.className='bg-pad nope';
-          pad.textContent='Слишком рано';
-          resEl.textContent='Слишком рано — раунд повторится';
-          brainTimers.push(setTimeout(()=>{ tooEarly=false; pad.className='bg-pad waiting'; pad.textContent='Ждите зелёного…'; arm(); },800));
-        }
-      };
-      arm();
-    });
-}
 /* ---- Охотник на уток ---- */
 function ac(){ try{ audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); }catch(e){ return null; } return audioCtx; }
 function playShot(){
@@ -4564,11 +4550,12 @@ function brainDuck(){
 let tetGame=null;
 window.addEventListener('keydown',e=>{
   if(!tetGame||!tetGame.move)return;
+  if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(e.key))e.preventDefault();
   if(e.key==='ArrowLeft')tetGame.move(-1);
   else if(e.key==='ArrowRight')tetGame.move(1);
-  else if(e.key==='ArrowDown')tetGame.plus();
+  else if(e.key==='ArrowDown')tetGame.drop();
   else if(e.key==='ArrowUp')tetGame.rotate();
-  else if(e.key===' '){ e.preventDefault(); tetGame.hardDrop(); }
+  else if(e.key===' ')tetGame.hardDrop();
   tetGame.draw();
 });
 const TET_SHAPES=[
@@ -4666,7 +4653,7 @@ function brainTetris(){
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
     modal=>{
-      tetGame={move,rotate,drop,hardDrop,draw,plus(){ score+=1; const s=$('#tetScore'); if(s)s.textContent=score; }};
+      tetGame={move,rotate,drop,hardDrop,draw};
       spawnShape();
       draw();
       drawNext();
@@ -4679,7 +4666,7 @@ function tetRot(){ if(tetGame&&tetGame.rotate){ tetGame.rotate(); tetGame.draw()
 function tetDrop(){ if(tetGame&&tetGame.drop){ tetGame.drop(); tetGame.draw(); } }
 function tetHard(){ if(tetGame&&tetGame.hardDrop){ tetGame.hardDrop(); tetGame.draw(); } }
 /* ---- Пасьянс «Косынка» ---- */
-let solGame=null;
+let solGame=null,solDrag=null;
 function brainSolitaire(){
   const SU=['♠','♥','♦','♣'], RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   const isRed=s=>s==='♥'||s==='♦';
@@ -4701,19 +4688,31 @@ function brainSolitaire(){
     return rv(card.r)===rv(below.r)-1&&(isRed(card.s)!==isRed(below.s));
   };
   const canBase=card=>{ const b=baseOf(card.s); return b.cards.length===0?card.r==='A':rv(card.r)===rv(b.cards[b.cards.length-1].r)+1; };
-  const cardHTML=(c,extra)=>{ const r=isRed(c.s); return `<div class="sol-card ${c.up?'up':'down'}${r?' red':''}${extra?' '+extra:''}"><b class="sol-r">${c.r}</b><span class="sol-s">${c.s}</span></div>`; };
+  const cHTML=(c,extra,dragSrc,dragI,dragJ)=>`<div class="win-card ${c.up?'up':'down'}${isRed(c.s)?' red':''}${extra?' '+extra:''}"${c.up&&dragSrc?` draggable="true" ondragstart="solDragStart(event,'${dragSrc}',${dragI},${dragJ})"`:''}><b class="win-r">${c.r}</b><span class="win-s">${c.s}</span></div>`;
   const render=()=>{
     const body=$('#solBody'); if(!body){ solGame=null; return; }
     const sv=stockView();
-    let html=`<div class="sol-top">
-      <div class="sol-stock" title="Клик: взять 3 карты" onclick="solAct('stock')">${stock.length?'<div class="sol-card down"><span class="sol-back">❖</span></div>':'<div class="sol-empty"></div>'}</div>
-      ${sv.map((c,k)=>`<div onclick="solAct('waste',${k})" ondblclick="solAct('waste',${k},true)">${cardHTML(c,sel&&sel.w===k?'sel':'')}</div>`).join('')}
-      ${bases.map((b,i)=>`<div class="sol-base" onclick="solAct('base',${i})">${b.cards.length?cardHTML(b.cards[b.cards.length-1]):`<span class="sol-base-sym">${b.s}</span>`}</div>`).join('')}
-    </div>
-    <div class="sol-cols">
-      ${cols.map((col,i)=>`<div class="sol-col"><div class="sol-empty" onclick="solAct('col',${i},${col.length})"></div>${col.map((c,j)=>`<div class="sol-wrap" style="margin-top:${j?((c.up?-26:-16)+'px'):'0'}" onclick="solAct('col',${i},${j})" ondblclick="solAct('col',${i},${j},true)">${cardHTML(c,sel&&sel.i===i&&sel.j===j?'sel':'')}</div>`).join('')}</div>`).join('')}
-    </div>
-    <div id="solRes" style="font-size:14px;margin-top:8px;text-align:center"></div>`;
+    const wasteCells=sv.map((c,k)=>`<div class="sol-waste" ondragover="event.preventDefault()" ondrop="solDrop(event,'waste',${k},0)" onclick="solClick('waste',${k},0)" ondblclick="solDbl('waste',${k},0)">${cHTML(c,sel&&sel.src==='waste'&&sel.i===k?'sel':'','waste',k,0)}</div>`).join('')||`<div class="sol-waste"></div>`;
+    const baseCells=bases.map((b,i)=>`<div class="sol-base" ondragover="event.preventDefault()" ondrop="solDrop(event,'base',${i},0)" onclick="solClick('base',${i},0)">${b.cards.length?cHTML(b.cards[b.cards.length-1]):`<span class="sol-base-sym">${b.s}</span>`}</div>`).join('');
+    const colCells=cols.map((col,i)=>{
+      const top=col.length*24;
+      return `<div class="sol-col" style="height:${top+104}px" ondragover="event.preventDefault()" ondrop="solDrop(event,'col',${i},${col.length})">
+        <div class="sol-slot" style="top:${top}px" onclick="solClick('col',${i},${col.length})"></div>
+        ${col.map((c,j)=>{
+          const isSel=sel&&sel.src==='col'&&sel.i===i&&sel.j===j;
+          return `<div class="sol-wrap" style="top:${j*24}px" ondragover="event.preventDefault()" ondrop="solDrop(event,'col',${i},${j})" onclick="solClick('col',${i},${j})" ondblclick="solDbl('col',${i},${j})">${cHTML(c,isSel?'sel':'','col',i,j)}</div>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+    let html=`<div class="sol-board">
+      <div class="sol-top">
+        <div class="sol-stock" title="Клик: взять 3 карты" onclick="solClick('stock',0,0)">${stock.length?'<div class="win-card down"><span class="win-back">❖</span></div>':'<div class="sol-slot"></div>'}</div>
+        ${wasteCells}
+        ${baseCells}
+      </div>
+      <div class="sol-cols">${colCells}</div>
+      <div id="solRes" style="font-size:14px;margin-top:8px;text-align:center"></div>
+    </div>`;
     body.innerHTML=html;
     const r=$('#solStat'); if(r)r.textContent='Победы: '+state.brain.scores.solitaire.wins+' · лучший результат: '+(state.brain.scores.solitaire.best?state.brain.scores.solitaire.best+' мин':'—');
   };
@@ -4723,11 +4722,6 @@ function brainSolitaire(){
       if(!(rv(cols[i][k+1].r)===rv(cols[i][k].r)-1&&isRed(cols[i][k+1].s)!==isRed(cols[i][k].s)))return false;
     }
     return true;
-  };
-  const tryBase=i=>{
-    const c=cols[i][cols[i].length-1];
-    if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(cols[i].pop()); return true; }
-    return false;
   };
   const checkWin=()=>{
     if(bases.every(b=>b.cards.length===13)){
@@ -4744,65 +4738,104 @@ function brainSolitaire(){
       if(st.enabled)senseiSay('Косынка собрана! Терпение и логика — твои союзники.',st.kind?'kind':'calm',true);
     }
   };
-  solGame={};
-  window.solAct=(type,i,j,dbl)=>{
-    if(!solGame)return;
-    if(type==='new'){ build(); render(); return; }
-    if(type==='stock'){ sIdx=(sIdx+3)%stock.length; render(); return; }
-    if(type==='waste'){
-      const sv=stockView(); const k=i; const c=sv[k];
+  const putBase=card=>{ if(canBase(card)){ baseOf(card.s).cards.push(card); return true; } return false; };
+  const putCard=(card,colIdx,pos)=>{
+    const col=cols[colIdx];
+    if(pos===0&&!col.length){ if(card.r==='K'){ col.unshift(card); return true; } return false; }
+    if(pos===col.length&&col.length){ if(canCol(card,col[col.length-1])){ col.push(card); return true; } return false; }
+    if(col[pos]&&canCol(card,col[pos])){ col.splice(pos,0,card); return true; }
+    return false;
+  };
+  const dropChain=(i,j,dstI,colIdx,pos)=>{
+    const src=cols[i];
+    if(!chainOk(i,j))return false;
+    const first=src[j];
+    const chain=src.splice(j);
+    if(dstI==='base'){
+      if(chain.length===1&&canBase(first)){ baseOf(first.s).cards.push(first); return true; }
+      src.splice(j,0,...chain); return false;
+    }
+    const col=cols[colIdx];
+    let ok=false;
+    if(pos===col.length){
+      if(!col.length&&first.r==='K')ok=true;
+      else if(col.length&&canCol(first,col[col.length-1]))ok=true;
+    } else if(col[pos]&&canCol(first,col[pos]))ok=true;
+    if(ok){ col.splice(pos,0,...chain); return true; }
+    src.splice(j,0,...chain);
+    return false;
+  };
+  window.solDragStart=(e,src,i,j)=>{ solDrag={src,i,j}; e.dataTransfer.setData('text/plain',''); };
+  window.solDrop=(e,dstI,dstJ,dstK)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const d=solDrag; solDrag=null;
+    if(!d)return;
+    sel=null;
+    if(d.src==='col'){
+      if(dstI==='col'&&d.i===dstJ)return;
+      dropChain(d.i,d.j,dstI,dstI==='col'?dstJ:0,dstI==='col'?dstK:dstJ);
+    } else if(d.src==='waste'){
+      const sv=stockView(); const c=sv[d.i];
       if(!c)return;
-      if(dbl){ if(canBase(c)){ baseOf(c.s).cards.push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); checkWin(); } return; }
+      const real=stock.splice((sIdx+d.i)%stock.length,1)[0];
+      const ok=dstI==='base'?putBase(real):putCard(real,dstJ,dstK);
+      if(!ok)stock.splice((sIdx+d.i)%stock.length,0,real);
+    }
+    render(); checkWin();
+  };
+  window.solClick=(src,i,j)=>{
+    if(src==='new'){ build(); render(); return; }
+    if(src==='stock'){ if(stock.length)sIdx=(sIdx+3)%stock.length; render(); return; }
+    if(src==='base'){ if(sel){ sel=null; render(); } return; }
+    if(src==='waste'){
+      const sv=stockView();
+      if(!sv[i])return;
       if(sel){ sel=null; render(); return; }
-      for(let ci=0;ci<7;ci++){
-        const top=cols[ci][cols[ci].length-1];
-        if(!top&&c.r==='K'){ cols[ci].push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); return; }
-        if(top&&canCol(c,top)){ cols[ci].push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); return; }
-      }
-      if(canBase(c)){ baseOf(c.s).cards.push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); checkWin(); }
+      sel={src,i,j};
+      render();
       return;
     }
-    if(type==='base'){ if(sel)sel=null; render(); return; }
-    if(type==='col'){
+    if(src==='col'){
       const col=cols[i];
-      if(dbl){
-        const c=col[j];
-        if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(col.splice(j,1)[0]); sel=null; render(); checkWin(); }
-        else if(j===col.length&&tryBase(i)){ sel=null; render(); checkWin(); }
-        return;
-      }
+      const c=col[j];
       if(sel){
-        if(sel.w!=null){
-          const c=stockView()[sel.w];
-          if(c&&j===col.length&&c.r==='K'&&!col.length){ col.push(stock.splice((sIdx+sel.w)%stock.length,1)[0]); sel=null; render(); }
-          else if(c&&col[j]&&canCol(c,col[j])){ const t=stock.splice((sIdx+sel.w)%stock.length,1)[0]; col.splice(j,0,t); sel=null; render(); }
-          else { sel=null; render(); }
-        } else if(sel.i!=null){
-          if(sel.i===i){ sel={i,j}; render(); return; }
-          const src=cols[sel.i];
-          if(chainOk(sel.i,sel.j)){
-            const first=src[sel.j];
-            if(!first)return;
-            if(j===col.length&&first.r==='K'&&!col.length){
-              col.push(...src.splice(sel.j)); sel=null; render();
-            } else if(col[j]&&canCol(first,col[j])){
-              col.splice(j,0,...src.splice(sel.j)); sel=null; render();
-            } else { sel={i,j}; render(); }
-          }
+        if(sel.src==='col'){
+          if(sel.i===i){ sel={src:'col',i,j}; render(); return; }
+          dropChain(sel.i,sel.j,'col',i,j);
+          sel=null; render(); checkWin(); return;
         }
-        return;
+        if(sel.src==='waste'){
+          const sv=stockView(); const wc=sv[sel.i];
+          if(!wc){ sel=null; render(); return; }
+          const real=stock.splice((sIdx+sel.i)%stock.length,1)[0];
+          if(!putCard(real,i,j))stock.splice((sIdx+sel.i)%stock.length,0,real);
+          sel=null; render(); checkWin(); return;
+        }
+        sel=null; render(); return;
       }
-      if(col[j]&&col[j].up){ sel={i,j}; render(); }
+      if(c&&c.up){ sel={src:'col',i,j}; render(); }
       return;
+    }
+  };
+  window.solDbl=(src,i,j)=>{
+    if(src==='col'){
+      const col=cols[i];
+      const c=col[j];
+      if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(col.splice(j,1)[0]); sel=null; render(); checkWin(); }
+    } else if(src==='waste'){
+      const sv=stockView(); const c=sv[i];
+      if(c&&canBase(c)){ baseOf(c.s).cards.push(stock.splice((sIdx+i)%stock.length,1)[0]); sel=null; render(); checkWin(); }
     }
   };
   openModal(`
     <div class="modal-head"><h3>${ICON.brain} Пасьянс «Косынка»</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
-    <div class="modal-body">
+    <div class="modal-body" style="max-height:78vh">
       <div id="solStat" style="font-size:12px;color:var(--muted);margin-bottom:6px"></div>
       <div id="solBody"></div>
+      <div class="field-hint" style="margin-top:8px">Перетаскивайте карты мышью, как в классической «Косынке». Двойной клик — карта на базу, клик по колоде — взять 3 карты.</div>
     </div>
-    <div class="modal-foot"><button class="btn ghost" onclick="solAct('new')">${ICON.brain} Новая игра</button><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
+    <div class="modal-foot"><button class="btn ghost" onclick="solClick('new',0,0)">${ICON.brain} Новая игра</button><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
     modal=>{ build(); render(); });
 }
 function renderPersonal(){
