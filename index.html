@@ -244,6 +244,30 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .doc-preview-tree{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg2);font-size:12.5px;line-height:2}
 .doc-preview-tree .dpt-root{font-weight:700;display:flex;align-items:center;gap:7px}
 .doc-preview-tree .dpt-child{padding-left:26px;display:flex;align-items:center;gap:7px;color:var(--muted)}
+#tabNotes{overflow:auto;padding:18px 22px}
+.notes-wrap{max-width:860px}
+.notes-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.notes-head-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text)}
+.notes-hint{font-size:12.5px;color:var(--muted)}
+.notes-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.note-card{border:1px solid var(--border);border-radius:10px;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 2px rgba(20,25,50,.04)}
+.note-card.pinned{border-color:var(--accent)}
+.note-head{display:flex;align-items:center;gap:4px;padding:5px 8px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.note-date{font-size:11px;color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note-mini{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);cursor:pointer;flex-shrink:0}
+.note-mini:hover{background:var(--bg);color:var(--accent)}
+.note-mini.pin-on{color:var(--accent)}
+.note-mini.del:hover{color:var(--danger)}
+.note-body{flex:1;display:flex;padding:0}
+.note-body textarea{flex:1;min-height:110px;border:none;resize:vertical;padding:10px 12px;font-size:13.5px;line-height:1.55;background:var(--panel);color:var(--text);outline:none;font-family:inherit}
+.note-empty{font-size:13px;color:var(--muted);text-align:center;padding:40px 10px;line-height:1.6}
+.notes-foot{font-size:11.5px;color:var(--muted);margin-top:14px}
+.input-mic{display:flex;gap:6px}
+.input-mic input,.input-mic textarea{flex:1}
+.mic-btn{width:34px;height:34px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border);color:var(--accent);cursor:pointer}
+.mic-btn:hover{border-color:var(--accent)}
+.mic-btn.on{background:#fde8e8;border-color:var(--danger);color:var(--danger);animation:pulse 1s infinite}
+@media(max-width:640px){ .notes-list{grid-template-columns:1fr} }
 @media(max-width:900px){
   .docs-wrap{position:relative}
   .docs-side{width:100%;min-width:0}
@@ -602,6 +626,7 @@ body[data-theme="dark"] .chip.rep{color:#fbd38d;background:#40331c;border-color:
     <button data-t="today">Сегодня</button>
     <button data-t="calendar">Календарь</button>
     <button data-t="docs">Документация</button>
+    <button data-t="notes">Заметки</button>
     <button data-t="report">Отчёт</button>
   </nav>
   <div class="stats" id="stats"></div>
@@ -664,6 +689,9 @@ body[data-theme="dark"] .chip.rep{color:#fbd38d;background:#40331c;border-color:
         <div class="docs-side" id="docsSide"></div>
         <div class="docs-main" id="docsMain"></div>
       </div>
+    </div>
+    <div class="tab-page" id="tabNotes">
+      <div class="notes-wrap" id="notesWrap"></div>
     </div>
     <div class="tab-page" id="tabReport">
       <div class="report-bar">
@@ -747,6 +775,9 @@ const ICON={
   book:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/><path d="M20 17v5H6.5a2.5 2.5 0 0 1 0-5"/></svg>',
   page:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
   file:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9l-7-7H5a2 2 0 0 0-2 2z"/><path d="M14 2v7h7"/></svg>',
+  mic:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4"/></svg>',
+  import:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>',
+  note:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5z"/><path d="M15 3v6h6"/></svg>',
 };
 const COLUMN_COLORS=['#4f46e5','#0ea5e9','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#14b8a6','#f97316','#64748b'];
 const LIGHT_BG=['#f0f1ff','#e9f6ff','#f4f0ff','#fdeef9','#fff6e6','#e6f8ef','#fdeeef','#e5fafb','#fdf0e4','#eff2f7'];
@@ -924,7 +955,7 @@ function defaultState(){
   return { version:3, expandedOrgs:[], columns:[
     {id:uid(),name:'Бэклог'},{id:uid(),name:'В работе'},{id:uid(),name:'Проверка'},{id:uid(),name:'Готово'},
   ], orgs:[{id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true}],
-    archive:[], docs:[], templates:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'' };
+    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'' };
 }
 function normalize(s){
   if(!s.columns||!Array.isArray(s.columns)) return defaultState();
@@ -940,6 +971,12 @@ function normalize(s){
     if(typeof d.title!=='string'||!d.title) d.title='Без названия';
   });
   s.templates.forEach(t=>{ if(typeof t.content!=='string') t.content=''; });
+  if(!Array.isArray(s.notes)) s.notes=[];
+  s.notes.forEach(n=>{
+    if(typeof n.text!=='string') n.text='';
+    if(typeof n.pinned!=='boolean') n.pinned=false;
+    if(typeof n.createdAt!=='number') n.createdAt=Date.now();
+  });
   if(!s.settings||typeof s.settings!=='object') s.settings={sound:true,notifications:false,theme:'light'};
   if(typeof s.settings.sound!=='boolean') s.settings.sound=true;
   if(typeof s.settings.notifications!=='boolean') s.settings.notifications=false;
@@ -1670,7 +1707,7 @@ function deleteArchive(i){
 function setTab(t){ currentTab=t; render(); }
 function renderTabs(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===currentTab));
-  const map={board:'tabBoard',today:'tabToday',calendar:'tabCalendar',docs:'tabDocs',report:'tabReport'};
+  const map={board:'tabBoard',today:'tabToday',calendar:'tabCalendar',docs:'tabDocs',notes:'tabNotes',report:'tabReport'};
   document.querySelectorAll('.tab-page').forEach(el=>el.classList.toggle('active',el.id===map[currentTab]));
   document.body.classList.toggle('print-report',currentTab==='report');
 }
@@ -1743,6 +1780,7 @@ function renderToolbar(){
     <button data-v="cards" class="${(state.settings.view||'cards')==='cards'?'active':''}">Карточки</button>
     <button data-v="list" class="${(state.settings.view||'cards')==='list'?'active':''}">Список</button>
   </div>`;
+  html+=`<button class="icon-btn" id="btnImportCards" title="Импорт карточек из текста">${ICON.import} Импорт</button>`;
   html+=`<button class="icon-btn" id="btnAddCardTop" style="background:var(--accent);color:#fff">${ICON.plus} Задача</button>`;
   tb.innerHTML=html;
   $('#prioFilter').onchange=e=>{ state.selPrio=e.target.value; save(); render(); };
@@ -1751,6 +1789,7 @@ function renderToolbar(){
   tb.querySelectorAll('#sortSeg button').forEach(b=>{ b.onclick=()=>{ sortBy=b.dataset.s; render(); }; });
   tb.querySelectorAll('#viewSeg button').forEach(b=>{ b.onclick=()=>{ state.settings.view=b.dataset.v; save(); render(); }; });
   $('#btnAddCardTop').onclick=()=>openCardModal(null,c?c.key:null);
+  $('#btnImportCards').onclick=openImportModal;
 }
 function renderBoard(){
   const board=$('#board');
@@ -1931,6 +1970,99 @@ function bindBoardEvents(){
   });
 }
 
+/* ============================================================ import cards from text */
+function ctxGroupsHtml(selKey){
+  const defOrg=state.orgs.find(o=>o.general)||state.orgs[0];
+  const defKey=selKey||(defOrg?'o:'+defOrg.id:'');
+  return state.orgs.map(o=>{
+    const nm=o.general?'Общее':esc(o.name);
+    const opts=[`<option value="o:${o.id}" ${('o:'+o.id)===defKey?'selected':''}>${o.general?'Общее (без организации)':nm+' — карточки компании'}</option>`];
+    o.projects.forEach(p=>opts.push(`<option value="p:${p.id}" ${('p:'+p.id)===defKey?'selected':''}>${nm} — ${esc(p.name)}</option>`));
+    return `<optgroup label="${nm}">${opts.join('')}</optgroup>`;
+  }).join('');
+}
+function openImportModal(){
+  const colOpts=state.columns.map(col=>`<option value="${col.id}">${esc(col.name)}</option>`).join('');
+  const prioOpts=Object.entries(PRIO).map(([k,p])=>`<option value="${k}" ${k==='med'?'selected':''}>${p.label}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>Импорт карточек из текста</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Текст — каждый кусок станет карточкой</label>
+        <div class="input-mic"><textarea id="impText" rows="9" placeholder="Купить молоко&#10;Созвон с клиентом 15.06 14:00&#10;Подготовить отчёт&#10;Согласовать макет"></textarea>
+        <button class="mic-btn" data-mic-for="impText" title="Голосовой ввод" onclick="toggleVoice('impText')">${ICON.mic}</button></div></div>
+      <div class="field"><div class="row">
+        <div><label>Разделитель</label><select id="impSep">
+          <option value="nl" selected>Перенос строки</option>
+          <option value="blank">Пустая строка</option>
+          <option value="|">Вертикальная черта (|)</option>
+          <option value=";">Точка с запятой (;)</option>
+          <option value="custom">Свой...</option>
+        </select></div>
+        <div id="impSepCustomWrap" style="display:none"><label>Свой разделитель</label><input type="text" id="impSepCustom" placeholder="например: //"></div>
+        <div><label>Куда</label><select id="impCtx">${ctxGroupsHtml()}</select></div>
+        <div><label>Колонка</label><select id="impCol">${colOpts}</select></div>
+      </div></div>
+      <div class="field"><div class="row">
+        <div><label>Приоритет</label><select id="impPrio">${prioOpts}</select></div>
+        <div><label>Метка (для всех)</label><input type="text" id="impTag" placeholder="например: импорт"></div>
+      </div></div>
+      <div class="field"><label class="f-lbl" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="impFirstLine" checked> Первая строка куска — название, остальное — описание</label>
+        <label class="f-lbl" style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:6px"><input type="checkbox" id="impDates" checked> Распознавать дату в тексте («15.06» или «15.06 14:00») — станет сроком</label></div>
+      <div class="modal-actions"><button class="btn primary" id="impGo">${ICON.plus} Создать карточки</button></div>
+    </div>`,()=>{
+    $('#impSep').onchange=e=>{ $('#impSepCustomWrap').style.display=e.target.value==='custom'?'block':'none'; };
+    $('#impGo').onclick=doImportCards;
+  });
+}
+function doImportCards(){
+  const raw=$('#impText').value;
+  const c=ctxFromKey($('#impCtx').value);
+  if(!c){ toast('Раздел не найден','error'); return; }
+  let sep;
+  const sepMode=$('#impSep').value;
+  if(sepMode==='nl')sep='\n';
+  else if(sepMode==='blank')sep=/\n\s*\n/;
+  else if(sepMode==='custom'){ const cv=$('#impSepCustom').value; if(!cv){ toast('Укажите свой разделитель','error'); return; } sep=cv; }
+  else sep=sepMode;
+  const chunks=raw.split(sep).map(s=>s.trim()).filter(Boolean);
+  if(!chunks.length){ toast('Вставьте текст','error'); return; }
+  const firstLine=$('#impFirstLine').checked;
+  const parseDates=$('#impDates').checked;
+  const tag=$('#impTag').value.trim();
+  const colId=$('#impCol').value;
+  const prio=$('#impPrio').value;
+  const arr=ctxTasks(c);
+  let n=0,withDate=0;
+  chunks.slice(0,500).forEach(ch=>{
+    let title=ch,desc='';
+    if(firstLine&&ch.includes('\n')){ const i=ch.indexOf('\n'); title=ch.slice(0,i).trim(); desc=ch.slice(i+1).trim(); }
+    title=title.slice(0,160);
+    if(!title)return;
+    const t={id:uid(),title,type:'task',desc,responsible:'',columnId:colId,priority:prio,tags:tag?[tag]:[],estimate:null,actualHours:null,startDate:todayISO(),deadline:null,completedDate:null,dueDateTime:null,reminder:null,repeat:null,repeatTime:undefined,noBill:undefined,created:Date.now(),checklist:[],comments:[],attachments:[],intervals:[],timer:null,notified:{}};
+    if(parseDates){
+      const m=ch.match(/(\d{1,2})[.\/](\d{1,2})(?:[.\/](\d{2}|\d{4}))?(?:[ ]+(\d{1,2}):(\d{2}))?/);
+      if(m){
+        let mm=parseInt(m[2],10),dd=parseInt(m[1],10);
+        let yy=m[3]?parseInt(m[3],10):new Date().getFullYear();
+        if(m[3]&&m[3].length===2)yy+=2000;
+        if(yy<100)yy+=2000;
+        const dt=new Date(yy,mm-1,dd,m[4]?parseInt(m[4],10):23,m[5]?parseInt(m[5],10):59,0,0);
+        const tod=new Date(); tod.setHours(0,0,0,0);
+        if(dt.getTime()>=tod.getTime()&&dt.getFullYear()<=new Date().getFullYear()+3){
+          if(m[4])t.dueDateTime=pad(dt.getFullYear())+'-'+pad(mm)+'-'+pad(dd)+'T'+pad(dt.getHours())+':'+pad(dt.getMinutes());
+          else t.deadline=pad(dt.getFullYear())+'-'+pad(mm)+'-'+pad(dd);
+          withDate++;
+        }
+      }
+    }
+    arr.push(t);
+    n++;
+  });
+  if(chunks.length>500)toast('Слишком много кусков — созданы первые 500','error');
+  save(); closeModal(); render();
+  toast('Создано карточек: '+n+(withDate?', из них с датами: '+withDate:''));
+}
+
 /* ============================================================ task modal */
 function openCardModal(tid,ctxKey,presetCol,presetDate){
   const ref=findTaskRef(tid,ctxKey);
@@ -1994,8 +2126,8 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
     <div class="modal-body">
       ${whereField}
       ${typeSeg}
-      <div class="field"><label>Название *</label><input type="text" id="tkTitle" maxlength="160" value="${t?esc(t.title):''}" placeholder="Что нужно сделать?"></div>
-      <div class="field"><label>Описание</label><textarea id="tkDesc" placeholder="Детали, ссылки, что в итоге сделать...">${t?esc(t.desc||''):''}</textarea></div>
+      <div class="field"><label>Название *</label><div class="input-mic"><input type="text" id="tkTitle" maxlength="160" value="${t?esc(t.title):''}" placeholder="Что нужно сделать?"><button class="mic-btn" data-mic-for="tkTitle" title="Голосовой ввод" onclick="toggleVoice('tkTitle')">${ICON.mic}</button></div></div>
+      <div class="field"><label>Описание</label><div class="input-mic"><textarea id="tkDesc" placeholder="Детали, ссылки, что в итоге сделать...">${t?esc(t.desc||''):''}</textarea><button class="mic-btn" data-mic-for="tkDesc" title="Голосовой ввод" onclick="toggleVoice('tkDesc')">${ICON.mic}</button></div></div>
       <div class="field"><div class="row">
         <div class="evt-hide"><label>Приоритет</label><select id="tkPrio">${prioOpts}</select></div>
         <div class="evt-hide"><label>Ответственный</label><input type="text" id="tkResp" list="respList" value="${t?esc(t.responsible||''):''}" placeholder="Кто делает?"><datalist id="respList">${responsibleList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
@@ -2143,6 +2275,38 @@ function duplicateTask(ctxKey,tid){
   arr.splice(arr.indexOf(ref.t)+1,0,cp);
   save(); openCardModal(cp.id,ctxKey); render();
   toast('Создана копия');
+}
+
+/* ============================================================ voice input */
+let voiceRec=null;
+function toggleVoice(targetId){
+  const el=document.getElementById(targetId);
+  if(!el)return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('Голосовой ввод не поддерживается в этом браузере. Используйте Chrome или Edge','error'); return; }
+  const micBtns=document.querySelectorAll('[data-mic-for="'+targetId+'"]');
+  if(voiceRec&&voiceRec._target===targetId&&voiceRec._active){ try{voiceRec.stop();}catch(e){} return; }
+  if(voiceRec){ try{voiceRec.abort();}catch(e){} }
+  const rec=new SR();
+  voiceRec=rec; rec._target=targetId; rec._active=true;
+  rec.lang='ru-RU'; rec.interimResults=true; rec.maxAlternatives=1;
+  const setOn=on=>micBtns.forEach(b=>b.classList.toggle('on',on));
+  setOn(true);
+  rec.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal)final+=r[0].transcript; else interim+=r[0].transcript;
+    }
+    const base=el.value.replace(/\s*\[…\]\s*$/,'');
+    el.value=(base?base+' ':'')+final+(interim?' […]':'');
+    if(interim&&el.scrollTop!=null)el.scrollTop=el.scrollHeight;
+    const nid=el.dataset.note;
+    if(nid)saveNoteText(nid,el.value);
+  };
+  rec.onend=()=>{ rec._active=false; setOn(false); el.value=el.value.replace(/\s*\[…\]\s*$/,''); };
+  rec.onerror=e=>{ if(e.error==='not-allowed')toast('Доступ к микрофону запрещён','error'); };
+  try{ rec.start(); toast('Говорите — текст появится в поле'); }catch(e){ setOn(false); toast('Не удалось запустить микрофон','error'); }
 }
 function deleteInterval(ctxKey,tid,idx){
   const ref=findTaskRef(tid,ctxKey); if(!ref)return;
@@ -3029,6 +3193,56 @@ function renderDocText(txt){
   return h||'<div class="doc-nocontent">Пустая страница — нажмите «Правка».</div>';
 }
 
+/* ============================================================ NOTES */
+const noteTimers={};
+function renderNotes(){
+  const wrap=$('#notesWrap');
+  const notes=[...state.notes].sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||((b.createdAt||0)-(a.createdAt||0)));
+  let h=`<div class="notes-head"><span class="notes-head-title">${ICON.note} Заметки</span>
+    <button class="icon-btn primary" onclick="addNote()">${ICON.plus} Добавить</button>
+    <span class="notes-hint">Личные быстрые заметки — видны только вам, синхронизируются с облаком</span></div>`;
+  if(!notes.length){
+    h+=`<div class="note-empty">Заметок нет.<br>Добавьте первую — текст сохраняется сам, можно диктовать голосом.</div>`;
+  }else{
+    h+=`<div class="notes-list">`+notes.map(n=>`<div class="note-card ${n.pinned?'pinned':''}">
+      <div class="note-head">
+        <span class="note-date">${n.pinned?'Закреплена · ':''}${new Date(n.createdAt||Date.now()).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>
+        <button class="note-mini" title="Голосовой ввод" onclick="toggleVoice('note-${n.id}')">${ICON.mic}</button>
+        <button class="note-mini ${n.pinned?'pin-on':''}" title="Закрепить" onclick="pinNote('${n.id}')">${ICON.flag}</button>
+        <button class="note-mini del" title="Удалить" onclick="delNote('${n.id}')">${ICON.trash}</button>
+      </div>
+      <div class="note-body"><textarea id="note-${n.id}" data-note="${n.id}" placeholder="Текст заметки...">${esc(n.text||'')}</textarea></div>
+    </div>`).join('')+`</div>`;
+  }
+  h+=`<div class="notes-foot">Всего: ${state.notes.length}</div>`;
+  wrap.innerHTML=h;
+  state.notes.forEach(n=>{
+    const ta=document.getElementById('note-'+n.id);
+    if(ta)ta.addEventListener('input',()=>scheduleNoteSave(n.id,ta.value));
+  });
+}
+function scheduleNoteSave(id,text){ clearTimeout(noteTimers[id]); noteTimers[id]=setTimeout(()=>saveNoteText(id,text),400); }
+function saveNoteText(id,text){
+  const n=state.notes.find(x=>x.id===id); if(!n)return;
+  n.text=text; save();
+}
+function addNote(){
+  state.notes.push({id:uid(),text:'',pinned:false,createdAt:Date.now()});
+  save(); renderNotes();
+  const tas=document.querySelectorAll('.note-body textarea');
+  if(tas.length){ const ta=tas[tas.length-1]; ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); }
+}
+function pinNote(id){
+  const n=state.notes.find(x=>x.id===id); if(!n)return;
+  n.pinned=!n.pinned; save(); renderNotes();
+}
+function delNote(id){
+  const n=state.notes.find(x=>x.id===id); if(!n)return;
+  if(!confirm('Удалить заметку?'))return;
+  state.notes=state.notes.filter(x=>x.id!==id);
+  save(); renderNotes();
+}
+
 /* ============================================================ export/import */
 function exportData(){
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
@@ -3098,6 +3312,7 @@ function render(){
   else if(currentTab==='today')renderToday();
   else if(currentTab==='calendar')renderCalendar();
   else if(currentTab==='docs')renderDocs();
+  else if(currentTab==='notes')renderNotes();
   else if(currentTab==='report')initReport();
   refreshTimerLabels();
 }
