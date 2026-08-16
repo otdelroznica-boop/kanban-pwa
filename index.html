@@ -673,6 +673,12 @@ body[data-theme="dark"] .med-time{background:#232944}
 .move-exs{display:grid;gap:6px}
 .move-ex{display:flex;align-items:center;gap:10px;background:#f8f9fd;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px}
 body[data-theme="dark"] .move-ex{background:#1a1e33}
+.move-ex.done{background:#e6f8ef;border-color:#86d9b2}
+body[data-theme="dark"] .move-ex.done{background:#10331f;border-color:#1e6b3c}
+.move-ex.done span{color:#0f7a3d}
+body[data-theme="dark"] .move-ex.done span{color:#4ade80}
+.btn.done{background:#10b981;border-color:#0f9d63;color:#fff}
+.btn.done:hover{background:#0f9d63}
 .move-ex span{flex:1;min-width:0}
 .br-circle{width:150px;height:150px;border-radius:50%;border:5px solid #10b981;margin:8px auto 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color .3s}
 .br-phase{font-weight:800;font-size:15px}
@@ -1143,7 +1149,7 @@ function defaultState(){
   return { version:3, expandedOrgs:[], columns:[
     {id:uid(),name:'Бэклог'},{id:uid(),name:'В работе'},{id:uid(),name:'Проверка'},{id:uid(),name:'Готово'},
   ], orgs:[{id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true}],
-    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,weight:70,age:30,auto:false,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{}}, notif:{}, sensei:{enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180}, habits:[], digest:{enabled:true,city:'Москва',genres:['technology','world'],time:'08:00',last:''}, brain:{level:'10-й кю',speed:60,done:{},laps:{},reads:0,readsToday:0,readsDay:'',scores:{math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0},duck:{best:0,last:0},tetris:{best:0,last:0},solitaire:{best:0,last:0,wins:0}}} };
+    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light',workdays:true}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,weight:70,age:30,auto:false,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{},done:{}}, notif:{}, sensei:{enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180}, habits:[], digest:{enabled:true,city:'Москва',genres:['technology','world'],time:'08:00',last:''}, brain:{level:'10-й кю',speed:60,done:{},laps:{},reads:0,readsToday:0,readsDay:'',scores:{math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0},duck:{best:0,last:0},tetris:{best:0,last:0},solitaire:{best:0,last:0,wins:0}}} };
 }
 function normalize(s){
   if(!s.columns||!Array.isArray(s.columns)) return defaultState();
@@ -1171,6 +1177,7 @@ function normalize(s){
   if(!['light','dark','mac','linux'].includes(s.settings.theme)) s.settings.theme='light';
   if(!['classic','alarm','bell','siren'].includes(s.settings.soundType)) s.settings.soundType='classic';
   if(!['cards','list'].includes(s.settings.view)) s.settings.view='cards';
+  if(typeof s.settings.workdays!=='boolean') s.settings.workdays=true;
   if(typeof s.respFilter!=='string') s.respFilter='';
   if(typeof s.tagFilter!=='string') s.tagFilter='';
   if(typeof s.selPrio!=='string') s.selPrio='';
@@ -1203,6 +1210,7 @@ function normalize(s){
   if(typeof s.move.enabled!=='boolean') s.move.enabled=true;
   if(!Number.isFinite(s.move.every)||s.move.every<10) s.move.every=45;
   if(!s.move.log||typeof s.move.log!=='object') s.move.log={};
+  if(!s.move.done||typeof s.move.done!=='object') s.move.done={};
   if(!s.notif||typeof s.notif!=='object') s.notif={};
   if(!s.sensei||typeof s.sensei!=='object') s.sensei={enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180};
   if(typeof s.sensei.enabled!=='boolean') s.sensei.enabled=true;
@@ -1733,9 +1741,11 @@ function checkPersonal(){
   const now=Date.now(), today=todayISO();
   const h=new Date().getHours();
   const inDay=h>=8&&h<22;
+  const wd=new Date().getDay();
+  const workdaysOk=!state.settings.workdays||(wd>=1&&wd<=5);
   const w=state.water;
   const wLog=w.log[today]||0;
-  if(w.remind&&w.every>0&&inDay&&wLog<w.goal){
+  if(w.remind&&w.every>0&&inDay&&workdaysOk&&wLog<w.goal){
     const last=(state.notif.water&&state.notif.water.d===today)?state.notif.water.at:0;
     if(!last){ state.notif.water={d:today,at:now}; save(); }
     else if(now-last>=w.every*60000){
@@ -1758,7 +1768,7 @@ function checkPersonal(){
     });
   });
   const mv=state.move;
-  if(mv.enabled&&mv.every>0&&inDay){
+  if(mv.enabled&&mv.every>0&&inDay&&workdaysOk){
     const last=(state.notif.move&&state.notif.move.d===today)?state.notif.move.at:0;
     if(!last){ state.notif.move={d:today,at:now}; save(); }
     else if(now-last>=mv.every*60000){
@@ -3783,7 +3793,22 @@ const MEDS_LIB=[
   {n:'Пробиотики',d:'1 капсула',t:'08:00',desc:'Здоровье кишечника и пищеварения. Натощак или перед едой.'},
   {n:'Коллаген',d:'5–10 г',t:'08:00',desc:'Кожа, суставы, связки. Натощак или просто с водой.'},
   {n:'L-карнитин',d:'500–1000 мг',t:'08:00',desc:'Энергия и жировой обмен. За 30 минут до тренировки или утром.'},
-  {n:'Мультивитамины',d:'1 таблетка',t:'09:00',desc:'Общий баланс витаминов и минералов. Утром после завтрака.'}
+  {n:'Мультивитамины',d:'1 таблетка',t:'09:00',desc:'Общий баланс витаминов и минералов. Утром после завтрака.'},
+  {n:'Ежовик гребенчатый (львиная грива)',d:'500–1000 мг',t:'09:00',desc:'Гриб для памяти, внимания и нервной системы. Утром с едой.'},
+  {n:'Кордицепс',d:'1–2 капсулы',t:'08:00',desc:'Гриб энергии и выносливости. Принимать утром или до тренировки, не вечером.'},
+  {n:'Рейши (трутовик)',d:'1 капсула',t:'21:00',desc:'Гриб иммунитета, стресса и сна. Вечером — успокаивает и восстанавливает.'},
+  {n:'Чага',d:'1 капсула или чай',t:'12:00',desc:'Гриб для иммунитета и пищеварения. Можно с едой или как чай днём.'},
+  {n:'Глицин',d:'1–2 таблетки под язык',t:'21:00',desc:'Ноотроп для успокоения и сна, снижает стресс. Вечером или перед напряжённой задачей.'},
+  {n:'L-теанин',d:'100–200 мг',t:'09:00',desc:'Ноотроп спокойной концентрации. Утром или днём, хорошо сочетается с кофеином.'},
+  {n:'Цитиколин (CDP-холин)',d:'250–500 мг',t:'09:00',desc:'Ноотроп для памяти и концентрации. Утром до еды или днём.'},
+  {n:'Альфа-GPC',d:'300–600 мг',t:'09:00',desc:'Ноотроп-холин для ясности ума. Утром до еды.'},
+  {n:'Бакопа монье',d:'300 мг',t:'09:00',desc:'Трава для памяти и обучения. Утром с едой, эффект накопительный.'},
+  {n:'Родиола розовая',d:'200–400 мг',t:'08:00',desc:'Адаптоген от стресса и усталости, энергия. Только утром — вечером мешает сну.'},
+  {n:'Женьшень',d:'200–400 мг',t:'08:00',desc:'Адаптоген для бодрости и выносливости. Утром, курсами 2–4 недели.'},
+  {n:'Левзея',d:'1 таблетка',t:'08:00',desc:'Тонус, работоспособность, восстановление. Утром — не принимать вечером.'},
+  {n:'Пептидный комплекс (общий)',d:'по инструкции',t:'08:00',desc:'Пептиды для восстановления и регенерации. Утром натощак, курс.'},
+  {n:'Семакс (капли в нос)',d:'2–3 капли',t:'09:00',desc:'Пептид для концентрации и памяти. Утром натощак, курс 5–10 дней.'},
+  {n:'Пептиды для сна',d:'1 капсула',t:'22:00',desc:'Пептиды для глубокого сна и восстановления. На ночь.'}
 ];
 const MED_TIMES_LIB=['08:00','09:00','12:00','15:00','18:00','20:00','21:00','22:00','08:00, 20:00','09:00, 21:00','07:00, 13:00, 19:00','09:00, 15:00, 21:00'];
 function medLibApply(idx){
@@ -3868,6 +3893,21 @@ function medUndo(id,hm){
 function moveToggle(on){ state.move.enabled=!!on; save(); renderPersonal(); }
 function moveSetEvery(v){ state.move.every=parseInt(v,10)||45; save(); renderPersonal(); }
 function moveDone(){ const t=todayISO(); state.move.log[t]=(state.move.log[t]||0)+1; save(); renderPersonal(); toast('Отлично, движение — жизнь!','ok'); }
+function moveToggleIdx(i){
+  const t=todayISO();
+  const arr=state.move.done[t]||(state.move.done[t]=[]);
+  const k=arr.indexOf(i);
+  if(k>=0)arr.splice(k,1); else arr.push(i);
+  save(); renderPersonal();
+}
+function moveNextCycle(){
+  const t=todayISO();
+  const arr=state.move.done[t]||(state.move.done[t]=[]);
+  if(arr.length>=MOVE_EX.length){ toast('Цикл завершён — начинаем новый','ok'); state.move.done[t]=[]; }
+  state._lastMoveEx=moveExercise();
+  save(); renderPersonal();
+}
+function moveReset(){ state.move.done[todayISO()]=[]; state._lastMoveEx=null; save(); renderPersonal(); toast('Отметки разминки сброшены'); }
 let brTimer=null;
 function openBreathModal(){
   const B=[[4,'Вдох','#10b981'],[7,'Задержка','#f59e0b'],[8,'Выдох','#6366f1']];
@@ -3952,10 +3992,18 @@ function senseiState(){
   return s.kind&&Math.random()<0.5?'kind':(s.calm?'calm':'kind');
 }
 function senseiQuote(st){ const arr=SEN_QUOTES[st||'calm']; return arr[Math.floor(Math.random()*arr.length)]; }
-function senseiSpeak(text){
+const JA_PHRASES={kind:['Аригато!','Сугои!','Ёси!','Кайдзэн!'],strict:['Хай!','Ки о кэттэ!','Икэ!','Сюккё!'],calm:['Юкури ико.','Кокю.','Хэйва.','Кандзэн.']};
+function jaVoice(){ try{ return speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().indexOf('ja')===0)||null; }catch(e){ return null; } }
+function senseiSpeak(text,st){
   try{
     if(!('speechSynthesis' in window))return;
     speechSynthesis.cancel();
+    const jv=st&&jaVoice();
+    if(jv){
+      const jp=new SpeechSynthesisUtterance((JA_PHRASES[st]||JA_PHRASES.calm)[Math.floor(Math.random()*4)]);
+      jp.voice=jv; jp.lang='ja-JP'; jp.rate=1; jp.pitch=1.15;
+      speechSynthesis.speak(jp);
+    }
     const u=new SpeechSynthesisUtterance(text);
     u.lang='ru-RU';
     u.rate=0.95;
@@ -3975,7 +4023,7 @@ function senseiSay(text,st,praise){
     bubble.classList.add('show');
     clearTimeout(senseiTimer);
     senseiTimer=setTimeout(senseiHide,12000);
-    if(s.voice)senseiSpeak(text);
+    if(s.voice)senseiSpeak(text,st);
   }
 }
 function senseiHide(){ const b=$('#senseiBubble'); if(b)b.classList.remove('show'); }
@@ -4143,7 +4191,7 @@ function renderDigestModal(){
   if(wEl&&digestCache)wEl.innerHTML=digestWeatherHtml(digestCache.weather);
   const nEl=$('#digNews');
   if(nEl&&digestCache){
-    nEl.innerHTML=digestCache.news.length?digestCache.news.map(g=>`<div class="dig-genre"><b>${esc(g.genre)}</b>${g.items.length?`<ul>${g.items.map(it=>`<li><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></li>`).join('')}</ul>`:'<div class="digest-note" style="margin-top:4px">Новостей пока нет.</div>'}</div>`).join(''):'<div class="digest-note">Новости не загрузились.</div>';
+    nEl.innerHTML=digestCache.news.length?digestCache.news.map(g=>`<div class="dig-genre"><b>${esc(g.genre)}</b>${g.items.length?`<ul>${g.items.slice(0,3).map(it=>`<li><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></li>`).join('')}</ul>`:'<div class="digest-note" style="margin-top:4px">Новостей пока нет.</div>'}</div>`).join(''):'<div class="digest-note">Новости не загрузились.</div>';
   }
 }
 function digestPlan(){
@@ -4457,44 +4505,76 @@ function brainDuck(){
   const W=560,H=340;
   let score=0,level=1,left=60,over=false,ducks=[];
   const spawn=()=>{
-    if(ducks.length>=3+level)return;
-    const fromLeft=Math.random()<0.5;
+    if(ducks.length>=1+level)return;
     ducks.push({
-      x:fromLeft?-50:W+50,
-      baseY:60+Math.random()*(H-170),
-      vx:(fromLeft?1:-1)*(1+level*0.35)*(0.7+Math.random()*0.6),
-      amp:18+Math.random()*26, freq:0.5+Math.random()*1.1, phase:Math.random()*6.28,
-      size:Math.max(12,26-(level-1)*2)
+      x:40+Math.random()*(W-80),
+      y:H-30+Math.random()*18,
+      vx:(Math.random()<0.5?-1:1)*(0.6+Math.random()*1.2)*(1+level*0.12),
+      vy:-(2.1+level*0.3)*(0.85+Math.random()*0.3),
+      phase:Math.random()*6.28,
+      size:Math.max(13,24-(level-1)*2),
+      dead:false,dy:0
     });
+  };
+  const drawDuck=(ctx,d)=>{
+    ctx.save(); ctx.translate(d.x,d.y);
+    if(d.dead===false){
+      const w=Math.sin(d.phase);
+      ctx.fillStyle='#8b5e3c';
+      ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
+      ctx.fillStyle='#2e5d34';
+      ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.44,0,6.28); ctx.fill();
+      ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.ellipse(d.size*0.55,-d.size*0.3,d.size*0.2,d.size*0.13,0.7,0,6.28); ctx.fill();
+      ctx.fillStyle='#e8a33d';
+      ctx.beginPath(); ctx.moveTo(d.size*1.22,-d.size*0.58); ctx.lineTo(d.size*1.58,-d.size*0.46); ctx.lineTo(d.size*1.22,-d.size*0.34); ctx.fill();
+      ctx.fillStyle='#111';
+      ctx.beginPath(); ctx.arc(d.size*0.98,-d.size*0.62,d.size*0.075,0,6.28); ctx.fill();
+      ctx.fillStyle='#6b4526';
+      ctx.save(); ctx.translate(-d.size*0.15,-d.size*0.1);
+      if(w>0)ctx.rotate(-0.55-w*0.8); else ctx.rotate(0.55+w*0.8);
+      ctx.beginPath(); ctx.ellipse(0,-d.size*0.6,d.size*0.52,d.size*0.2,0,0,6.28); ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.save(); ctx.rotate(d.dead);
+      ctx.fillStyle='#8b5e3c';
+      ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
+      ctx.fillStyle='#2e5d34';
+      ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.44,0,6.28); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
   };
   const draw=()=>{
     const cv=$('#duckCv');
     if(!cv){ duckStop(); return; }
     const ctx=cv.getContext('2d');
-    ctx.fillStyle='#7dd3fc'; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#38bdf8'; ctx.fillRect(0,0,W,30);
-    ctx.fillStyle='#0284c7'; ctx.fillRect(0,H-60,W,60);
-    ctx.fillStyle='#0369a1'; ctx.fillRect(0,H-30,W,30);
-    ctx.fillStyle='#075985';
-    for(let i=0;i<12;i++)ctx.fillRect(10+i*50,H-64-(i%3)*8,8,5);
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#8fd0f5'); sky.addColorStop(1,'#cdeafb');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    [[70,58],[235,92],[420,50],[150,118],[490,110]].forEach(([cx,cy])=>{
+      ctx.beginPath(); ctx.arc(cx,cy,16,0,6.28); ctx.arc(cx+16,cy-8,13,0,6.28); ctx.arc(cx+32,cy,15,0,6.28); ctx.fill();
+    });
+    ctx.fillStyle='#1c5e2a';
+    ctx.fillRect(0,H-56,W,56);
+    ctx.fillStyle='#2e8b3a';
+    for(let i=0;i<28;i++){ ctx.beginPath(); ctx.arc(8+i*22,H-56+12,26+(i%3)*8,Math.PI,0); ctx.fill(); }
+    ctx.fillStyle='#46a14e';
+    for(let i=0;i<28;i++){ ctx.beginPath(); ctx.arc(16+i*22,H-56+4,12+(i%4)*5,Math.PI,0); ctx.fill(); }
     ducks.forEach(d=>{
-      d.x+=d.vx;
-      d.phase+=d.freq*0.06;
-      if(d.x>W+60)d.x=-60;
-      if(d.x<-60)d.x=W+60;
-      const y=d.baseY+Math.sin(d.phase)*d.amp;
-      ctx.save(); ctx.translate(d.x,y); if(d.vx<0)ctx.scale(-1,1);
-      ctx.fillStyle='#fbbf24'; ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.62,0,0,6.28); ctx.fill();
-      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(d.size*0.72,-d.size*0.55,d.size*0.4,0,6.28); ctx.fill();
-      ctx.fillStyle='#ea580c'; ctx.beginPath(); ctx.moveTo(d.size*1.02,-d.size*0.6); ctx.lineTo(d.size*1.45,-d.size*0.48); ctx.lineTo(d.size*1.02,-d.size*0.36); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(d.size*0.82,-d.size*0.62,d.size*0.11,0,6.28); ctx.fill();
-      ctx.fillStyle='#0f172a'; ctx.beginPath(); ctx.arc(d.size*0.85,-d.size*0.62,d.size*0.055,0,6.28); ctx.fill();
-      ctx.fillStyle='#d97706'; ctx.beginPath(); ctx.ellipse(-d.size*0.15,d.size*0.08,d.size*0.55,d.size*0.32,0.25,0,6.28); ctx.fill();
-      ctx.restore();
+      if(typeof d.dead==='number'){
+        d.y+=d.dy; d.dy+=0.4; d.dead+=0.12;
+      } else {
+        d.x+=d.vx; d.y+=d.vy; d.phase+=0.35;
+        d.vy+=(Math.sin(d.phase*0.5))*0.02;
+      }
+      if(d.y>H+40||d.y<-60||d.x<-60||d.x>W+60){ ducks.splice(ducks.indexOf(d),1); return; }
+      drawDuck(ctx,d);
     });
   };
   const loop=setInterval(draw,33);
-  const spawnT=setInterval(spawn,1800);
+  const spawnT=setInterval(()=>{ if(!over)spawn(); },1500);
   const timerT=setInterval(()=>{
     left--;
     const t=$('#duckTime'); if(t)t.textContent=left+' с';
@@ -4515,13 +4595,13 @@ function brainDuck(){
     <div class="modal-body" style="text-align:center">
       <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
       <canvas id="duckCv" width="${W}" height="${H}" style="max-width:100%;cursor:crosshair;border-radius:10px;border:1px solid var(--border)"></canvas>
-      <div class="field-hint">Кликайте по уткам. Каждые 5 попаданий — уровень выше: утки быстрее и меньше.</div>
+      <div class="field-hint">Дикие утки вылетают из кустов — бейте, пока не улетели! Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
       <div id="duckRes" style="font-size:14px;margin-top:6px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
     modal=>{
       const cv=modal.querySelector('#duckCv');
-      spawn(); spawn(); spawn();
+      spawn(); spawn();
       draw();
       cv.addEventListener('click',e=>{
         if(over)return;
@@ -4530,9 +4610,9 @@ function brainDuck(){
         const cx=(e.clientX-r.left)*W/r.width, cy=(e.clientY-r.top)*H/r.height;
         let hit=-1,bestD=1e9;
         ducks.forEach((d,i)=>{
-          const y=d.baseY+Math.sin(d.phase)*d.amp;
-          const dist=Math.hypot(cx-d.x,cy-y);
-          if(dist<d.size*1.4&&dist<bestD){ bestD=dist; hit=i; }
+          if(d.dead)return;
+          const dist=Math.hypot(cx-d.x,cy-d.y);
+          if(dist<d.size*1.5&&dist<bestD){ bestD=dist; hit=i; }
         });
         if(hit>=0){
           playQuack();
@@ -4540,7 +4620,7 @@ function brainDuck(){
           const nl=1+Math.floor(score/5);
           if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
           const s=$('#duckScore'); if(s)s.textContent=score;
-          ducks.splice(hit,1);
+          ducks[hit].dead=0; ducks[hit].dy=1.5;
           spawn();
         }
       });
@@ -4943,6 +5023,7 @@ function renderPersonal(){
   </div>`;
   const mv=state.move;
   const mvToday=mv.log[today]||0;
+  const mvDone=mv.done[today]||[];
   const lastEx=state._lastMoveEx||null;
   const medsHtml=`<div class="p-card">
     <div class="p-card-head">${ICON.med} Препараты <span class="mini-actions"><span class="mini" title="Добавить препарат" onclick="openMedModal(null)">${ICON.plus}</span></span></div>
@@ -4952,13 +5033,19 @@ function renderPersonal(){
     <div class="p-card-head">${ICON.move} Разминка и движение</div>
     <div class="move-row">
       <label class="chk"><input type="checkbox" ${mv.enabled?'checked':''} onchange="moveToggle(this.checked)"> Напоминать вставать и разминаться</label>
+      <label class="chk"><input type="checkbox" ${state.settings.workdays?'checked':''} onchange="state.settings.workdays=this.checked;save();renderPersonal()"> Только в будни</label>
       <div class="field" style="width:120px"><label>Каждые, мин</label>
         <select onchange="moveSetEvery(this.value)">${[30,45,60,90,120].map(v=>`<option value="${v}" ${mv.every===v?'selected':''}>${v} мин</option>`).join('')}</select>
       </div>
       <span class="pomo-stat">Сегодня разминок: <b>${mvToday}</b></span>
     </div>
     ${lastEx?`<div class="pomo-focus-task" style="background:#e6f8ef;border-color:#86d9b2">${ICON.move} Сейчас советует Сенсей: <b style="flex:1;min-width:0">${esc(lastEx.text)}</b><button class="b-btn ghost" onclick="moveDone()">Сделал</button></div>`:''}
-    <div class="move-exs">${MOVE_EX.map(ex=>`<div class="move-ex"><span>${ex.text}</span>${ex.ex==='breath'?`<button class="btn ghost" onclick="openBreathModal()">${ICON.wind} Дыхание</button>`:`<button class="btn ghost" onclick="moveDone()">Сделал</button>`}</div>`).join('')}</div>
+    <div class="move-exs">${MOVE_EX.map((ex,i)=>{const dn=mvDone.includes(i);return `<div class="move-ex${dn?' done':''}"><span>${ex.text}</span>${ex.ex==='breath'?`<button class="btn ghost ${dn?'done':''}" onclick="moveToggleIdx(${i})">${dn?'Сделано ✓':'Сделал'}</button><button class="btn ghost" onclick="openBreathModal()">${ICON.wind} Дыхание</button>`:`<button class="btn ghost ${dn?'done':''}" onclick="moveToggleIdx(${i})">${dn?'Сделано ✓':'Сделал'}</button>`}</div>`;}).join('')}</div>
+    <div class="move-row" style="margin-top:8px">
+      <span class="pomo-stat">Цикл: <b>${mvDone.length} из ${MOVE_EX.length}</b></span>
+      <button class="btn ghost" onclick="moveNextCycle()">⟳ Следующий цикл</button>
+      <button class="btn ghost" onclick="moveReset()">Сброс</button>
+    </div>
   </div>`;
   const s=state.sensei;
   const senseiHtml=`<div class="p-card">
@@ -5003,6 +5090,7 @@ function renderPersonal(){
     </div>
   </div>`;
   el.innerHTML=pomoHtml+waterHtml+medsHtml+moveHtml+senseiHtml+habitsHtml+digestHtml;
+  if(state.digest.enabled&&!(digestCache&&(Date.now()-digestCacheAt)<10*60000))fetchDigest(false);
 }
 
 /* ============================================================ render */
