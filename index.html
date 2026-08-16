@@ -641,6 +641,40 @@ body[data-theme="dark"] .pomo-stat{background:#1c2036}
 .pomo-week .pw-bar{width:24px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#6366f1,#8b5cf6);position:relative;min-height:4px}
 .pomo-week .pw-bar b{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text);font-weight:700}
 .pomo-week .pw-bar span{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);white-space:nowrap}
+.water-wrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.water-glass{width:64px;height:112px;border:3px solid var(--muted);border-top:none;border-radius:0 0 16px 16px;position:relative;overflow:hidden;flex-shrink:0;background:rgba(56,189,248,.06)}
+.water-glass .wg-fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#7dd3fc,#0ea5e9);opacity:.85;transition:height .5s}
+.water-glass .wg-mark{position:absolute;left:0;right:0;border-top:1px dashed rgba(100,116,139,.45)}
+.water-side{flex:1;min-width:250px}
+.water-today{font-size:14px;margin-bottom:8px}
+.water-bar{height:10px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.water-bar div{height:100%;background:linear-gradient(90deg,#38bdf8,#0ea5e9);border-radius:6px;transition:width .4s}
+.water-btns{display:flex;gap:6px;flex-wrap:wrap}
+.water-settings{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:10px}
+.water-settings .field{width:100px}
+.med-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8f9fd;border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:8px}
+body[data-theme="dark"] .med-item{background:#1a1e33}
+.med-item.off{opacity:.55}
+.med-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.med-dose{font-weight:500;color:var(--muted);font-size:12px}
+.med-times{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:200px}
+.med-time{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;background:#fff;border:1px solid var(--border);border-radius:7px;padding:3px 8px}
+body[data-theme="dark"] .med-time{background:#232944}
+.med-time.done{background:#e6f8ef;border-color:#86d9b2;color:#0f9d63}
+.med-time.overdue{background:#fdeeef;border-color:#f0a3a3;color:#d33}
+.med-take,.med-x{width:19px;height:19px;border-radius:50%;color:#fff;border:none;cursor:pointer;font-size:11px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.med-take{background:var(--ok)}
+.med-x{background:var(--muted)}
+.med-empty{color:var(--muted);font-size:13px;padding:8px 0}
+.move-row{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:10px}
+.move-exs{display:grid;gap:6px}
+.move-ex{display:flex;align-items:center;gap:10px;background:#f8f9fd;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px}
+body[data-theme="dark"] .move-ex{background:#1a1e33}
+.move-ex span{flex:1;min-width:0}
+.br-circle{width:150px;height:150px;border-radius:50%;border:5px solid #10b981;margin:8px auto 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color .3s}
+.br-phase{font-weight:800;font-size:15px}
+.br-time{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
+.br-rounds{font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -817,6 +851,10 @@ const ICON={
   import:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>',
   note:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5z"/><path d="M15 3v6h6"/></svg>',
   pomo:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 6c0-2 1-3.5 3-3.5.6 0 1.1.5 1.1 1.1 0 .8-.5 1.7-1.1 2.4"/></svg>',
+  water:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7 6.3 9.2a7 7 0 1 0 11.4 0z"/></svg>',
+  med:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="16" r="4.5"/><circle cx="16" cy="8" r="4.5"/></svg>',
+  move:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>',
+  wind:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9a3 3 0 1 0-3-3"/><path d="M3 12h13a3 3 0 1 1-3 3"/><path d="M3 16h6"/></svg>',
 };
 const COLUMN_COLORS=['#4f46e5','#0ea5e9','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#14b8a6','#f97316','#64748b'];
 const LIGHT_BG=['#f0f1ff','#e9f6ff','#f4f0ff','#fdeef9','#fff6e6','#e6f8ef','#fdeeef','#e5fafb','#fdf0e4','#eff2f7'];
@@ -994,7 +1032,7 @@ function defaultState(){
   return { version:3, expandedOrgs:[], columns:[
     {id:uid(),name:'Бэклог'},{id:uid(),name:'В работе'},{id:uid(),name:'Проверка'},{id:uid(),name:'Готово'},
   ], orgs:[{id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true}],
-    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}} };
+    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{}}, notif:{} };
 }
 function normalize(s){
   if(!s.columns||!Array.isArray(s.columns)) return defaultState();
@@ -1031,6 +1069,26 @@ function normalize(s){
   if(![10,15,20,25,30,45,60].includes(s.pomodoro.long)) s.pomodoro.long=15;
   if(![1,2,3,4,5,6,7,8].includes(s.pomodoro.cycles)) s.pomodoro.cycles=4;
   if(!s.pomodoro.log||typeof s.pomodoro.log!=='object') s.pomodoro.log={};
+  if(!s.water||typeof s.water!=='object') s.water={};
+  if(!Number.isFinite(s.water.goal)||s.water.goal<100) s.water.goal=2000;
+  if(!Number.isFinite(s.water.glass)||s.water.glass<50) s.water.glass=250;
+  if(typeof s.water.remind!=='boolean') s.water.remind=true;
+  if(!Number.isFinite(s.water.every)||s.water.every<0) s.water.every=90;
+  if(!s.water.log||typeof s.water.log!=='object') s.water.log={};
+  if(!Array.isArray(s.meds)) s.meds=[];
+  s.meds.forEach(m=>{
+    if(typeof m.id!=='string'||!m.id) m.id=uid();
+    if(typeof m.name!=='string'||!m.name) m.name='Препарат';
+    if(typeof m.dose!=='string') m.dose='';
+    if(!Array.isArray(m.times)) m.times=[];
+    if(!m.taken||typeof m.taken!=='object') m.taken={};
+    if(typeof m.active!=='boolean') m.active=true;
+  });
+  if(!s.move||typeof s.move!=='object') s.move={};
+  if(typeof s.move.enabled!=='boolean') s.move.enabled=true;
+  if(!Number.isFinite(s.move.every)||s.move.every<10) s.move.every=45;
+  if(!s.move.log||typeof s.move.log!=='object') s.move.log={};
+  if(!s.notif||typeof s.notif!=='object') s.notif={};
   if(!s.orgs.some(o=>o.general)) s.orgs.unshift({id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true});
   s.orgs.forEach(o=>{
     if(!Array.isArray(o.tasks)) o.tasks=[];
@@ -1347,14 +1405,15 @@ function showBanner(job){
     const a=e.target.closest('[data-a]');
     if(a){
       e.stopPropagation();
-      if(a.dataset.a==='open'){ closeBanner(el); openCardModal(job.tid,job.ctxKey); }
+      if(a.dataset.a==='open'){ closeBanner(el); if(job.personal)personalBannerAction(job); else openCardModal(job.tid,job.ctxKey); }
       else if(a.dataset.a==='off'){ closeBanner(el); dismissReminder(job); }
       else if(a.dataset.a==='snooze'){ const s=el.querySelector('.b-snooze'); s.style.display=s.style.display==='none'?'inline-block':'none'; }
       return;
     }
     if(e.target.closest('.b-snooze'))return;
     closeBanner(el);
-    if(job.tid&&job.ctxKey)openCardModal(job.tid,job.ctxKey);
+    if(job.personal)personalBannerAction(job);
+    else if(job.tid&&job.ctxKey)openCardModal(job.tid,job.ctxKey);
   };
   el.querySelector('.b-snooze').onchange=()=>{ const s=el.querySelector('.b-snooze'); closeBanner(el); snoozeReminder(job,s.value); };
   wrap.appendChild(el);
@@ -1365,10 +1424,27 @@ function showBanner(job){
   if(navigator.vibrate){ try{ navigator.vibrate([350,120,350,120,350]); }catch(e){} }
 }
 function dismissReminder(job){
+  if(job.personal){
+    if(job.personal==='water')state.notif.water={d:todayISO(),at:0};
+    else if(job.personal==='move')state.notif.move={d:todayISO(),at:0};
+    else state.notif[job.key]='d';
+    save();
+    return;
+  }
   const ref=job.ctxKey&&job.tid?findTaskRef(job.tid,job.ctxKey):null;
   if(ref&&ref.t){ if(!ref.t.notified)ref.t.notified={}; ref.t.notified[job.key]='d'; save(); }
 }
 function snoozeReminder(job,min){
+  if(job.personal){
+    const m=min==='tomorrow'?1440:(parseInt(min,10)||15);
+    const at=Date.now()+m*60000;
+    if(job.personal==='water')state.notif.water={d:todayISO(),at};
+    else if(job.personal==='move')state.notif.move={d:todayISO(),at};
+    else state.notif[job.key]=at;
+    save();
+    toast(min==='tomorrow'?'Напомню завтра в 9:00':'Напомню через '+m+' мин');
+    return;
+  }
   const ref=job.ctxKey&&job.tid?findTaskRef(job.tid,job.ctxKey):null;
   if(!ref||!ref.t)return;
   if(!ref.t.notified)ref.t.notified={};
@@ -1484,6 +1560,71 @@ function fireReminder(job,ctxKey,tid){
 }
 setInterval(checkReminders,20000);
 
+/* ---- личные напоминания: вода, препараты, разминка ---- */
+const MOVE_EX=[
+  {text:'Растяжка шеи и плеч — 2 минуты',ex:'stretch'},
+  {text:'Приседания — 10 раз',ex:'squat'},
+  {text:'Дыхание 4-7-8 — один круг',ex:'breath'},
+  {text:'Ходьба по комнате — 3 минуты',ex:'walk'},
+  {text:'Наклоны и повороты корпуса — 1 минута',ex:'bend'},
+  {text:'Отжимания от стола — 8 раз',ex:'pushup'}
+];
+let _lastMoveIdx=-1;
+function moveExercise(){
+  let i;
+  do{ i=Math.floor(Math.random()*MOVE_EX.length); }while(MOVE_EX.length>1&&i===_lastMoveIdx);
+  _lastMoveIdx=i;
+  return MOVE_EX[i];
+}
+function personalBannerAction(job){ setTab('personal'); }
+function firePersonal(job){
+  showBanner(job);
+  if(state.settings.notifications&&'Notification' in window&&Notification.permission==='granted'){
+    try{ new Notification('Кайдзен · '+job.label,{body:job.text,tag:job.key,requireInteraction:true,vibrate:[350,120,350,120,350]}); }catch(e){}
+  }
+}
+function checkPersonal(){
+  const now=Date.now(), today=todayISO();
+  const h=new Date().getHours();
+  const inDay=h>=8&&h<22;
+  const w=state.water;
+  const wLog=w.log[today]||0;
+  if(w.remind&&w.every>0&&inDay&&wLog<w.goal){
+    const last=(state.notif.water&&state.notif.water.d===today)?state.notif.water.at:0;
+    if(!last){ state.notif.water={d:today,at:now}; save(); }
+    else if(now-last>=w.every*60000){
+      state.notif.water.at=now; save();
+      const left=Math.max(0,w.goal-wLog);
+      firePersonal({key:'water:'+today+':'+now,personal:'water',label:'Вода',text:'Пора попить воды. До цели осталось '+left+' мл'});
+    }
+  }
+  state.meds.forEach(m=>{
+    if(!m.active)return;
+    m.times.forEach(hm=>{
+      const at=new Date(today+'T'+hm).getTime();
+      if(!isFinite(at)||now<at)return;
+      const key='med:'+m.id+':'+hm+':'+today;
+      const nv=state.notif[key];
+      if(nv==='d')return;
+      if(typeof nv==='number'&&nv>now)return;
+      state.notif[key]='d'; save();
+      firePersonal({key,personal:'med',label:'Препарат: '+m.name,text:'Время принять «'+m.name+'»'+(m.dose?' — '+m.dose:'')});
+    });
+  });
+  const mv=state.move;
+  if(mv.enabled&&mv.every>0&&inDay){
+    const last=(state.notif.move&&state.notif.move.d===today)?state.notif.move.at:0;
+    if(!last){ state.notif.move={d:today,at:now}; save(); }
+    else if(now-last>=mv.every*60000){
+      state.notif.move.at=now; save();
+      const ex=moveExercise();
+      state._lastMoveEx=ex;
+      firePersonal({key:'move:'+today+':'+now,personal:'move',label:'Разминка',text:ex.text});
+    }
+  }
+}
+setInterval(checkPersonal,20000);
+
 /* ============================================================ modal */
 function openModal(html,onMount){
   const ov=$('#modalOverlay');
@@ -1497,6 +1638,7 @@ function closeModal(){
   ov.style.display='none'; ov.innerHTML='';
   currentModal=null;
   hideRowMenu();
+  if(brTimer){ clearInterval(brTimer); brTimer=null; }
   if(voiceRec&&voiceRec._active){ voiceRec._userStop=true; try{voiceRec.abort();}catch(e){} }
 }
 function toggleRowMenu(e,key){
@@ -3419,6 +3561,118 @@ function startFocusFromCard(key,tid){
   startPomo();
 }
 function openPomoTask(){ if(pomoTask)openCardModal(pomoTask.tid,pomoTask.key); }
+
+/* ---- вода ---- */
+function waterAdd(ml){
+  const t=todayISO();
+  const cur=state.water.log[t]||0;
+  state.water.log[t]=Math.max(0,cur+ml);
+  save(); renderPersonal();
+}
+function waterSetGoal(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=100){ state.water.goal=n; save(); renderPersonal(); } }
+function waterSetGlass(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=50){ state.water.glass=n; save(); renderPersonal(); } }
+function waterSetEvery(v){ state.water.every=parseInt(v,10)||0; save(); renderPersonal(); }
+
+/* ---- препараты ---- */
+function openMedModal(mid){
+  const m=mid?state.meds.find(x=>x.id===mid):null;
+  openModal(`
+    <div class="modal-head"><h3>${m?'Препарат':'Новый препарат'}</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Название</label><input id="medName" maxlength="80" value="${m?esc(m.name):''}" placeholder="Например: Витамин D3"></div>
+      <div class="field"><label>Дозировка</label><input id="medDose" maxlength="40" value="${m?esc(m.dose):''}" placeholder="Например: 500 мг, 1 таблетка"></div>
+      <div class="field"><label>Время приёма, чч:мм (через запятую)</label><input id="medTimes" maxlength="80" value="${m?m.times.join(', '):'09:00'}" placeholder="08:00, 20:00"></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="saveMed('${mid||''}')">Сохранить</button></div>`,
+    modal=>{ const i=modal.querySelector('#medName'); if(i)i.focus(); });
+}
+function saveMed(mid){
+  const name=$('#medName').value.trim();
+  if(!name){ toast('Укажите название','error'); return; }
+  const times=$('#medTimes').value.split(/[,;]+/).map(s=>s.trim()).filter(s=>/^\d{1,2}:\d{2}$/.test(s));
+  if(!times.length){ toast('Укажите время в формате чч:мм','error'); return; }
+  const dose=$('#medDose').value.trim();
+  if(mid){
+    const m=state.meds.find(x=>x.id===mid);
+    if(m){ m.name=name; m.dose=dose; m.times=times; }
+  } else {
+    state.meds.push({id:uid(),name,dose,times,taken:{},active:true});
+  }
+  save(); closeModal(); renderPersonal();
+  toast('«'+name+'» сохранён','ok');
+}
+function deleteMed(id){
+  const m=state.meds.find(x=>x.id===id);
+  if(!m||!confirm('Удалить препарат «'+m.name+'»?'))return;
+  state.meds=state.meds.filter(x=>x.id!==id);
+  save(); renderPersonal();
+}
+function medToggle(id){ const m=state.meds.find(x=>x.id===id); if(!m)return; m.active=!m.active; save(); renderPersonal(); }
+function medTake(id,hm){
+  const m=state.meds.find(x=>x.id===id); if(!m)return;
+  const t=todayISO();
+  if(!m.taken[t])m.taken[t]=[];
+  if(!m.taken[t].includes(hm))m.taken[t].push(hm);
+  save(); renderPersonal();
+  toast('«'+m.name+'» — принято','ok');
+}
+function medUndo(id,hm){
+  const m=state.meds.find(x=>x.id===id); if(!m)return;
+  const t=todayISO();
+  if(m.taken[t])m.taken[t]=m.taken[t].filter(x=>x!==hm);
+  save(); renderPersonal();
+}
+
+/* ---- разминка ---- */
+function moveToggle(on){ state.move.enabled=!!on; save(); renderPersonal(); }
+function moveSetEvery(v){ state.move.every=parseInt(v,10)||45; save(); renderPersonal(); }
+function moveDone(){ const t=todayISO(); state.move.log[t]=(state.move.log[t]||0)+1; save(); renderPersonal(); toast('Отлично, движение — жизнь!','ok'); }
+let brTimer=null;
+function openBreathModal(){
+  const B=[[4,'Вдох','#10b981'],[7,'Задержка','#f59e0b'],[8,'Выдох','#6366f1']];
+  let idx=0,left=B[0][0],rounds=0;
+  openModal(`
+    <div class="modal-head"><h3>Дыхание 4-7-8</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body" style="text-align:center">
+      <div class="br-circle" style="border-color:${B[0][2]}"><div class="br-phase" id="brPhase" style="color:${B[0][2]}">Вдох</div><div class="br-time" id="brTime">4</div></div>
+      <div class="br-rounds">Круг: <b id="brRound">1</b> · 4 круга ≈ 80 секунд</div>
+      <div class="field-hint">Вдох носом, задержка, выдох через рот. Повторите 3–4 круга — успокаивает и разгоняет кровь.</div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`);
+  if(brTimer)clearInterval(brTimer);
+  brTimer=setInterval(()=>{
+    left--;
+    if(left<=0){ idx=(idx+1)%3; left=B[idx][0]; if(idx===0)rounds++; }
+    const ph=$('#brPhase'),tm=$('#brTime'),cr=document.querySelector('.br-circle');
+    if(ph){ ph.textContent=B[idx][1]; ph.style.color=B[idx][2]; }
+    if(tm)tm.textContent=left;
+    if(cr)cr.style.borderColor=B[idx][2];
+    const r=$('#brRound'); if(r)r.textContent=rounds+1;
+    if(rounds>=4){ clearInterval(brTimer); brTimer=null; closeModal(); toast('Дыхание завершено — спокойствие и ясность','ok'); }
+  },1000);
+}
+function medHTML(m){
+  const t=todayISO();
+  const taken=m.taken[t]||[];
+  const nowMin=new Date().getHours()*60+new Date().getMinutes();
+  const rows=m.times.map(hm=>{
+    const parts=hm.split(':');
+    const mins=parseInt(parts[0],10)*60+(parseInt(parts[1],10)||0);
+    const done=taken.includes(hm);
+    const st=done?'Принято':mins<=nowMin?'Пропущено':'';
+    return `<span class="med-time ${done?'done':mins<=nowMin?'overdue':''}">${hm}${st?' · '+st:''}${done?`<button class="med-x" title="Отменить" onclick="medUndo('${m.id}','${hm}')">×</button>`:`<button class="med-take" title="Принято" onclick="medTake('${m.id}','${hm}')">✓</button>`}</span>`;
+  });
+  return `<div class="med-item ${m.active?'':'off'}">
+    <div class="med-name">${esc(m.name)}${m.dose?`<span class="med-dose">${esc(m.dose)}</span>`:''}
+      <span class="mini-actions">
+        <span class="mini" title="${m.active?'Отключить напоминания':'Включить напоминания'}" onclick="medToggle('${m.id}')">${m.active?ICON.pause:ICON.play}</span>
+        <span class="mini" title="Изменить" onclick="openMedModal('${m.id}')">${ICON.settings}</span>
+        <span class="mini" title="Удалить" onclick="deleteMed('${m.id}')">${ICON.trash}</span>
+      </span>
+    </div>
+    <div class="med-times">${rows.join('')}</div>
+  </div>`;
+}
 function renderPersonal(){
   const el=$('#personalWrap'); if(!el)return;
   const p=state.pomodoro;
@@ -3436,7 +3690,7 @@ function renderPersonal(){
   const left=pomoRunning?Math.max(0,Math.round((pomoEnd-Date.now())/1000)):pomoLeft;
   const off=pomoTotal>0?POMO_CIRC*(1-left/pomoTotal):0;
   const taskHtml=pomoTask?`<div class="pomo-focus-task">${ICON.pomo}<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(pomoTask.title)}</b><button class="b-btn ghost" onclick="openPomoTask()">Открыть</button><button class="b-btn ghost" onclick="pomoTask=null;renderPersonal()">Снять</button></div>`:'';
-  el.innerHTML=`<div class="p-card">
+  const pomoHtml=`<div class="p-card">
     <div class="p-card-head">${ICON.pomo} Помодоро — техника фокуса</div>
     <div class="pomo-wrap">
       <div class="pomo-ring">
@@ -3475,6 +3729,67 @@ function renderPersonal(){
       <div class="pomo-week">${week.map(w=>`<div class="pw-bar" style="height:${Math.max(4,Math.round(w.pm/maxPm*48))}px" title="${w.label}: ${w.pm}"><b>${w.pm||''}</b><span>${w.label}</span></div>`).join('')}</div>
     </div>
   </div>`;
+  const w=state.water;
+  const wToday=w.log[today]||0;
+  const wPct=Math.min(100,Math.round(wToday/w.goal*100));
+  const wweek=[];
+  for(let i=6;i>=0;i--){
+    const dt=new Date(); dt.setDate(dt.getDate()-i);
+    const k=dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+    wweek.push({ml:(w.log[k]||0),label:wd[dt.getDay()]});
+  }
+  const wMax=Math.max(1,...wweek.map(x=>x.ml));
+  const waterHtml=`<div class="p-card">
+    <div class="p-card-head">${ICON.water} Вода</div>
+    <div class="water-wrap">
+      <div class="water-glass">
+        <div class="wg-fill" style="height:${wPct}%"></div>
+        ${[25,50,75].map(m=>`<div class="wg-mark" style="bottom:${m}%"></div>`).join('')}
+      </div>
+      <div class="water-side">
+        <div class="water-today">Сегодня выпито: <b>${wToday} мл</b> из <b>${w.goal} мл</b> (${wPct}%)</div>
+        <div class="water-bar"><div style="width:${wPct}%"></div></div>
+        <div class="water-btns">
+          <button class="btn" onclick="waterAdd(100)">+100 мл</button>
+          <button class="btn" onclick="waterAdd(${w.glass})">Стакан (${w.glass})</button>
+          <button class="btn" onclick="waterAdd(300)">Кружка (300)</button>
+          <button class="btn" onclick="waterAdd(500)">Бутылка (500)</button>
+          <button class="btn ghost" title="Убрать последний объём" onclick="waterAdd(-${w.glass})">−</button>
+        </div>
+        <div class="water-settings">
+          <div class="field"><label>Цель, мл</label><input type="number" min="100" step="100" value="${w.goal}" onchange="waterSetGoal(this.value)"></div>
+          <div class="field"><label>Стакан, мл</label><input type="number" min="50" step="50" value="${w.glass}" onchange="waterSetGlass(this.value)"></div>
+          <div class="field" style="width:130px"><label>Напоминание</label>
+            <select onchange="waterSetEvery(this.value)"><option value="0" ${w.every===0?'selected':''}>Выкл</option>${[30,60,90,120,180].map(v=>`<option value="${v}" ${w.every===v?'selected':''}>Каждые ${v} мин</option>`).join('')}</select>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted)">Последние 7 дней</div>
+          <div class="pomo-week">${wweek.map(x=>`<div class="pw-bar" style="height:${Math.max(4,Math.round(x.ml/wMax*48))}px;background:linear-gradient(180deg,#38bdf8,#0ea5e9)" title="${x.label}: ${x.ml} мл"><b>${x.ml?Math.round(x.ml/100)/10+' л':''}</b><span>${x.label}</span></div>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  const mv=state.move;
+  const mvToday=mv.log[today]||0;
+  const lastEx=state._lastMoveEx||null;
+  const medsHtml=`<div class="p-card">
+    <div class="p-card-head">${ICON.med} Препараты <span class="mini-actions"><span class="mini" title="Добавить препарат" onclick="openMedModal(null)">${ICON.plus}</span></span></div>
+    ${state.meds.length?state.meds.map(medHTML).join(''):'<div class="med-empty">Препаратов пока нет. Добавьте первый — кнопкой «+».</div>'}
+  </div>`;
+  const moveHtml=`<div class="p-card">
+    <div class="p-card-head">${ICON.move} Разминка и движение</div>
+    <div class="move-row">
+      <label class="chk"><input type="checkbox" ${mv.enabled?'checked':''} onchange="moveToggle(this.checked)"> Напоминать вставать и разминаться</label>
+      <div class="field" style="width:120px"><label>Каждые, мин</label>
+        <select onchange="moveSetEvery(this.value)">${[30,45,60,90,120].map(v=>`<option value="${v}" ${mv.every===v?'selected':''}>${v} мин</option>`).join('')}</select>
+      </div>
+      <span class="pomo-stat">Сегодня разминок: <b>${mvToday}</b></span>
+    </div>
+    ${lastEx?`<div class="pomo-focus-task" style="background:#e6f8ef;border-color:#86d9b2">${ICON.move} Сейчас советует Сенсей: <b style="flex:1;min-width:0">${esc(lastEx.text)}</b><button class="b-btn ghost" onclick="moveDone()">Сделал</button></div>`:''}
+    <div class="move-exs">${MOVE_EX.map(ex=>`<div class="move-ex"><span>${ex.text}</span>${ex.ex==='breath'?`<button class="btn ghost" onclick="openBreathModal()">${ICON.wind} Дыхание</button>`:`<button class="btn ghost" onclick="moveDone()">Сделал</button>`}</div>`).join('')}</div>
+  </div>`;
+  el.innerHTML=pomoHtml+waterHtml+medsHtml+moveHtml;
 }
 
 /* ============================================================ render */
