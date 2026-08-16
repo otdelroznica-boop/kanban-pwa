@@ -2477,6 +2477,14 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
       return `<optgroup label="${nm}">${opts.join('')}</optgroup>`;
     }).join('');
     whereField=`<div class="field"><label>Организация / раздел</label><select id="tkCtx">${groups}</select></div>`;
+  } else if(t&&c&&!t.parentId){
+    const groups=state.orgs.map(o=>{
+      const nm=o.general?'Общее':esc(o.name);
+      const opts=[`<option value="o:${o.id}" ${c.key==='o:'+o.id?'selected':''}>${o.general?'Общее (без организации)':nm+' — карточки компании'}</option>`];
+      o.projects.forEach(p=>opts.push(`<option value="p:${p.id}" ${c.key==='p:'+p.id?'selected':''}>${nm} — ${esc(p.name)}</option>`));
+      return `<optgroup label="${nm}">${opts.join('')}</optgroup>`;
+    }).join('');
+    whereField=`<div class="field"><label>Организация / раздел</label><select id="tkCtx">${groups}</select></div>`;
   } else if(c){
     whereField=`<div class="field"><label>Организация / раздел</label><div class="field-ctx-label">${esc(ctxLabel(c))}</div></div>`;
   }
@@ -2624,6 +2632,22 @@ function saveTask(ctxKey,tid){
   if(tid){
     const ref=findTaskRef(tid,ctxKey);
     if(!ref){ toast('Задача не найдена','error'); return; }
+    const sel=$('#tkCtx');
+    if(sel&&sel.value&&ctxKey&&sel.value!==ctxKey){
+      const newC=ctxFromKey(sel.value);
+      if(!newC){ toast('Раздел не найден','error'); return; }
+      const oldArr=ctxTasks(ref.c);
+      const idx=oldArr.indexOf(ref.t);
+      const mover=ref.t;
+      if(idx>=0)oldArr.splice(idx,1);
+      Object.assign(mover,data);
+      applyFact(mover);
+      ctxTasks(newC).push(mover);
+      syncSubs(newC,mover);
+      toast('Задача перенесена в «'+ctxLabel(newC)+'»');
+      save(); closeModal(); render();
+      return;
+    }
     Object.assign(ref.t,data);
     applyFact(ref.t);
     syncSubs(ref.c,ref.t);
@@ -4504,6 +4528,7 @@ function playQuack(){
 function brainDuck(){
   const W=560,H=340;
   let score=0,level=1,left=60,over=false,ducks=[];
+  let gun={ang:Math.PI/2,kick:0,flash:0};
   const spawn=()=>{
     if(ducks.length>=1+level)return;
     ducks.push({
@@ -4545,6 +4570,42 @@ function brainDuck(){
     }
     ctx.restore();
   };
+  const drawGun=(ctx)=>{
+    if(over)return;
+    ctx.save();
+    ctx.translate(W/2,H-16);
+    ctx.rotate(gun.ang);
+    ctx.translate(-Math.cos(gun.ang)*gun.kick,-Math.sin(gun.ang)*gun.kick);
+    ctx.fillStyle='#7a4a21';
+    ctx.beginPath(); ctx.rect(-50,-9,32,18); ctx.fill();
+    ctx.strokeStyle='#5b3515'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#5b3515';
+    ctx.beginPath(); ctx.rect(-20,-6,14,12); ctx.fill();
+    ctx.fillStyle='#374151';
+    ctx.beginPath(); ctx.rect(-2,-15,10,30); ctx.fill();
+    ctx.fillStyle='#4b5563';
+    ctx.beginPath(); ctx.rect(0,-14,96,9); ctx.fill();
+    ctx.beginPath(); ctx.rect(0,-3,96,9); ctx.fill();
+    ctx.fillStyle='#6b7280';
+    ctx.beginPath(); ctx.rect(86,-15,10,30); ctx.fill();
+    if(gun.flash>0){
+      const fx=102,fy=0;
+      ctx.fillStyle='rgba(255,220,90,'+(gun.flash/3)+')';
+      ctx.beginPath(); ctx.arc(fx,fy,22,0,6.28); ctx.fill();
+      ctx.fillStyle='#ffd54d';
+      for(let i=0;i<10;i++){
+        const a=i/10*6.28;
+        ctx.beginPath();
+        ctx.moveTo(fx,fy);
+        ctx.lineTo(fx+Math.cos(a)*34,fy+Math.sin(a)*34);
+        ctx.lineTo(fx+Math.cos(a+0.28)*10,fy+Math.sin(a+0.28)*10);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.arc(fx,fy,9,0,6.28); ctx.fill();
+    }
+    ctx.restore();
+  };
   const draw=()=>{
     const cv=$('#duckCv');
     if(!cv){ duckStop(); return; }
@@ -4572,6 +4633,9 @@ function brainDuck(){
       if(d.y>H+40||d.y<-60||d.x<-60||d.x>W+60){ ducks.splice(ducks.indexOf(d),1); return; }
       drawDuck(ctx,d);
     });
+    if(gun.kick>0)gun.kick*=0.82;
+    if(gun.flash>0)gun.flash--;
+    drawGun(ctx);
   };
   const loop=setInterval(draw,33);
   const spawnT=setInterval(()=>{ if(!over)spawn(); },1500);
@@ -4595,7 +4659,7 @@ function brainDuck(){
     <div class="modal-body" style="text-align:center">
       <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
       <canvas id="duckCv" width="${W}" height="${H}" style="max-width:100%;cursor:crosshair;border-radius:10px;border:1px solid var(--border)"></canvas>
-      <div class="field-hint">Дикие утки вылетают из кустов — бейте, пока не улетели! Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
+      <div class="field-hint">Дикие утки вылетают из кустов — наводите двустволку и бейте, пока не улетели! Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
       <div id="duckRes" style="font-size:14px;margin-top:6px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
@@ -4603,19 +4667,28 @@ function brainDuck(){
       const cv=modal.querySelector('#duckCv');
       spawn(); spawn();
       draw();
+      cv.addEventListener('mousemove',e=>{
+        if(over)return;
+        const r=cv.getBoundingClientRect();
+        let my=(e.clientY-r.top)*H/r.height;
+        const mx=(e.clientX-r.left)*W/r.width;
+        if(my>H-20)my=H-20;
+        gun.ang=Math.atan2(my-(H-16),mx-W/2);
+      });
       cv.addEventListener('click',e=>{
         if(over)return;
         playShot();
+        gun.kick=10; gun.flash=3;
         const r=cv.getBoundingClientRect();
         const cx=(e.clientX-r.left)*W/r.width, cy=(e.clientY-r.top)*H/r.height;
         let hit=-1,bestD=1e9;
         ducks.forEach((d,i)=>{
-          if(d.dead)return;
+          if(typeof d.dead==='number')return;
           const dist=Math.hypot(cx-d.x,cy-d.y);
           if(dist<d.size*1.5&&dist<bestD){ bestD=dist; hit=i; }
         });
         if(hit>=0){
-          playQuack();
+          setTimeout(playQuack,200);
           score++;
           const nl=1+Math.floor(score/5);
           if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
