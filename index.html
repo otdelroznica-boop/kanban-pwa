@@ -675,6 +675,29 @@ body[data-theme="dark"] .move-ex{background:#1a1e33}
 .br-phase{font-weight:800;font-size:15px}
 .br-time{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
 .br-rounds{font-size:12.5px;color:var(--muted)}
+.sensei-fab{position:fixed;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;background:#fff;box-shadow:0 4px 14px rgba(20,25,50,.25);display:flex;align-items:center;justify-content:center;z-index:90;padding:0;transition:transform .15s}
+.sensei-fab:hover{transform:scale(1.07)}
+.sensei-fab svg{width:40px;height:40px}
+.sensei-bubble{position:fixed;right:18px;bottom:86px;width:300px;max-width:calc(100vw - 40px);background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 28px rgba(20,25,50,.22);padding:12px 12px 12px 14px;display:none;z-index:91;align-items:flex-start;gap:10px}
+.sensei-bubble.show{display:flex;animation:senseiIn .25s ease}
+.sensei-bubble.praise{border-color:#86d9b2}
+.sensei-bubble .sensei-face{flex-shrink:0}
+.sensei-bubble .sensei-text{flex:1;font-size:13px;line-height:1.45}
+.sensei-bubble .sensei-x{background:none;border:none;cursor:pointer;color:var(--muted);padding:0;display:flex}
+@keyframes senseiIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sensei-modal-quote{font-size:15px;font-weight:600;line-height:1.5;margin-top:12px}
+.sensei-set{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.sensei-bigface{flex-shrink:0}
+.sensei-states,.sensei-opts{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;align-items:end}
+.habit{display:flex;align-items:center;gap:10px;background:#f8f9fd;border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:7px}
+body[data-theme="dark"] .habit{background:#1a1e33}
+.habit.done{background:#e6f8ef;border-color:#86d9b2}
+.habit-cb{width:22px;height:22px;border-radius:7px;border:2px solid var(--muted);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;padding:0}
+.habit-cb.on{background:var(--ok);border-color:var(--ok)}
+.habit-name{flex:1;min-width:0;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.habit-auto{font-size:10.5px;font-weight:600;color:#0f9d63;background:#dff5e9;border-radius:5px;padding:1px 6px}
+body[data-theme="dark"] .habit-auto{background:#1d3322;color:#7dd08a}
+.habit-streak{font-size:12px;color:var(--muted);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -732,6 +755,9 @@ body[data-theme="dark"] .move-ex{background:#1a1e33}
     Компания
   </button>
 </header>
+
+<button class="sensei-fab" id="senseiFab" title="Сенсей" onclick="openSenseiModal()"></button>
+<div class="sensei-bubble" id="senseiBubble"></div>
 
 <div class="layout">
   <aside class="sidebar">
@@ -835,6 +861,7 @@ const ICON={
   settings:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5h.1a1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
   close:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
   check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  sensei:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M4 9 Q12 5 20 9"/><circle cx="9" cy="12.5" r="1.3" fill="currentColor"/><circle cx="15" cy="12.5" r="1.3" fill="currentColor"/><path d="M9.5 16.5 q2.5 2 5 0"/></svg>',
   up:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
   down:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>',
   flag:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a1 1 0 0 1 .6-.9 8 8 0 0 1 6.8 0A1 1 0 0 0 12 3h8v12h-8a1 1 0 0 1-1-1"/></svg>',
@@ -1032,7 +1059,7 @@ function defaultState(){
   return { version:3, expandedOrgs:[], columns:[
     {id:uid(),name:'Бэклог'},{id:uid(),name:'В работе'},{id:uid(),name:'Проверка'},{id:uid(),name:'Готово'},
   ], orgs:[{id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true}],
-    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{}}, notif:{} };
+    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{}}, notif:{}, sensei:{enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180}, habits:[] };
 }
 function normalize(s){
   if(!s.columns||!Array.isArray(s.columns)) return defaultState();
@@ -1089,6 +1116,20 @@ function normalize(s){
   if(!Number.isFinite(s.move.every)||s.move.every<10) s.move.every=45;
   if(!s.move.log||typeof s.move.log!=='object') s.move.log={};
   if(!s.notif||typeof s.notif!=='object') s.notif={};
+  if(!s.sensei||typeof s.sensei!=='object') s.sensei={enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180};
+  if(typeof s.sensei.enabled!=='boolean') s.sensei.enabled=true;
+  if(typeof s.sensei.kind!=='boolean') s.sensei.kind=true;
+  if(typeof s.sensei.strict!=='boolean') s.sensei.strict=true;
+  if(typeof s.sensei.calm!=='boolean') s.sensei.calm=true;
+  if(typeof s.sensei.quotes!=='boolean') s.sensei.quotes=true;
+  if(typeof s.sensei.voice!=='boolean') s.sensei.voice=false;
+  if(![60,120,180,300,480].includes(s.sensei.freq)) s.sensei.freq=180;
+  if(!Array.isArray(s.habits)) s.habits=[];
+  s.habits.forEach(h=>{
+    if(typeof h.name!=='string'||!h.name) h.name='Привычка';
+    if(!h.days||typeof h.days!=='object') h.days={};
+    if(h.auto&&!['water','move','meds'].includes(h.auto)) delete h.auto;
+  });
   if(!s.orgs.some(o=>o.general)) s.orgs.unshift({id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true});
   s.orgs.forEach(o=>{
     if(!Array.isArray(o.tasks)) o.tasks=[];
@@ -2143,8 +2184,10 @@ function bindDnD(body,colId){
       if(tc){ target=tc; const arr=ctxTasks(tc); const ibT=arr.find(x=>x.id===insertBefore.dataset.tid); const idx=arr.indexOf(ibT); if(idx>=0)arr.splice(idx,0,t); else arr.push(t); }
       else srcArr.push(t);
     } else srcArr.push(t);
+    const wasDone=isDone(t);
     t.columnId=colId;
     if(colId===doneColId()&&!t.completedDate)t.completedDate=todayISO();
+    if(!wasDone&&colId===doneColId())senseiPraise(t.title);
     syncSubs(target,t);
     dragged=null;
     save(); render();
@@ -3673,8 +3716,199 @@ function medHTML(m){
     <div class="med-times">${rows.join('')}</div>
   </div>`;
 }
+/* ============================================================ сенсей */
+const SEN_QUOTES={
+  kind:['Даже маленький шаг сегодня — это прогресс.','Ты сделал это. Уважение.','Каждая завершённая задача — кирпич в твою дисциплину.','Хорошо сделано. Продолжай в том же духе.','Я горжусь тобой, ученик.','Один помидор за раз — и гора сдаётся.','Ты становишься сильнее с каждым днём.','Не останавливайся — ты почти у цели.','Отличная работа. Так держать.','Твоя серия растёт — не разрывай её.','Вода, движение, фокус — ты всё делаешь верно.','Сегодня ты победил прокрастинацию. Снова.'],
+  strict:['Просроченные задачи не прощают лень. Действуй.','Хватит откладывать. Начни сейчас.','Слабый ищет причину, сильный — время.','Ты опять пропустил приём. Береги себя.','Разминка пропущена — тело помнит это.','Дисциплина или хаос — выбирай.','Никаких «потом». Только сейчас.','Проверь дедлайны — они не ждут.','Один раз заставил себя — станет привычкой.','Не подведи своего учителя.','Прокрастинация — враг. Ты — воин.','Вставай и делай. Слов достаточно.'],
+  calm:['Дыхание — якорь спокойствия.','Одна задача. Полная сосредоточенность.','Тишина и порядок — начало мудрости.','Не спеши. Кайдзен — это маленькие шаги.','Выдохни. Следующий шаг прост.','Разум в порядке — доска в порядке.','Проверь воду. Тело просит.','Помни: даже отдых — часть пути.','Сделай глубокий вдох и продолжай.','Порядок снаружи — покой внутри.','Один шаг за раз. Ты уже в пути.','Спокойствие — половина победы.']
+};
+function senseiFace(st,sz){
+  const col=st==='strict'?'#ef4444':st==='kind'?'#10b981':'#3b82f6';
+  const brow=st==='strict'?'<path d="M15 26 l11 -3 M49 26 l-11 -3" stroke="#fff" stroke-width="3" stroke-linecap="round"/>':'';
+  const mouth=st==='kind'?'<path d="M24 42 q8 8 16 0" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+    :st==='strict'?'<path d="M26 46 q6 -7 12 0" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+    :'<path d="M24 44 h16" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>';
+  const eyeY=st==='strict'?30:34;
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 64 64" fill="none">
+    <circle cx="32" cy="32" r="30" fill="${col}"/>
+    <path d="M4 22 Q32 10 60 22" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".9"/>
+    ${brow}
+    <circle cx="24" cy="${eyeY}" r="4" fill="#fff"/>
+    <circle cx="40" cy="${eyeY}" r="4" fill="#fff"/>
+    ${mouth}
+  </svg>`;
+}
+function medMissedToday(m){
+  const t=todayISO();
+  const taken=m.taken[t]||[];
+  const nowMin=new Date().getHours()*60+new Date().getMinutes();
+  return m.times.some(hm=>{ const p=hm.split(':'); return parseInt(p[0],10)*60+(parseInt(p[1],10)||0)<=nowMin&&!taken.includes(hm); });
+}
+function senseiState(){
+  const s=state.sensei;
+  if(!s.enabled)return 'calm';
+  const overdue=allTasks().some(t=>isOverdue(t)&&!isDone(t));
+  const miss=state.meds.some(m=>m.active&&medMissedToday(m));
+  if((overdue||miss)&&s.strict)return 'strict';
+  return s.kind&&Math.random()<0.5?'kind':(s.calm?'calm':'kind');
+}
+function senseiQuote(st){ const arr=SEN_QUOTES[st||'calm']; return arr[Math.floor(Math.random()*arr.length)]; }
+function senseiSpeak(text){
+  try{
+    if(!('speechSynthesis' in window))return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ru-RU';
+    u.rate=0.95;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+let senseiTimer=null;
+function senseiSay(text,st,praise){
+  const s=state.sensei;
+  if(!s.enabled)return;
+  st=st||senseiState();
+  if(!s[st])st=s.strict?'strict':s.kind?'kind':'calm';
+  const bubble=$('#senseiBubble');
+  if(bubble){
+    bubble.innerHTML=`<div class="sensei-face">${senseiFace(st,44)}</div><div class="sensei-text">${esc(text)}</div><button class="sensei-x" onclick="senseiHide()">${ICON.close}</button>`;
+    bubble.classList.toggle('praise',!!praise);
+    bubble.classList.add('show');
+    clearTimeout(senseiTimer);
+    senseiTimer=setTimeout(senseiHide,12000);
+    if(s.voice)senseiSpeak(text);
+  }
+}
+function senseiHide(){ const b=$('#senseiBubble'); if(b)b.classList.remove('show'); }
+function senseiShoot(){
+  if(!state.sensei.enabled||!state.sensei.quotes)return;
+  const st=senseiState();
+  senseiSay(senseiQuote(st),st);
+}
+function senseiPraise(title){
+  const s=state.sensei;
+  if(!s.enabled)return;
+  const st=s.kind?'kind':'calm';
+  const texts=[
+    'Задача «'+title+'» выполнена. Уважение, ученик.',
+    '«'+title+'» — готово. Ты движешься вперёд.',
+    'Отлично: «'+title+'» закрыта. Так держать.',
+    '«'+title+'» — ещё один шаг к мастерству.',
+    'Хорошая работа: «'+title+'». Кайдзен в действии.'
+  ];
+  senseiSay(texts[Math.floor(Math.random()*texts.length)],st,true);
+}
+let senseiShootT=null;
+function senseiReschedule(){
+  if(senseiShootT)clearTimeout(senseiShootT);
+  const min=state.sensei.freq||180;
+  senseiShootT=setTimeout(()=>{ senseiShoot(); senseiReschedule(); },Math.round(min*60000*(0.7+Math.random()*0.6)));
+}
+function senseiSet(k,v){
+  if(k==='freq')v=parseInt(v,10)||180;
+  state.sensei[k]=v;
+  save();
+  if(k==='freq')senseiReschedule();
+  if(k==='enabled'&&!v){ senseiHide(); }
+  if(k==='voice'&&!v){ try{ speechSynthesis.cancel(); }catch(e){} }
+  updateSenseiFab();
+  renderPersonal();
+}
+function updateSenseiFab(){ const f=$('#senseiFab'); if(f)f.innerHTML=senseiFace(senseiState(),40); }
+function openSenseiModal(){
+  if(!state.sensei.enabled)senseiSet('enabled',true);
+  const st=senseiState();
+  openModal(`
+    <div class="modal-head"><h3>Сенсей</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body" style="text-align:center">
+      ${senseiFace(st,110)}
+      <div class="sensei-modal-quote" id="senseiQuote">${esc(senseiQuote(st))}</div>
+      <div style="margin-top:12px"><button class="btn ghost" onclick="senseiNewQuote()">Ещё цитату</button></div>
+      <div class="field-hint" style="margin-top:12px">Сенсей подбадривает, хвалит и ругает по делу. Состояния и частота — во вкладке «Личное».</div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal();setTab('personal')">Настройки</button><button class="btn primary" onclick="closeModal()">Закрыть</button></div>`);
+}
+function senseiNewQuote(){ const q=$('#senseiQuote'); if(q)q.textContent=senseiQuote(senseiState()); }
+/* ============================================================ привычки */
+function habitStreak(h){
+  let s=0; const d=new Date();
+  while(true){
+    const k=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    if(!h.days[k])break;
+    s++; d.setDate(d.getDate()-1);
+    if(s>3650)break;
+  }
+  return s;
+}
+function habitsAutoUpdate(){
+  const t=todayISO();
+  const wT=state.water.log[t]||0;
+  const mvT=state.move.log[t]||0;
+  const medsOk=state.meds.some(m=>m.active)&&state.meds.filter(m=>m.active).every(m=>{ const tk=m.taken[t]||[]; return m.times.every(hm=>tk.includes(hm)); });
+  let changed=false;
+  state.habits.forEach(h=>{
+    let done=false;
+    if(h.auto==='water')done=wT>0&&wT>=state.water.goal;
+    else if(h.auto==='move')done=mvT>0;
+    else if(h.auto==='meds')done=medsOk;
+    if(done){ if(!h.days[t]){h.days[t]=true; changed=true;} }
+    else { if(h.days[t]){delete h.days[t]; changed=true;} }
+  });
+  if(changed)save();
+}
+function habitToggle(id){
+  const h=state.habits.find(x=>x.id===id); if(!h||h.auto)return;
+  const t=todayISO();
+  if(h.days[t])delete h.days[t]; else h.days[t]=true;
+  save(); renderPersonal();
+}
+function openHabitModal(id){
+  const h=id?state.habits.find(x=>x.id===id):null;
+  const autoOpts=[['','Нет — отмечаю сам'],['water','Авто: вода'],['move','Авто: разминка'],['meds','Авто: препараты']];
+  openModal(`
+    <div class="modal-head"><h3>${h?'Привычка':'Новая привычка'}</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Название</label><input id="habName" maxlength="60" value="${h?esc(h.name):''}" placeholder="Например: Читать 10 минут"></div>
+      <div class="field"><label>Автоотметка</label><select id="habAuto">${autoOpts.map(([v,l])=>`<option value="${v}" ${h&&h.auto===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="field-hint">Автоотметка привязана к модулям: цель по воде, все приёмы препаратов, хотя бы одна разминка за день.</div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="saveHabit('${id||''}')">Сохранить</button></div>`,
+    modal=>{ const i=modal.querySelector('#habName'); if(i)i.focus(); });
+}
+function saveHabit(id){
+  const inp=$('#habName'); if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){ toast('Укажите название привычки','error'); return; }
+  const auto=$('#habAuto').value;
+  if(id){ const h=state.habits.find(x=>x.id===id); if(h){h.name=name; h.auto=auto||null;} }
+  else state.habits.push({id:uid(),name,auto:auto||null,days:{}});
+  save(); closeModal(); renderPersonal();
+}
+function deleteHabit(id){
+  const h=state.habits.find(x=>x.id===id);
+  if(!h||!confirm('Удалить привычку «'+h.name+'»?'))return;
+  state.habits=state.habits.filter(x=>x.id!==id);
+  save(); renderPersonal();
+}
+function habitHTML(h){
+  const t=todayISO();
+  const done=!!h.days[t];
+  const streak=habitStreak(h);
+  const autoLabel=h.auto?{water:'авто: вода',move:'авто: разминка',meds:'авто: препараты'}[h.auto]:'';
+  const st=streak===1?'день':streak>=2&&streak<=4?'дня':'дней';
+  return `<div class="habit ${done?'done':''}">
+    <button class="habit-cb ${done?'on':''}" ${h.auto?'title="Отмечается автоматически"':'onclick="habitToggle(\''+h.id+'\')"'}>${done?ICON.check:''}</button>
+    <span class="habit-name">${esc(h.name)}${autoLabel?` <span class="habit-auto">${autoLabel}</span>`:''}</span>
+    <span class="habit-streak" title="Серия дней подряд">Серия: <b>${streak}</b> ${st}</span>
+    <span class="mini-actions">
+      <span class="mini" title="Изменить" onclick="openHabitModal('${h.id}')">${ICON.settings}</span>
+      <span class="mini" title="Удалить" onclick="deleteHabit('${h.id}')">${ICON.trash}</span>
+    </span>
+  </div>`;
+}
 function renderPersonal(){
   const el=$('#personalWrap'); if(!el)return;
+  habitsAutoUpdate();
   const p=state.pomodoro;
   const today=todayISO();
   const d=p.log[today]||{pomos:0,secs:0};
@@ -3789,7 +4023,35 @@ function renderPersonal(){
     ${lastEx?`<div class="pomo-focus-task" style="background:#e6f8ef;border-color:#86d9b2">${ICON.move} Сейчас советует Сенсей: <b style="flex:1;min-width:0">${esc(lastEx.text)}</b><button class="b-btn ghost" onclick="moveDone()">Сделал</button></div>`:''}
     <div class="move-exs">${MOVE_EX.map(ex=>`<div class="move-ex"><span>${ex.text}</span>${ex.ex==='breath'?`<button class="btn ghost" onclick="openBreathModal()">${ICON.wind} Дыхание</button>`:`<button class="btn ghost" onclick="moveDone()">Сделал</button>`}</div>`).join('')}</div>
   </div>`;
-  el.innerHTML=pomoHtml+waterHtml+medsHtml+moveHtml;
+  const s=state.sensei;
+  const senseiHtml=`<div class="p-card">
+    <div class="p-card-head">${ICON.sensei} Сенсей</div>
+    <div class="sensei-set">
+      <div class="sensei-bigface">${senseiFace(senseiState(),56)}</div>
+      <div style="flex:1;min-width:230px">
+        <label class="chk"><input type="checkbox" ${s.enabled?'checked':''} onchange="senseiSet('enabled',this.checked)"> Сенсей включён</label>
+        <div class="sensei-states">
+          ${['kind','strict','calm'].map(st=>`<label class="chk"><input type="checkbox" ${s[st]?'checked':''} onchange="senseiSet('${st}',this.checked)"> ${st==='kind'?'Добрый':st==='strict'?'Строгий':'Спокойный'}</label>`).join('')}
+        </div>
+        <div class="sensei-opts">
+          <label class="chk"><input type="checkbox" ${s.quotes?'checked':''} onchange="senseiSet('quotes',this.checked)"> Цитаты и советы</label>
+          <label class="chk"><input type="checkbox" ${s.voice?'checked':''} onchange="senseiSet('voice',this.checked)"> Озвучивать речью</label>
+        </div>
+        <div class="sensei-opts">
+          <div class="field" style="width:150px"><label>Говорить примерно</label>
+            <select onchange="senseiSet('freq',this.value)">${[[60,'Каждый час'],[120,'Раз в 2 часа'],[180,'Раз в 3 часа'],[300,'Раз в 5 часов'],[480,'Редко (8 ч)']].map(([v,l])=>`<option value="${v}" ${s.freq===v?'selected':''}>${l}</option>`).join('')}</select>
+          </div>
+          <button class="btn ghost" onclick="senseiShoot()">Сказать что-нибудь</button>
+        </div>
+        <div class="field-hint" style="margin-top:8px">Состояние выбирается по ситуации: просроченное — строгий, выполненное — добрый, тишина — спокойный.</div>
+      </div>
+    </div>
+  </div>`;
+  const habitsHtml=`<div class="p-card">
+    <div class="p-card-head">${ICON.check} Привычки <span class="mini-actions"><span class="mini" title="Добавить привычку" onclick="openHabitModal(null)">${ICON.plus}</span></span></div>
+    ${state.habits.length?state.habits.map(habitHTML).join(''):'<div class="med-empty">Привычек пока нет. Добавьте первую — например «Читать 10 минут». Вода, препараты и разминка могут отмечаться сами.</div>'}
+  </div>`;
+  el.innerHTML=pomoHtml+waterHtml+medsHtml+moveHtml+senseiHtml+habitsHtml;
 }
 
 /* ============================================================ render */
@@ -3818,6 +4080,7 @@ function render(){
   else if(currentTab==='notes')renderNotes();
   else if(currentTab==='personal')renderPersonal();
   else if(currentTab==='report')initReport();
+  updateSenseiFab();
   refreshTimerLabels();
 }
 
@@ -3851,6 +4114,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   updateHeader();
   render();
+  updateSenseiFab();
+  senseiReschedule();
+  if(state.sensei.enabled){
+    setTimeout(()=>{
+      const h=new Date().getHours();
+      const st=senseiState();
+      senseiSay(h<12?'Доброе утро, ученик. Начнём день с малого?':h>=20?'День клонится к вечеру. Проверь дедлайны и выпей воды.':'Привет, ученик. Что сегодня займёт твой фокус?',st);
+    },1500);
+  }
   if('serviceWorker' in navigator){
     try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
   }
