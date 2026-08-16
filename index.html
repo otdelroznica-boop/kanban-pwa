@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Канбан — задачи, события, напоминания</title>
+<title>Кайдзен — задачи, события, напоминания</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -450,6 +450,8 @@ body[data-theme="dark"] .report-table tr.ctx-head td{background:#2a2f4a;color:#d
 .report-table tr.total td{background:#fbf7ea;font-weight:700;border-top:2px solid var(--warn);font-variant-numeric:tabular-nums}
 body[data-theme="dark"] .report-table tr.total td{background:#33301f}
 .report-table .t-title{font-weight:600}
+.report-table .rep-cmt{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#4caf50;background:#e8f5e9;border:1px solid #b9e4c0;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+body[data-theme="dark"] .report-table .rep-cmt{background:#1d3322;color:#7dd08a;border-color:#2e5a38}
 .report-table .t-desc{color:var(--muted);font-size:12px;margin-top:2px}
 .report-table .t-resp{white-space:nowrap}
 .report-empty{padding:60px;text-align:center;color:var(--muted);font-size:14px}
@@ -619,7 +621,7 @@ body[data-theme="dark"] .chip.rep{color:#fbd38d;background:#40331c;border-color:
     <div class="logo-badge">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
     </div>
-    <span>Канбан</span>
+    <span>Кайдзен</span>
   </div>
   <button class="icon-btn btn-burger" id="btnBurger" title="Структура (компании и проекты)">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -1437,7 +1439,7 @@ function checkReminders(){
 function fireReminder(job,ctxKey,tid){
   showBanner({...job,ctxKey,tid});
   if(state.settings.notifications&&'Notification' in window&&Notification.permission==='granted'){
-    try{ new Notification('Канбан · '+job.label,{body:job.text,tag:job.key,requireInteraction:true,vibrate:[350,120,350,120,350]}); }catch(e){}
+    try{ new Notification('Кайдзен · '+job.label,{body:job.text,tag:job.key,requireInteraction:true,vibrate:[350,120,350,120,350]}); }catch(e){}
   }
 }
 setInterval(checkReminders,20000);
@@ -2849,8 +2851,9 @@ function buildReport(){
     html+=`<tr class="ctx-head"><td colspan="7">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}${pct===null?'':` · Выполнение: ${pct}%`}</span></td></tr>`;
     gr.forEach(r=>{
       const pr=PRIO[r.t.priority||'med'];
-      html+=`<tr>
-        <td><div class="t-title">${esc(r.t.title)}</div>${r.t.desc?`<div class="t-desc">${esc(r.t.desc)}</div>`:''}</td>
+      const cmts=(r.t.comments||[]).length;
+      html+=`<tr style="cursor:pointer" onclick="openCardModal('${r.t.id}','${r.c.key}')">
+        <td><div class="t-title">${esc(r.t.title)}${cmts?` <span class="rep-cmt" title="Комментариев: ${cmts}">${ICON.cmt} ${cmts}</span>`:''}</div>${r.t.desc?`<div class="t-desc">${esc(r.t.desc)}</div>`:''}</td>
         <td class="t-resp">${esc(r.resp||'—')}</td>
         <td>${esc(r.status)}</td>
         <td style="color:${pr.color}">${pr.label}</td>
