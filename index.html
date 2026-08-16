@@ -355,7 +355,10 @@ body[data-theme="dark"] .lrow:hover{border-color:#3a4162}
 .lrow.l-done .l-title{color:var(--muted);text-decoration:line-through}
 .lrow .l-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .lrow .l-chips .chip{font-size:11.5px;padding:1px 7px}
-.lrow .l-run{color:var(--warn);font-size:13px;flex-shrink:0;animation:pulse 1.6s infinite}
+.lrow .l-timer{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.lrow .l-timer .tt{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.lrow .l-timer .tt.running{color:var(--warn)}
+.lrow .l-timer .timer-btn{width:26px;height:26px;border-radius:6px}
 .lrow .l-who{font-size:12px;color:var(--muted);flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cli{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;padding:3px 2px;border-radius:5px;cursor:pointer}
 .cli:hover{background:var(--soft)}
@@ -1902,6 +1905,7 @@ function cardHTML(c,t){
 }
 function listRowHTML(c,t){
   const spent=totalSpent(t);
+  const running=!!t.timer;
   const overdue=isOverdue(t);
   const done=isDone(t);
   const cc=colColor(t.columnId);
@@ -1926,7 +1930,11 @@ function listRowHTML(c,t){
       <div class="l-title">${esc(t.title)}</div>
       ${chips.length?`<div class="l-chips">${chips.join('')}</div>`:''}
     </div>
-    ${t.timer?`<span class="l-run" title="Идёт замер">●</span>`:''}
+    ${running||spent>0||t.estimate?`<span class="l-timer">
+      ${running?`<span class="live-dot" title="Идёт замер"></span>`:''}
+      <span class="tt ${running?'running':''}" id="tt-${t.id}">${running?'Идёт замер: '+fmtHMS(spent):fmtDur(spent)}</span>
+      <button class="timer-btn ${running?'stop':'start'}" title="${running?'Остановить':'Запустить таймер'}" onclick="event.stopPropagation();toggleTimer('${c.key}','${t.id}')">${running?ICON.pause:ICON.play}</button>
+    </span>`:''}
     ${t.responsible?`<span class="l-who">${esc(t.responsible)}</span>`:''}
   </div>`;
 }
