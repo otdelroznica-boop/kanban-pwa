@@ -728,10 +728,16 @@ body[data-theme="dark"] .dig-genre{background:#1a1e33}
 .dig-genre li{font-size:13px;margin:4px 0}
 .dig-genre a{color:var(--text);text-decoration:none}
 .dig-genre a:hover{color:var(--accent);text-decoration:underline}
-.sensei-tip{display:flex;gap:10px;align-items:center;background:#e6f8ef;border:1px solid #86d9b2;border-radius:10px;padding:10px 12px;font-size:13px}
+.sensei-tip{display:flex;gap:10px;align-items:center;background:#e6f8ef;border:1px solid #86d9b2;border-radius:10px;padding:10px 12px;font-size:13px;color:#0f5132}
+body[data-theme="dark"] .sensei-tip{background:#14281d;border-color:#2f6b4a;color:#c9e8d8}
+.lurv-chip{font-weight:700}
+.lurv-chip[data-l="0"]{color:#64748b}
+.lurv-chip[data-l="1"]{color:#0ea5e9}
+.lurv-chip[data-l="2"]{color:#f59e0b}
+.lurv-chip[data-l="3"]{color:#0f9d63}
 .brain-wrap{display:flex;flex-direction:column;gap:14px}
 .tongue-bar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:10px}
-.tongue-view{height:190px;overflow:hidden;position:relative;background:#f8f9fd;border:1px solid var(--border);border-radius:10px;margin:10px 0}
+.tongue-view{height:400px;overflow:hidden;position:relative;background:#f8f9fd;border:1px solid var(--border);border-radius:10px;margin:10px 0}
 body[data-theme="dark"] .tongue-view{background:#1a1e33}
 .tongue-run{position:absolute;left:0;right:0;bottom:0;transform:translateY(0);white-space:pre-wrap;font-size:20px;font-weight:600;line-height:1.5;text-align:center;padding:0 18px;color:var(--text)}
 .tongue-level{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;font-size:11.5px;font-weight:700;padding:2px 8px}
@@ -754,6 +760,20 @@ body[data-theme="dark"] .bg-card{background:#1a1e33}
 .bg-pad.go{background:#ef4444;cursor:pointer}
 .bg-pad.nope{background:#94a3b8}
 .bg-mem-nums{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:30px;font-weight:800;letter-spacing:2px;margin:16px 0;font-variant-numeric:tabular-nums}
+.duck-hud{display:flex;gap:16px;justify-content:center;font-size:14px;margin-bottom:8px}
+.sol-top{display:flex;gap:10px;align-items:flex-start;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.sol-card{width:64px;height:88px;border-radius:8px;background:#fff;border:1px solid #cbd5e1;box-shadow:0 1px 2px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;position:relative;cursor:pointer;user-select:none;color:#0f172a;font-size:15px;line-height:1.2}
+.sol-card.red{color:#dc2626}
+.sol-card.down{background:linear-gradient(135deg,#1d4ed8,#1e40af);border-color:#1e3a8a;color:#fff}
+.sol-back{font-size:20px}
+.sol-card.sel{outline:3px solid var(--accent);outline-offset:-2px}
+.sol-stock,.sol-base{width:64px;height:88px}
+.sol-base{display:flex;align-items:center;justify-content:center}
+.sol-base-sym{font-size:26px;color:var(--muted)}
+.sol-cols{display:flex;gap:10px;justify-content:center;overflow-x:auto;padding-bottom:6px}
+.sol-col{width:64px;min-height:88px;position:relative;display:flex;flex-direction:column;align-items:center}
+.sol-col .sol-empty{position:absolute;inset:0;border:1.5px dashed var(--border);border-radius:8px}
+.sol-wrap{width:64px;height:88px;position:relative}
 </style>
 </head>
 <body>
@@ -1121,7 +1141,7 @@ function defaultState(){
   return { version:3, expandedOrgs:[], columns:[
     {id:uid(),name:'Бэклог'},{id:uid(),name:'В работе'},{id:uid(),name:'Проверка'},{id:uid(),name:'Готово'},
   ], orgs:[{id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true}],
-    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{}}, notif:{}, sensei:{enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180}, habits:[], digest:{enabled:true,city:'Москва',genres:['technology','world'],time:'08:00',last:''}, brain:{level:'10-й кю',speed:60,done:{},reads:0,readsToday:0,readsDay:'',scores:{math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0}}} };
+    archive:[], docs:[], templates:[], notes:[], settings:{sound:true,notifications:false,theme:'light'}, respFilter:'', tagFilter:'', selPrio:'', pomodoro:{duration:25,short:5,long:15,cycles:4,log:{}}, water:{goal:2000,glass:250,weight:70,age:30,auto:false,remind:true,every:90,log:{}}, meds:[], move:{enabled:true,every:45,log:{}}, notif:{}, sensei:{enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180}, habits:[], digest:{enabled:true,city:'Москва',genres:['technology','world'],time:'08:00',last:''}, brain:{level:'10-й кю',speed:60,done:{},laps:{},reads:0,readsToday:0,readsDay:'',scores:{math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0},duck:{best:0,last:0},tetris:{best:0,last:0},solitaire:{best:0,last:0,wins:0}}} };
 }
 function normalize(s){
   if(!s.columns||!Array.isArray(s.columns)) return defaultState();
@@ -1161,6 +1181,9 @@ function normalize(s){
   if(!s.water||typeof s.water!=='object') s.water={};
   if(!Number.isFinite(s.water.goal)||s.water.goal<100) s.water.goal=2000;
   if(!Number.isFinite(s.water.glass)||s.water.glass<50) s.water.glass=250;
+  if(!Number.isFinite(s.water.weight)||s.water.weight<20||s.water.weight>250) s.water.weight=70;
+  if(!Number.isFinite(s.water.age)||s.water.age<10||s.water.age>110) s.water.age=30;
+  if(typeof s.water.auto!=='boolean') s.water.auto=false;
   if(typeof s.water.remind!=='boolean') s.water.remind=true;
   if(!Number.isFinite(s.water.every)||s.water.every<0) s.water.every=90;
   if(!s.water.log||typeof s.water.log!=='object') s.water.log={};
@@ -1198,13 +1221,15 @@ function normalize(s){
   if(!Array.isArray(s.digest.genres)||!s.digest.genres.length) s.digest.genres=['technology','world'];
   if(typeof s.digest.time!=='string'||!/^\d{2}:\d{2}$/.test(s.digest.time)) s.digest.time='08:00';
   if(typeof s.digest.last!=='string') s.digest.last='';
-  if(!s.brain||typeof s.brain!=='object') s.brain={level:'10-й кю',speed:60,done:{},reads:0,readsToday:0,readsDay:'',scores:{math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0}}};
+  if(!s.brain||typeof s.brain!=='object') s.brain={level:'10-й кю',speed:60,done:{},laps:{},reads:0,readsToday:0,readsDay:'',scores:{math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0},duck:{best:0,last:0},tetris:{best:0,last:0},solitaire:{best:0,last:0,wins:0}}};
   if(!s.brain.done||typeof s.brain.done!=='object') s.brain.done={};
+  if(!s.brain.laps||typeof s.brain.laps!=='object') s.brain.laps={};
   if(typeof s.brain.speed!=='number'||s.brain.speed<10||s.brain.speed>120) s.brain.speed=60;
   if(typeof s.brain.reads!=='number') s.brain.reads=0;
   if(typeof s.brain.readsToday!=='number') s.brain.readsToday=0;
-  if(!s.brain.scores||typeof s.brain.scores!=='object') s.brain.scores={math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0}};
-  ['math','mem','react'].forEach(k=>{ if(!s.brain.scores[k])s.brain.scores[k]={best:0,last:0}; });
+  if(!s.brain.scores||typeof s.brain.scores!=='object') s.brain.scores={math:{best:0,last:0},mem:{best:0,last:0},react:{best:0,last:0},duck:{best:0,last:0},tetris:{best:0,last:0},solitaire:{best:0,last:0,wins:0}};
+  ['math','mem','react','duck','tetris'].forEach(k=>{ if(!s.brain.scores[k])s.brain.scores[k]={best:0,last:0}; });
+  if(!s.brain.scores.solitaire||typeof s.brain.scores.solitaire!=='object') s.brain.scores.solitaire={best:0,last:0,wins:0};
   if(!s.orgs.some(o=>o.general)) s.orgs.unshift({id:'_general',name:'Общее',color:'#94a3b8',tasks:[],projects:[],general:true});
   s.orgs.forEach(o=>{
     if(!Array.isArray(o.tasks)) o.tasks=[];
@@ -2140,6 +2165,16 @@ function renderBoard(){
   });
   bindBoardEvents();
 }
+const LURV_NAMES=['Л — создан','У — заполнен','Р — согласован','В — подписан'];
+function lurvShort(l){ return ['Л','У','Р','В'][l||0]; }
+function lurvFull(l){ return LURV_NAMES[l||0]; }
+function lurvNext(ctxKey,tid){
+  const ref=findTaskRef(tid,ctxKey);
+  if(!ref)return;
+  ref.t.lurv=((ref.t.lurv||0)+1)%4;
+  save(); render();
+  toast('ЛУРВ: '+lurvFull(ref.t.lurv));
+}
 function cardHTML(c,t){
   const spent=totalSpent(t);
   const running=!!t.timer;
@@ -2168,6 +2203,7 @@ function cardHTML(c,t){
   if(subs.length)chips.push(`<span class="chip" title="Подзадачи">▸ ${subDone}/${subs.length}</span>`);
   if((t.attachments||[]).length)chips.push(`<span class="chip" title="Вложения">${ICON.attach} ${t.attachments.length}</span>`);
   if((t.comments||[]).length)chips.push(`<span class="chip" title="Комментарии">${ICON.cmt} ${t.comments.length}</span>`);
+  chips.push(`<span class="chip lurv-chip" data-l="${t.lurv||0}" title="ЛУРВ: ${lurvFull(t.lurv)} — клик: следующий статус" onclick="event.stopPropagation();lurvNext('${c.key}','${t.id}')">ЛУРВ: ${lurvShort(t.lurv)}</span>`);
   if(view.type==='all')chips.push(`<span class="chip proj" title="Раздел">${esc(ctxLabel(c))}</span>`);
   let prog='';
   if(t.estimate&&spent>0){
@@ -2460,6 +2496,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
         <div class="evt-hide"><label>Приоритет</label><select id="tkPrio">${prioOpts}</select></div>
         <div class="evt-hide"><label>Ответственный</label><input type="text" id="tkResp" list="respList" value="${t?esc(t.responsible||''):''}" placeholder="Кто делает?"><datalist id="respList">${responsibleList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
         <div><label>Статус</label><select id="tkCol">${colsOpts}</select></div>
+        <div class="evt-hide"><label>ЛУРВ</label><select id="tkLurv">${[0,1,2,3].map(l=>`<option value="${l}" ${(t?(t.lurv||0):0)===l?'selected':''}>${lurvFull(l)}</option>`).join('')}</select></div>
       </div></div>
       <div class="field evt-hide"><label>Метки (через запятую)</label><input type="text" id="tkTags" list="tagList" value="${esc(tagVal)}" placeholder="Например: срочно, клиент, аналитика"><datalist id="tagList">${tagList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
       <div class="field evt-hide"><div class="row">
@@ -2549,6 +2586,7 @@ function collectTaskInputs(){
     responsible:$('#tkResp').value.trim(),
     columnId:$('#tkCol').value,
     priority:$('#tkPrio').value,
+    lurv:parseInt($('#tkLurv').value,10)||0,
     tags:[...new Set(tags)],
     estimate:isFinite(est)&&est>0?est:(type==='event'?1:null),
     actualHours:isFinite(fact)&&fact>=0?fact:null,
@@ -3156,7 +3194,7 @@ function buildReport(){
   html+=chartHTML(chartData(f));
   if(!rows.length){ html+=`<div class="report-empty">За выбранный период нет данных.</div>`; body.innerHTML=html; return; }
   html+=`<table class="report-table"><thead><tr>
-    <th style="width:34%">Задача</th><th>Ответственный</th><th>Статус</th><th>Приоритет</th>
+    <th style="width:34%">Задача</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Приоритет</th>
     <th class="num">Оценка</th><th class="num">Замеров</th><th class="num">Время за период</th>
   </tr></thead><tbody>`;
   const grouped=new Map();
@@ -3165,7 +3203,7 @@ function buildReport(){
     const gr=grouped.get(c.key); if(!gr)return;
     const sub=gr.reduce((s,r)=>s+r.spent,0);
     const pct=ctxPct(c);
-    html+=`<tr class="ctx-head"><td colspan="7">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}${pct===null?'':` · Выполнение: ${pct}%`}</span></td></tr>`;
+    html+=`<tr class="ctx-head"><td colspan="8">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}${pct===null?'':` · Выполнение: ${pct}%`}</span></td></tr>`;
     gr.forEach(r=>{
       const pr=PRIO[r.t.priority||'med'];
       const cmts=(r.t.comments||[]).length;
@@ -3173,6 +3211,7 @@ function buildReport(){
         <td><div class="t-title">${esc(r.t.title)}${cmts?` <span class="rep-cmt" title="Комментариев: ${cmts}">${ICON.cmt} ${cmts}</span>`:''}</div>${r.t.desc?`<div class="t-desc">${esc(r.t.desc)}</div>`:''}</td>
         <td class="t-resp">${esc(r.resp||'—')}</td>
         <td>${esc(r.status)}</td>
+        <td><span class="lurv-chip" data-l="${r.t.lurv||0}" title="${lurvFull(r.t.lurv)}">${lurvFull(r.t.lurv)}</span></td>
         <td style="color:${pr.color}">${pr.label}</td>
         <td class="num">${r.estimate?fmtDur(r.estimate*3600):'—'}</td>
         <td class="num">${r.count}</td>
@@ -3180,7 +3219,7 @@ function buildReport(){
       </tr>`;
     });
   });
-  html+=`<tr class="total"><td colspan="4">Итого</td><td class="num"></td><td class="num">${totalCount}</td><td class="num">${fmtDur(totalSec)}</td></tr>`;
+  html+=`<tr class="total"><td colspan="5">Итого</td><td class="num"></td><td class="num">${totalCount}</td><td class="num">${fmtDur(totalSec)}</td></tr>`;
   html+='</tbody></table>';
   body.innerHTML=html;
 }
@@ -3188,11 +3227,11 @@ function reportCsv(){
   const f=repFilters();
   f.fromMs=new Date(f.from+'T00:00:00').getTime(); f.toMs=new Date(f.to+'T23:59:59.999').getTime();
   const rows=reportRows(f);
-  let csv='\uFEFFРаздел;Задача;Что делали (описание);Ответственный;Приоритет;Статус;Оценка;Замеров;Время (чч:мм:сс)\n';
+  let csv='\uFEFFРаздел;Задача;Что делали (описание);Ответственный;Приоритет;Статус;ЛУРВ;Оценка;Замеров;Время (чч:мм:сс)\n';
   rows.forEach(r=>{
     const dur=new Date(r.spent*1000).toISOString().substr(11,8);
     const q=s=>'"'+(s||'').replace(/"/g,'""')+'"';
-    csv+=q(ctxLabel(r.c))+';'+q(r.t.title)+';'+q(r.t.desc)+';'+q(r.resp||'')+';'+q((PRIO[r.t.priority||'med']).label)+';'+q(r.status)+';'+q(r.estimate?fmtDur(r.estimate*3600):'')+';'+r.count+';'+dur+'\n';
+    csv+=q(ctxLabel(r.c))+';'+q(r.t.title)+';'+q(r.t.desc)+';'+q(r.resp||'')+';'+q((PRIO[r.t.priority||'med']).label)+';'+q(r.status)+';'+q(lurvFull(r.t.lurv))+';'+q(r.estimate?fmtDur(r.estimate*3600):'')+';'+r.count+';'+dur+'\n';
   });
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
@@ -3206,9 +3245,9 @@ function reportExcel(){
   const f=repFilters();
   f.fromMs=new Date(f.from+'T00:00:00').getTime(); f.toMs=new Date(f.to+'T23:59:59.999').getTime();
   const rows=reportRows(f);
-  let t='<table border="1" cellpadding="4" cellspacing="0"><tr style="background:#eef0ff"><th>Раздел</th><th>Задача</th><th>Описание</th><th>Ответственный</th><th>Статус</th><th>Оценка</th><th>Замеров</th><th>Время (сек)</th><th>Время</th></tr>';
+  let t='<table border="1" cellpadding="4" cellspacing="0"><tr style="background:#eef0ff"><th>Раздел</th><th>Задача</th><th>Описание</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Оценка</th><th>Замеров</th><th>Время (сек)</th><th>Время</th></tr>';
   rows.forEach(r=>{
-    t+=`<tr><td>${esc(ctxLabel(r.c))}</td><td>${esc(r.t.title)}</td><td>${esc(r.t.desc||'')}</td><td>${esc(r.resp||'')}</td><td>${esc(r.status)}</td><td>${r.estimate?fmtDur(r.estimate*3600):''}</td><td>${r.count}</td><td>${r.spent}</td><td>${fmtDur(r.spent)}</td></tr>`;
+    t+=`<tr><td>${esc(ctxLabel(r.c))}</td><td>${esc(r.t.title)}</td><td>${esc(r.t.desc||'')}</td><td>${esc(r.resp||'')}</td><td>${esc(r.status)}</td><td>${esc(lurvFull(r.t.lurv))}</td><td>${r.estimate?fmtDur(r.estimate*3600):''}</td><td>${r.count}</td><td>${r.spent}</td><td>${fmtDur(r.spent)}</td></tr>`;
   });
   t+='</table>';
   const htmlDoc=`<html><head><meta charset="utf-8"></head><body>${t}</body></html>`;
@@ -3706,6 +3745,27 @@ function waterAdd(ml){
 function waterSetGoal(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=100){ state.water.goal=n; save(); renderPersonal(); } }
 function waterSetGlass(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=50){ state.water.glass=n; save(); renderPersonal(); } }
 function waterSetEvery(v){ state.water.every=parseInt(v,10)||0; save(); renderPersonal(); }
+function waterCalcGoal(){
+  const w=parseInt(state.water.weight,10)||0;
+  const a=parseInt(state.water.age,10)||0;
+  if(w<20||w>250){ toast('Укажите корректный вес','error'); return null; }
+  let goal=w*30;
+  if(a>=65) goal*=0.85;
+  else if(a>=50) goal*=0.9;
+  goal=Math.max(500,Math.round(goal/50)*50);
+  return goal;
+}
+function waterAutoGoal(on){
+  state.water.auto=!!on;
+  if(on){
+    const g=waterCalcGoal();
+    if(g){ state.water.goal=g; toast('Цель по воде: '+g+' мл (вес '+state.water.weight+' кг)','ok'); }
+    else state.water.auto=false;
+  }
+  save(); renderPersonal();
+}
+function waterSetWeight(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=20&&n<=250){ state.water.weight=n; if(state.water.auto){ const g=waterCalcGoal(); if(g)state.water.goal=g; } save(); renderPersonal(); } }
+function waterSetAge(v){ const n=parseInt(v,10); if(isFinite(n)&&n>=10&&n<=110){ state.water.age=n; if(state.water.auto){ const g=waterCalcGoal(); if(g)state.water.goal=g; } save(); renderPersonal(); } }
 
 /* ---- препараты ---- */
 function openMedModal(mid){
@@ -4081,13 +4141,13 @@ const TONGUE_LEVELS=[
   {lvl:'4-й дан',items:['Была у Фрола — Фролу на Лавра наврала, пойдёт к Лавру — Лавру на Фрола наврёт.','От топота копыт пыль по полю летит, от копыт топота по полю пыль летит.','В Чите течёт Читинка, течёт не та Читинка, что в Чите.']},
   {lvl:'5-й дан',items:['В четверг четвёртого числа в четыре с четвертью часа четыре чёрненьких чумазеньких чертёнка чертили чёрными чернилами чертёж.','Лигурийский регулировщик регулировал в Лигурии, а лигурийский лигуриец лигурийскость лигурийскую имел.']}
 ];
-let tongueRun=null,tongueTimer=null,tonguePos=0,tongueCur=null;
+let tongueTimer=null,tonguePos=0,tongueTexts=[],tongueHalf=0;
 let brainTimers=[];
 function tonguePick(){
   const lvl=TONGUE_LEVELS.find(l=>l.lvl===state.brain.level)||TONGUE_LEVELS[0];
-  const fresh=lvl.items.filter(i=>!state.brain.done[lvl.lvl+':'+i]);
-  const pool=fresh.length?fresh:lvl.items;
-  tongueCur=pool[Math.floor(Math.random()*pool.length)];
+  const items=[...lvl.items];
+  for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]]; }
+  tongueTexts=[...items,...items];
   tonguePos=0;
   tongueStop();
   renderTongue();
@@ -4096,10 +4156,11 @@ function tongueTick(){
   const el=$('#tongueRun');
   if(!el){ tongueStop(); return; }
   tonguePos+=tongueSpeed*0.05;
+  if(tongueHalf>0&&tonguePos>=tongueHalf)tonguePos-=tongueHalf;
   el.style.transform='translateY('+(-tonguePos)+'px)';
 }
 function tongueStart(){
-  if(!tongueCur)tonguePick();
+  if(!tongueTexts.length)tonguePick();
   if(tongueTimer){ clearInterval(tongueTimer); tongueTimer=null; }
   tongueTimer=setInterval(tongueTick,50);
   const b=$('#btnTongueStart'); if(b)b.textContent='Пауза';
@@ -4113,14 +4174,14 @@ function tongueSpeedSet(v){
 function renderTongue(){
   const el=$('#tongueRun');
   if(!el)return;
-  el.textContent=tongueCur||'Нажмите «Новая скороговорка», чтобы начать';
+  el.textContent=tongueTexts.length?tongueTexts.join('\n\n'):'Нажмите «Новая скороговорка», чтобы начать';
   el.style.transform='translateY(0)';
+  tongueHalf=el.scrollHeight/2;
 }
 function brainDone(){
-  if(!tongueCur)return;
   const lvl=state.brain.level;
-  const key=lvl+':'+tongueCur;
-  state.brain.done[key]=true;
+  if(!tongueTexts.length)tonguePick();
+  state.brain.laps[lvl]=(state.brain.laps[lvl]||0)+1;
   state.brain.reads++;
   const t=todayISO();
   if(state.brain.readsDay!==t){ state.brain.readsDay=t; state.brain.readsToday=0; }
@@ -4128,8 +4189,8 @@ function brainDone(){
   save();
   tonguePick();
   const st=state.sensei;
-  if(st.enabled)senseiSay('Отличная дикция, ученик! Уровень «'+lvl+'» — ещё один шаг к мастерству.',st.kind?'kind':'calm',true);
-  toast('Прочитано!','ok');
+  if(st.enabled)senseiSay('Отличная дикция, ученик! Уровень «'+lvl+'» — ещё один круг.',st.kind?'kind':'calm',true);
+  toast('Круг пройден!','ok');
 }
 function brainSetLevel(v){ state.brain.level=v; save(); tonguePick(); }
 function brainSetSpeed(v){ state.brain.speed=parseInt(v,10)||60; save(); }
@@ -4139,35 +4200,38 @@ function renderBrain(){
   const t=todayISO();
   if(b.readsDay!==t){ b.readsDay=t; b.readsToday=0; }
   const lvl=TONGUE_LEVELS.find(l=>l.lvl===b.level)||TONGUE_LEVELS[0];
-  const doneCount=lvl.items.filter(i=>b.done[lvl.lvl+':'+i]).length;
+  const lapsCount=b.laps[b.level]||0;
   const s=b.scores;
   el.innerHTML=`
   <div class="p-card">
-    <div class="p-card-head">${ICON.brain} Скороговорки — дикция и скорость речи <span class="tongue-level">${b.level}</span> <span class="tongue-prog">${doneCount}/${lvl.items.length} прочитано</span></div>
+    <div class="p-card-head">${ICON.brain} Скороговорки — дикция и скорость речи <span class="tongue-level">${b.level}</span> <span class="tongue-prog">кругов пройдено: ${lapsCount}</span></div>
     <div class="tongue-bar">
       <div class="field" style="width:130px"><label>Уровень</label>
         <select onchange="brainSetLevel(this.value)">${TONGUE_LEVELS.map(l=>`<option value="${l.lvl}" ${l.lvl===b.level?'selected':''}>${l.lvl}</option>`).join('')}</select>
       </div>
-      <button class="btn ghost" onclick="tonguePick()">${ICON.brain} Новая скороговорка</button>
+      <button class="btn ghost" onclick="tonguePick()">${ICON.brain} Новая лента</button>
       <div class="field" style="flex:1;min-width:180px"><label>Скорость движения</label>
         <div class="tongue-ctrl"><input type="range" min="10" max="120" step="5" value="${b.speed}" oninput="tongueSpeedSet(this.value)" onchange="brainSetSpeed(this.value)"><span class="tongue-speed-lbl" id="tongueSpeedLbl">${b.speed<35?'медленно':b.speed<80?'средне':'быстро'}</span></div>
       </div>
     </div>
-    <div class="tongue-view"><div class="tongue-run" id="tongueRun">Нажмите «Новая скороговорка», чтобы начать</div></div>
+    <div class="tongue-view"><div class="tongue-run" id="tongueRun">Нажмите «Новая лента», чтобы начать</div></div>
     <div class="tongue-ctrl">
       <button class="btn primary" id="btnTongueStart" onclick="tongueTimer?tonguePause():tongueStart()">Старт</button>
       <button class="btn ghost" onclick="tongueStop()">Сброс</button>
-      <button class="btn" onclick="brainDone()">Прочитано ✓</button>
+      <button class="btn" onclick="brainDone()">Круг пройден ✓</button>
       <span class="tongue-prog">Сегодня: <b>${b.readsToday}</b> · всего: <b>${b.reads}</b></span>
     </div>
-    <div class="field-hint" style="margin-top:8px">Текст движется снизу вверх — читайте вслух, не отставая. Когда одолели уровень, переходите к следующему: кю — ученические ранги, дан — мастерские.</div>
+    <div class="field-hint" style="margin-top:8px">Все скороговорки уровня собраны в одну ленту — читайте вслух, не отставая. Лента закольцована, каждый полный проход — один круг. Когда одолели уровень, переходите к следующему: кю — ученические ранги, дан — мастерские.</div>
   </div>
   <div class="p-card">
     <div class="p-card-head">${ICON.brain} Мини-тренировки — 3 минуты в день</div>
     <div class="bg-grid">
       <div class="bg-card"><h4>${ICON.brain} Математика</h4><p>Решите как можно больше примеров за 30 секунд.</p><div class="bg-score">Рекорд: <b>${s.math.best}</b> · последний: ${s.math.last}</div><button class="btn primary" onclick="brainMath()">Играть</button></div>
       <div class="bg-card"><h4>${ICON.brain} Память</h4><p>Запомните ряд чисел — с каждым раундом длиннее.</p><div class="bg-score">Рекорд: <b>${s.mem.best}</b> чисел · последний: ${s.mem.last}</div><button class="btn primary" onclick="brainMem()">Играть</button></div>
-      <div class="bg-card"><h4>${ICON.brain} Реакция</h4><p>Нажмите, как только поле станет красным.</p><div class="bg-score">Рекорд: <b>${s.react.best}</b> мс · последний: ${s.react.last}</div><button class="btn primary" onclick="brainReact()">Играть</button></div>
+      <div class="bg-card"><h4>${ICON.brain} Реакция</h4><p>Нажмите, как только поле станет красным. 5 раундов.</p><div class="bg-score">Рекорд: <b>${s.react.best}</b> мс · последний: ${s.react.last}</div><button class="btn primary" onclick="brainReact()">Играть</button></div>
+      <div class="bg-card"><h4>${ICON.brain} Охотник на уток</h4><p>Стреляйте по уткам за 60 секунд — уровень растёт.</p><div class="bg-score">Рекорд: <b>${s.duck.best}</b> · последний: ${s.duck.last}</div><button class="btn primary" onclick="brainDuck()">Играть</button></div>
+      <div class="bg-card"><h4>${ICON.brain} Тетрис</h4><p>Классика: собирайте линии, не дайте стакану заполниться.</p><div class="bg-score">Рекорд: <b>${s.tetris.best}</b> · последний: ${s.tetris.last}</div><button class="btn primary" onclick="brainTetris()">Играть</button></div>
+      <div class="bg-card"><h4>${ICON.brain} Косынка</h4><p>Пасьянс: разложите карты по мастям от туза.</p><div class="bg-score">Побед: <b>${s.solitaire.wins}</b> · лучший: ${s.solitaire.best?s.solitaire.best+' мин':'—'}</div><button class="btn primary" onclick="brainSolitaire()">Играть</button></div>
     </div>
   </div>
   <div class="p-card">
@@ -4176,10 +4240,10 @@ function renderBrain(){
       <span>Скороговорок прочитано: <b>${b.reads}</b></span>
       <span>Сегодня: <b>${b.readsToday}</b></span>
       <span>Уровень: <b>${b.level}</b></span>
-      <span>Освоено уровней: <b>${TONGUE_LEVELS.filter(l=>l.items.every(i=>b.done[l.lvl+':'+i])).length}/${TONGUE_LEVELS.length}</b></span>
+      <span>Освоено уровней: <b>${TONGUE_LEVELS.filter(l=>(b.laps[l.lvl]||0)>=2).length}/${TONGUE_LEVELS.length}</b></span>
     </div>
   </div>`;
-  if(!tongueCur)tonguePick();
+  if(!tongueTexts.length)tonguePick();
 }
 /* ---- мини-игры ---- */
 function brainSaveScore(k,val){
@@ -4236,8 +4300,9 @@ function brainMath(){
       brainTimers.push(tm);
     });
 }
+let memGame=null;
 function brainMem(){
-  let len=4,status='show';
+  let len=4,inpTimer=null,left=20;
   const nums=Array.from({length:len},()=>Math.floor(Math.random()*90)+10);
   openModal(`
     <div class="modal-head"><h3>${ICON.brain} Память — числа</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
@@ -4246,80 +4311,499 @@ function brainMem(){
       <div class="bg-mem-nums" id="mgmNums">${nums.join(' ')}</div>
       <div class="field-hint" id="mgmHint">Запоминайте…</div>
       <input id="mgmInp" type="text" style="text-align:center;font-size:18px" placeholder="Числа через пробел" disabled>
+      <div id="mgmTime" style="font-size:13px;color:var(--warn);margin-top:6px"></div>
       <div id="mgmRes" style="font-size:14px;margin-top:8px"></div>
     </div>
-    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
+    <div class="modal-foot"><button class="btn ghost" onclick="memGame&&memGame.skip()">Пропустить раунд</button><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
     modal=>{
       const numsEl=modal.querySelector('#mgmNums');
       const inp=modal.querySelector('#mgmInp');
-      let hideT=setTimeout(()=>{
-        numsEl.style.filter='blur(8px)';
-        inp.disabled=false;
-        inp.focus();
-        modal.querySelector('#mgmHint').textContent='Введите числа в том же порядке';
-      },2400);
-      brainTimers.push(hideT);
+      const timeEl=modal.querySelector('#mgmTime');
+      const stopInpTimer=()=>{ if(inpTimer){ clearInterval(inpTimer); inpTimer=null; } timeEl.textContent=''; };
+      const endGame=msg=>{
+        stopInpTimer();
+        brainSaveScore('mem',len-1);
+        modal.querySelector('#mgmRes').textContent=msg+' Рекорд: '+state.brain.scores.mem.best+' чисел';
+        inp.disabled=true;
+        toast('Память: '+len+' чисел — рекорд '+state.brain.scores.mem.best);
+        const st=state.sensei;
+        if(st.enabled)senseiSay('Память тренируется ежедневно. Завтра будет больше!',st.kind?'kind':'calm',true);
+      };
+      const startInput=()=>{
+        if(inpTimer)clearInterval(inpTimer);
+        left=20;
+        timeEl.textContent='Ввод: '+left+' с';
+        inpTimer=setInterval(()=>{
+          left--;
+          timeEl.textContent='Ввод: '+left+' с';
+          if(left<=0){ stopInpTimer(); endGame('Время на ввод вышло — запомнили '+(len-1)+' чисел. '); }
+        },1000);
+        brainTimers.push(inpTimer);
+      };
+      const showNums=()=>{
+        numsEl.style.filter='none';
+        numsEl.textContent=nums.join(' ');
+        inp.disabled=true;
+        modal.querySelector('#mgmHint').textContent='Запоминайте…';
+        brainTimers.push(setTimeout(()=>{
+          numsEl.style.filter='blur(8px)';
+          inp.disabled=false;
+          inp.focus();
+          modal.querySelector('#mgmHint').textContent='Введите числа в том же порядке';
+          startInput();
+        },2400));
+      };
+      const nextRound=()=>{
+        nums.length=0; nums.push(...Array.from({length:len},()=>Math.floor(Math.random()*90)+10));
+        modal.querySelector('#mgmLen').textContent='Раунд '+(len-3)+' · запомните '+len+' чисел';
+        showNums();
+      };
+      memGame={skip(){
+        if(inp.disabled)return;
+        inp.value='';
+        modal.querySelector('#mgmRes').textContent='Раунд пропущен — новый ряд той же длины';
+        nextRound();
+      }};
+      showNums();
       inp.addEventListener('keydown',e=>{
-        if(e.key!=='Enter')return;
+        if(e.key!=='Enter'||inp.disabled)return;
         const given=inp.value.trim().split(/\s+/).map(Number);
         inp.value='';
         const ok=given.length===nums.length&&nums.every((n,i)=>given[i]===n);
         if(ok){
           len++;
-          const next=Array.from({length:len},()=>Math.floor(Math.random()*90)+10);
-          nums.length=0; nums.push(...next);
-          modal.querySelector('#mgmLen').textContent='Раунд '+len+' · запомните '+len+' чисел';
-          numsEl.style.filter='none';
-          numsEl.textContent=nums.join(' ');
-          inp.disabled=true;
-          modal.querySelector('#mgmHint').textContent='Запоминайте…';
-          hideT=setTimeout(()=>{
-            numsEl.style.filter='blur(8px)';
-            inp.disabled=false;
-            inp.focus();
-            modal.querySelector('#mgmHint').textContent='Введите числа в том же порядке';
-          },2400);
-          brainTimers.push(hideT);
+          nextRound();
         } else {
-          brainSaveScore('mem',len-1);
-          modal.querySelector('#mgmRes').textContent='Серия прервана — запомнили '+len+' чисел. Рекорд: '+state.brain.scores.mem.best;
-          inp.disabled=true;
-          toast('Память: '+len+' чисел — рекорд '+state.brain.scores.mem.best);
-          const st=state.sensei;
-          if(st.enabled)senseiSay('Память тренируется ежедневно. Завтра будет больше!',st.kind?'kind':'calm',true);
+          endGame('Серия прервана — запомнили '+(len-1)+' чисел. ');
         }
       });
     });
 }
 function brainReact(){
-  let ready=false,t0=0,done=false;
+  let ready=false,t0=0,round=0,total=5,times=[],tooEarly=false;
   openModal(`
-    <div class="modal-head"><h3>${ICON.brain} Реакция</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-head"><h3>${ICON.brain} Реакция — 5 раундов</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
     <div class="modal-body" style="text-align:center">
       <div class="bg-pad waiting" id="bgPad">Ждите зелёного…</div>
-      <div id="bgRes" style="font-size:15px;margin-top:10px"></div>
+      <div id="bgRound" style="font-size:13px;color:var(--muted);margin-top:8px">Раунд 1 из 5</div>
+      <div id="bgRes" style="font-size:15px;margin-top:6px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
     modal=>{
       const pad=modal.querySelector('#bgPad');
-      let delay=setTimeout(()=>{
-        ready=true; t0=Date.now();
-        pad.className='bg-pad go';
-        pad.textContent='ЖМИ!';
-      },1200+Math.random()*2800);
-      brainTimers.push(delay);
-      pad.onclick=()=>{
-        if(!ready){ clearTimeout(delay); pad.className='bg-pad nope'; pad.textContent='Слишком рано — попробуйте ещё раз'; modal.querySelector('#bgRes').textContent='Слишком рано!'; ready=false; delay=setTimeout(()=>{ ready=true; t0=Date.now(); pad.className='bg-pad go'; pad.textContent='ЖМИ!'; },1200+Math.random()*2800); brainTimers.push(delay); return; }
-        const ms=Date.now()-t0;
-        brainSaveScore('react',ms);
+      const roundEl=modal.querySelector('#bgRound');
+      const resEl=modal.querySelector('#bgRes');
+      let delay=null;
+      const arm=()=>{
+        clearTimeout(delay);
+        delay=setTimeout(()=>{
+          ready=true; t0=Date.now();
+          pad.className='bg-pad go';
+          pad.textContent='ЖМИ!';
+        },1200+Math.random()*2800);
+        brainTimers.push(delay);
+      };
+      const finish=()=>{
+        ready=false;
+        const best=Math.min(...times);
+        const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+        brainSaveScore('react',best);
+        resEl.textContent='Итог: лучший '+best+' мс · средний '+avg+' мс · рекорд: '+state.brain.scores.react.best+' мс';
+        roundEl.textContent='Готово — 5 раундов';
         pad.className='bg-pad waiting';
         pad.textContent='Готово';
-        modal.querySelector('#bgRes').textContent='Ваша реакция: '+ms+' мс · рекорд: '+state.brain.scores.react.best+' мс';
-        done=true;
+        toast('Реакция: лучший '+best+' мс — рекорд '+state.brain.scores.react.best+' мс');
         const st=state.sensei;
-        if(st.enabled)senseiSay(ms<250?'Молниеносно!':'Неплохо. Внимание — навык, который можно натренировать.',st.kind?'kind':'calm',true);
+        if(st.enabled)senseiSay(best<250?'Молниеносно!':'Неплохо. Внимание — навык, который можно натренировать.',st.kind?'kind':'calm',true);
       };
+      pad.onclick=()=>{
+        if(ready){
+          ready=false;
+          const ms=Date.now()-t0;
+          times.push(ms);
+          round++;
+          resEl.textContent='Раунд '+round+': '+ms+' мс';
+          pad.className='bg-pad waiting';
+          pad.textContent='Ждите зелёного…';
+          if(round>=total){ finish(); return; }
+          roundEl.textContent='Раунд '+(round+1)+' из '+total;
+          brainTimers.push(setTimeout(()=>{ if(round<total)arm(); },1200));
+        } else if(!tooEarly){
+          tooEarly=true;
+          clearTimeout(delay);
+          pad.className='bg-pad nope';
+          pad.textContent='Слишком рано';
+          resEl.textContent='Слишком рано — раунд повторится';
+          brainTimers.push(setTimeout(()=>{ tooEarly=false; pad.className='bg-pad waiting'; pad.textContent='Ждите зелёного…'; arm(); },800));
+        }
+      };
+      arm();
     });
+}
+/* ---- Охотник на уток ---- */
+function ac(){ try{ audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended')audioCtx.resume(); }catch(e){ return null; } return audioCtx; }
+function playShot(){
+  const a=ac(); if(!a)return;
+  const dur=0.12;
+  const buf=a.createBuffer(1,Math.floor(a.sampleRate*dur),a.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const src=a.createBufferSource(); src.buffer=buf;
+  const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1800;
+  const g=a.createGain(); g.gain.setValueAtTime(0.5,a.currentTime); g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);
+  src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+}
+function playQuack(){
+  const a=ac(); if(!a)return;
+  const t=a.currentTime;
+  [0,0.07].forEach(dt=>{
+    const o=a.createOscillator(); o.type='sawtooth';
+    const g=a.createGain();
+    o.frequency.setValueAtTime(380+Math.random()*120,t+dt);
+    o.frequency.exponentialRampToValueAtTime(850+Math.random()*200,t+dt+0.08);
+    g.gain.setValueAtTime(0.001,t+dt);
+    g.gain.exponentialRampToValueAtTime(0.14,t+dt+0.015);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dt+0.09);
+    o.connect(g); g.connect(a.destination); o.start(t+dt); o.stop(t+dt+0.1);
+  });
+}
+function brainDuck(){
+  const W=560,H=340;
+  let score=0,level=1,left=60,over=false,ducks=[];
+  const spawn=()=>{
+    if(ducks.length>=3+level)return;
+    const fromLeft=Math.random()<0.5;
+    ducks.push({
+      x:fromLeft?-50:W+50,
+      baseY:60+Math.random()*(H-170),
+      vx:(fromLeft?1:-1)*(1+level*0.35)*(0.7+Math.random()*0.6),
+      amp:18+Math.random()*26, freq:0.5+Math.random()*1.1, phase:Math.random()*6.28,
+      size:Math.max(12,26-(level-1)*2)
+    });
+  };
+  const draw=()=>{
+    const cv=$('#duckCv');
+    if(!cv){ duckStop(); return; }
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle='#7dd3fc'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#38bdf8'; ctx.fillRect(0,0,W,30);
+    ctx.fillStyle='#0284c7'; ctx.fillRect(0,H-60,W,60);
+    ctx.fillStyle='#0369a1'; ctx.fillRect(0,H-30,W,30);
+    ctx.fillStyle='#075985';
+    for(let i=0;i<12;i++)ctx.fillRect(10+i*50,H-64-(i%3)*8,8,5);
+    ducks.forEach(d=>{
+      d.x+=d.vx;
+      d.phase+=d.freq*0.06;
+      if(d.x>W+60)d.x=-60;
+      if(d.x<-60)d.x=W+60;
+      const y=d.baseY+Math.sin(d.phase)*d.amp;
+      ctx.save(); ctx.translate(d.x,y); if(d.vx<0)ctx.scale(-1,1);
+      ctx.fillStyle='#fbbf24'; ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.62,0,0,6.28); ctx.fill();
+      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(d.size*0.72,-d.size*0.55,d.size*0.4,0,6.28); ctx.fill();
+      ctx.fillStyle='#ea580c'; ctx.beginPath(); ctx.moveTo(d.size*1.02,-d.size*0.6); ctx.lineTo(d.size*1.45,-d.size*0.48); ctx.lineTo(d.size*1.02,-d.size*0.36); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(d.size*0.82,-d.size*0.62,d.size*0.11,0,6.28); ctx.fill();
+      ctx.fillStyle='#0f172a'; ctx.beginPath(); ctx.arc(d.size*0.85,-d.size*0.62,d.size*0.055,0,6.28); ctx.fill();
+      ctx.fillStyle='#d97706'; ctx.beginPath(); ctx.ellipse(-d.size*0.15,d.size*0.08,d.size*0.55,d.size*0.32,0.25,0,6.28); ctx.fill();
+      ctx.restore();
+    });
+  };
+  const loop=setInterval(draw,33);
+  const spawnT=setInterval(spawn,1800);
+  const timerT=setInterval(()=>{
+    left--;
+    const t=$('#duckTime'); if(t)t.textContent=left+' с';
+    if(left<=0){
+      over=true;
+      duckStop();
+      brainSaveScore('duck',score);
+      const res=$('#duckRes'); if(res)res.textContent='Время вышло! Попаданий: '+score+' · рекорд: '+state.brain.scores.duck.best;
+      toast('Утки: '+score+' — рекорд '+state.brain.scores.duck.best);
+      const st=state.sensei;
+      if(st.enabled)senseiSay(score>=25?'Меткий стрелок!':'Хорошая охота. Скорость глаз — это навык.',st.kind?'kind':'calm',true);
+    }
+  },1000);
+  brainTimers.push(loop,spawnT,timerT);
+  function duckStop(){ clearInterval(loop); clearInterval(spawnT); clearInterval(timerT); }
+  openModal(`
+    <div class="modal-head"><h3>${ICON.brain} Охотник на уток — 60 секунд</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body" style="text-align:center">
+      <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
+      <canvas id="duckCv" width="${W}" height="${H}" style="max-width:100%;cursor:crosshair;border-radius:10px;border:1px solid var(--border)"></canvas>
+      <div class="field-hint">Кликайте по уткам. Каждые 5 попаданий — уровень выше: утки быстрее и меньше.</div>
+      <div id="duckRes" style="font-size:14px;margin-top:6px"></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
+    modal=>{
+      const cv=modal.querySelector('#duckCv');
+      spawn(); spawn(); spawn();
+      draw();
+      cv.addEventListener('click',e=>{
+        if(over)return;
+        playShot();
+        const r=cv.getBoundingClientRect();
+        const cx=(e.clientX-r.left)*W/r.width, cy=(e.clientY-r.top)*H/r.height;
+        let hit=-1,bestD=1e9;
+        ducks.forEach((d,i)=>{
+          const y=d.baseY+Math.sin(d.phase)*d.amp;
+          const dist=Math.hypot(cx-d.x,cy-y);
+          if(dist<d.size*1.4&&dist<bestD){ bestD=dist; hit=i; }
+        });
+        if(hit>=0){
+          playQuack();
+          score++;
+          const nl=1+Math.floor(score/5);
+          if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
+          const s=$('#duckScore'); if(s)s.textContent=score;
+          ducks.splice(hit,1);
+          spawn();
+        }
+      });
+    });
+}
+/* ---- Тетрис ---- */
+let tetGame=null;
+window.addEventListener('keydown',e=>{
+  if(!tetGame||!tetGame.move)return;
+  if(e.key==='ArrowLeft')tetGame.move(-1);
+  else if(e.key==='ArrowRight')tetGame.move(1);
+  else if(e.key==='ArrowDown')tetGame.plus();
+  else if(e.key==='ArrowUp')tetGame.rotate();
+  else if(e.key===' '){ e.preventDefault(); tetGame.hardDrop(); }
+  tetGame.draw();
+});
+const TET_SHAPES=[
+  {m:[[1,1,1,1]],c:'#22d3ee'},
+  {m:[[1,1],[1,1]],c:'#facc15'},
+  {m:[[0,1,0],[1,1,1]],c:'#a78bfa'},
+  {m:[[0,1,1],[1,1,0]],c:'#4ade80'},
+  {m:[[1,1,0],[0,1,1]],c:'#f87171'},
+  {m:[[1,0,0],[1,1,1]],c:'#60a5fa'},
+  {m:[[0,0,1],[1,1,1]],c:'#fb923c'}
+];
+function brainTetris(){
+  const COLS=10,ROWS=20,CELL=26;
+  let grid=Array.from({length:ROWS},()=>Array(COLS).fill(0));
+  let cur=null,next=null,score=0,lines=0,level=1,over=false,tickT=null;
+  const randShape=()=>{ const s=TET_SHAPES[Math.floor(Math.random()*TET_SHAPES.length)]; return {m:s.m.map(r=>r.slice()),c:s.c}; };
+  const spawnShape=()=>{
+    cur=next||randShape();
+    next=randShape();
+    cur.x=Math.floor((COLS-cur.m[0].length)/2); cur.y=0;
+    if(collide(cur)){ gameOver(); return false; }
+    drawNext();
+    return true;
+  };
+  const collide=(p,g)=>{ g=g||grid; for(let y=0;y<p.m.length;y++)for(let x=0;x<p.m[y].length;x++){ if(!p.m[y][x])continue; const nx=p.x+x,ny=p.y+y; if(nx<0||nx>=COLS||ny>=ROWS)return true; if(ny>=0&&g[ny][nx])return true; } return false; };
+  const lock=()=>{
+    for(let y=0;y<cur.m.length;y++)for(let x=0;x<cur.m[y].length;x++){ if(!cur.m[y][x])continue; const ny=cur.y+y; if(ny<0){ gameOver(); return; } grid[ny][cur.x+x]=cur.c; }
+    let cleared=0;
+    for(let y=ROWS-1;y>=0;y--){ if(grid[y].every(v=>v!==0)){ grid.splice(y,1); grid.unshift(Array(COLS).fill(0)); cleared++; y++; } }
+    if(cleared){ lines+=cleared; score+=cleared*100*level; const nl=1+Math.floor(lines/10); if(nl!==level){ level=nl; const l=$('#tetLevel'); if(l)l.textContent=level; adjustTick(); } const s=$('#tetScore'); if(s)s.textContent=score; }
+    if(!spawnShape())return;
+  };
+  const rotate=()=>{
+    const m=cur.m;
+    const rm=m[0].map((_,i)=>m.map(r=>r[i]).reverse());
+    const p={...cur,m:rm};
+    if(!collide(p))cur.m=rm;
+  };
+  const move=(dx)=>{
+    const p={...cur,x:cur.x+dx};
+    if(!collide(p))cur.x+=dx;
+  };
+  const drop=()=>{
+    const p={...cur,y:cur.y+1};
+    if(!collide(p)){ cur.y++; return false; }
+    lock();
+    return true;
+  };
+  const hardDrop=()=>{ while(!collide({...cur,y:cur.y+1}))cur.y++; lock(); };
+  const adjustTick=()=>{ if(tickT){ clearInterval(tickT); tickT=setInterval(tick,Math.max(120,700-level*50)); brainTimers.push(tickT); } };
+  const tick=()=>{ drop(); draw(); };
+  const gameOver=()=>{
+    over=true;
+    if(tickT){ clearInterval(tickT); tickT=null; }
+    brainSaveScore('tetris',score);
+    const res=$('#tetRes'); if(res)res.textContent='Игра окончена! Счёт: '+score+' · рекорд: '+state.brain.scores.tetris.best;
+    toast('Тетрис: '+score+' — рекорд '+state.brain.scores.tetris.best);
+    const st=state.sensei;
+    if(st.enabled)senseiSay('Тетрис — отличная гимнастика для мозга. Сыграем ещё?',st.kind?'kind':'calm',true);
+  };
+  const draw=()=>{
+    const cv=$('#tetCv'); if(!cv){ if(tickT){ clearInterval(tickT); tickT=null; } tetGame=null; return; }
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
+    for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+      if(grid[y][x]){ ctx.fillStyle=grid[y][x]; ctx.fillRect(x*CELL+1,y*CELL+1,CELL-2,CELL-2); }
+    }
+    if(cur)for(let y=0;y<cur.m.length;y++)for(let x=0;x<cur.m[y].length;x++){
+      if(cur.m[y][x]){ ctx.fillStyle=cur.c; ctx.fillRect((cur.x+x)*CELL+1,(cur.y+y)*CELL+1,CELL-2,CELL-2); }
+    }
+  };
+  const drawNext=()=>{
+    const cv=$('#tetNext'); if(!cv)return;
+    const ctx=cv.getContext('2d');
+    ctx.clearRect(0,0,80,60);
+    if(!next)return;
+    next.m.forEach((r,y)=>r.forEach((v,x)=>{ if(v){ ctx.fillStyle=next.c; ctx.fillRect(x*CELL/2+8,y*CELL/2+6,CELL/2-2,CELL/2-2); } }));
+  };
+  openModal(`
+    <div class="modal-head"><h3>${ICON.brain} Тетрис</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body" style="display:flex;gap:14px;justify-content:center;align-items:flex-start;flex-wrap:wrap">
+      <canvas id="tetCv" width="${COLS*CELL}" height="${ROWS*CELL}" style="border:1px solid var(--border);border-radius:8px;background:#0f172a"></canvas>
+      <div style="text-align:center;min-width:110px">
+        <div style="font-size:13px;font-weight:700">Следующая</div>
+        <canvas id="tetNext" width="80" height="60"></canvas>
+        <div class="duck-hud" style="flex-direction:column;gap:4px;margin-top:8px"><span>Счёт: <b id="tetScore">0</b></span><span>Линии: <b id="tetLines">0</b></span><span>Уровень: <b id="tetLevel">1</b></span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+          <button class="btn ghost" onclick="tetMove(-1)">←</button><button class="btn ghost" onclick="tetMove(1)">→</button>
+          <button class="btn ghost" onclick="tetRot()">⟳</button><button class="btn ghost" onclick="tetDrop()">↓</button>
+          <button class="btn primary" style="grid-column:span 2" onclick="tetHard()">⤓ Сброс вниз</button>
+        </div>
+        <div class="field-hint" style="margin-top:8px">Клавиши: ← → ↓, ↑ — поворот, пробел — сброс вниз.</div>
+        <div id="tetRes" style="font-size:14px;margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
+    modal=>{
+      tetGame={move,rotate,drop,hardDrop,draw,plus(){ score+=1; const s=$('#tetScore'); if(s)s.textContent=score; }};
+      spawnShape();
+      draw();
+      drawNext();
+      tickT=setInterval(tick,700);
+      brainTimers.push(tickT);
+    });
+}
+function tetMove(dx){ if(tetGame&&tetGame.move){ tetGame.move(dx); tetGame.draw(); } }
+function tetRot(){ if(tetGame&&tetGame.rotate){ tetGame.rotate(); tetGame.draw(); } }
+function tetDrop(){ if(tetGame&&tetGame.drop){ tetGame.drop(); tetGame.draw(); } }
+function tetHard(){ if(tetGame&&tetGame.hardDrop){ tetGame.hardDrop(); tetGame.draw(); } }
+/* ---- Пасьянс «Косынка» ---- */
+let solGame=null;
+function brainSolitaire(){
+  const SU=['♠','♥','♦','♣'], RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  const isRed=s=>s==='♥'||s==='♦';
+  const rv=r=>r==='A'?1:r==='J'?11:r==='Q'?12:r==='K'?13:parseInt(r,10);
+  let deck=[],cols=[],bases=[],stock=[],sIdx=0,sel=null,win=false,t0=Date.now();
+  const build=()=>{
+    deck=[];
+    SU.forEach(s=>RK.forEach(r=>deck.push({s,r,up:false})));
+    for(let i=deck.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+    cols=[]; bases=[];
+    for(let i=0;i<7;i++){ const c=deck.splice(0,i+1); if(c.length)c[c.length-1].up=true; cols.push(c); }
+    stock=deck; sIdx=0; sel=null; win=false; t0=Date.now();
+    bases=SU.map(s=>({s,cards:[]}));
+  };
+  const stockView=()=>{ const v=[]; if(!stock.length)return v; for(let i=0;i<3;i++)v.push(stock[(sIdx+i)%stock.length]); return v; };
+  const baseOf=s=>bases.find(b=>b.s===s);
+  const canCol=(card,below)=>{
+    if(!below)return card.r==='K';
+    return rv(card.r)===rv(below.r)-1&&(isRed(card.s)!==isRed(below.s));
+  };
+  const canBase=card=>{ const b=baseOf(card.s); return b.cards.length===0?card.r==='A':rv(card.r)===rv(b.cards[b.cards.length-1].r)+1; };
+  const cardHTML=(c,extra)=>{ const r=isRed(c.s); return `<div class="sol-card ${c.up?'up':'down'}${r?' red':''}${extra?' '+extra:''}"><b class="sol-r">${c.r}</b><span class="sol-s">${c.s}</span></div>`; };
+  const render=()=>{
+    const body=$('#solBody'); if(!body){ solGame=null; return; }
+    const sv=stockView();
+    let html=`<div class="sol-top">
+      <div class="sol-stock" title="Клик: взять 3 карты" onclick="solAct('stock')">${stock.length?'<div class="sol-card down"><span class="sol-back">❖</span></div>':'<div class="sol-empty"></div>'}</div>
+      ${sv.map((c,k)=>`<div onclick="solAct('waste',${k})" ondblclick="solAct('waste',${k},true)">${cardHTML(c,sel&&sel.w===k?'sel':'')}</div>`).join('')}
+      ${bases.map((b,i)=>`<div class="sol-base" onclick="solAct('base',${i})">${b.cards.length?cardHTML(b.cards[b.cards.length-1]):`<span class="sol-base-sym">${b.s}</span>`}</div>`).join('')}
+    </div>
+    <div class="sol-cols">
+      ${cols.map((col,i)=>`<div class="sol-col"><div class="sol-empty" onclick="solAct('col',${i},${col.length})"></div>${col.map((c,j)=>`<div class="sol-wrap" style="margin-top:${j?((c.up?-26:-16)+'px'):'0'}" onclick="solAct('col',${i},${j})" ondblclick="solAct('col',${i},${j},true)">${cardHTML(c,sel&&sel.i===i&&sel.j===j?'sel':'')}</div>`).join('')}</div>`).join('')}
+    </div>
+    <div id="solRes" style="font-size:14px;margin-top:8px;text-align:center"></div>`;
+    body.innerHTML=html;
+    const r=$('#solStat'); if(r)r.textContent='Победы: '+state.brain.scores.solitaire.wins+' · лучший результат: '+(state.brain.scores.solitaire.best?state.brain.scores.solitaire.best+' мин':'—');
+  };
+  const chainOk=(i,j)=>{
+    if(!cols[i][j].up)return false;
+    for(let k=j;k<cols[i].length-1;k++){
+      if(!(rv(cols[i][k+1].r)===rv(cols[i][k].r)-1&&isRed(cols[i][k+1].s)!==isRed(cols[i][k].s)))return false;
+    }
+    return true;
+  };
+  const tryBase=i=>{
+    const c=cols[i][cols[i].length-1];
+    if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(cols[i].pop()); return true; }
+    return false;
+  };
+  const checkWin=()=>{
+    if(bases.every(b=>b.cards.length===13)){
+      win=true;
+      const min=Math.round((Date.now()-t0)/60000*10)/10;
+      const sc=state.brain.scores.solitaire;
+      sc.wins++;
+      sc.last=min;
+      if(!sc.best||min<sc.best)sc.best=min;
+      save();
+      const res=$('#solRes'); if(res)res.innerHTML='<b>Победа!</b> Сложено за '+min+' мин · побед: '+sc.wins+' · лучший результат: '+sc.best+' мин';
+      toast('Косынка собрана за '+min+' мин!','ok');
+      const st=state.sensei;
+      if(st.enabled)senseiSay('Косынка собрана! Терпение и логика — твои союзники.',st.kind?'kind':'calm',true);
+    }
+  };
+  solGame={};
+  window.solAct=(type,i,j,dbl)=>{
+    if(!solGame)return;
+    if(type==='new'){ build(); render(); return; }
+    if(type==='stock'){ sIdx=(sIdx+3)%stock.length; render(); return; }
+    if(type==='waste'){
+      const sv=stockView(); const k=i; const c=sv[k];
+      if(!c)return;
+      if(dbl){ if(canBase(c)){ baseOf(c.s).cards.push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); checkWin(); } return; }
+      if(sel){ sel=null; render(); return; }
+      for(let ci=0;ci<7;ci++){
+        const top=cols[ci][cols[ci].length-1];
+        if(!top&&c.r==='K'){ cols[ci].push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); return; }
+        if(top&&canCol(c,top)){ cols[ci].push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); return; }
+      }
+      if(canBase(c)){ baseOf(c.s).cards.push(stock.splice((sIdx+k)%stock.length,1)[0]); sel=null; render(); checkWin(); }
+      return;
+    }
+    if(type==='base'){ if(sel)sel=null; render(); return; }
+    if(type==='col'){
+      const col=cols[i];
+      if(dbl){
+        const c=col[j];
+        if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(col.splice(j,1)[0]); sel=null; render(); checkWin(); }
+        else if(j===col.length&&tryBase(i)){ sel=null; render(); checkWin(); }
+        return;
+      }
+      if(sel){
+        if(sel.w!=null){
+          const c=stockView()[sel.w];
+          if(c&&j===col.length&&c.r==='K'&&!col.length){ col.push(stock.splice((sIdx+sel.w)%stock.length,1)[0]); sel=null; render(); }
+          else if(c&&col[j]&&canCol(c,col[j])){ const t=stock.splice((sIdx+sel.w)%stock.length,1)[0]; col.splice(j,0,t); sel=null; render(); }
+          else { sel=null; render(); }
+        } else if(sel.i!=null){
+          if(sel.i===i){ sel={i,j}; render(); return; }
+          const src=cols[sel.i];
+          if(chainOk(sel.i,sel.j)){
+            const first=src[sel.j];
+            if(!first)return;
+            if(j===col.length&&first.r==='K'&&!col.length){
+              col.push(...src.splice(sel.j)); sel=null; render();
+            } else if(col[j]&&canCol(first,col[j])){
+              col.splice(j,0,...src.splice(sel.j)); sel=null; render();
+            } else { sel={i,j}; render(); }
+          }
+        }
+        return;
+      }
+      if(col[j]&&col[j].up){ sel={i,j}; render(); }
+      return;
+    }
+  };
+  openModal(`
+    <div class="modal-head"><h3>${ICON.brain} Пасьянс «Косынка»</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div id="solStat" style="font-size:12px;color:var(--muted);margin-bottom:6px"></div>
+      <div id="solBody"></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="solAct('new')">${ICON.brain} Новая игра</button><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
+    modal=>{ build(); render(); });
 }
 function renderPersonal(){
   const el=$('#personalWrap'); if(!el)return;
@@ -4406,10 +4890,15 @@ function renderPersonal(){
           <button class="btn ghost" title="Убрать последний объём" onclick="waterAdd(-${w.glass})">−</button>
         </div>
         <div class="water-settings">
-          <div class="field"><label>Цель, мл</label><input type="number" min="100" step="100" value="${w.goal}" onchange="waterSetGoal(this.value)"></div>
+          <div class="field" style="width:150px"><label>Цель, мл</label><input type="number" min="100" step="100" value="${w.goal}" onchange="waterSetGoal(this.value)" ${w.auto?'disabled':''}></div>
           <div class="field"><label>Стакан, мл</label><input type="number" min="50" step="50" value="${w.glass}" onchange="waterSetGlass(this.value)"></div>
+          <div class="field"><label>Вес, кг</label><input type="number" min="20" max="250" step="1" value="${w.weight}" onchange="waterSetWeight(this.value)"></div>
+          <div class="field"><label>Возраст</label><input type="number" min="10" max="110" step="1" value="${w.age}" onchange="waterSetAge(this.value)"></div>
           <div class="field" style="width:130px"><label>Напоминание</label>
             <select onchange="waterSetEvery(this.value)"><option value="0" ${w.every===0?'selected':''}>Выкл</option>${[30,60,90,120,180].map(v=>`<option value="${v}" ${w.every===v?'selected':''}>Каждые ${v} мин</option>`).join('')}</select>
+          </div>
+          <div class="field" style="width:auto"><label>Авто по весу</label>
+            <label class="chk"><input type="checkbox" ${w.auto?'checked':''} onchange="waterAutoGoal(this.checked)"> ${w.auto?'Рассчитано: '+w.goal+' мл':'рассчитывать цель'}</label>
           </div>
         </div>
         <div style="margin-top:12px">
