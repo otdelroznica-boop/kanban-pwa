@@ -1452,6 +1452,7 @@ function closeModal(){
   ov.style.display='none'; ov.innerHTML='';
   currentModal=null;
   hideRowMenu();
+  if(voiceRec&&voiceRec._active){ voiceRec._userStop=true; try{voiceRec.abort();}catch(e){} }
 }
 function toggleRowMenu(e,key){
   e.stopPropagation();
@@ -2285,13 +2286,14 @@ function toggleVoice(targetId){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ toast('Голосовой ввод не поддерживается в этом браузере. Используйте Chrome или Edge','error'); return; }
   const micBtns=document.querySelectorAll('[data-mic-for="'+targetId+'"]');
-  if(voiceRec&&voiceRec._target===targetId&&voiceRec._active){ try{voiceRec.stop();}catch(e){} return; }
+  if(voiceRec&&voiceRec._target===targetId&&voiceRec._active){ voiceRec._userStop=true; try{voiceRec.stop();}catch(e){} return; }
   if(voiceRec){ try{voiceRec.abort();}catch(e){} }
   const rec=new SR();
-  voiceRec=rec; rec._target=targetId; rec._active=true;
-  rec.lang='ru-RU'; rec.interimResults=true; rec.maxAlternatives=1;
+  voiceRec=rec; rec._target=targetId; rec._active=true; rec._userStop=false;
+  rec.lang='ru-RU'; rec.interimResults=true; rec.maxAlternatives=1; rec.continuous=true;
   const setOn=on=>micBtns.forEach(b=>b.classList.toggle('on',on));
   setOn(true);
+  const startRec=()=>{ try{ rec.start(); }catch(e){} };
   rec.onresult=e=>{
     let interim='',final='';
     for(let i=e.resultIndex;i<e.results.length;i++){
@@ -2304,9 +2306,18 @@ function toggleVoice(targetId){
     const nid=el.dataset.note;
     if(nid)saveNoteText(nid,el.value);
   };
-  rec.onend=()=>{ rec._active=false; setOn(false); el.value=el.value.replace(/\s*\[…\]\s*$/,''); };
-  rec.onerror=e=>{ if(e.error==='not-allowed')toast('Доступ к микрофону запрещён','error'); };
-  try{ rec.start(); toast('Говорите — текст появится в поле'); }catch(e){ setOn(false); toast('Не удалось запустить микрофон','error'); }
+  rec.onend=()=>{
+    rec._active=false; setOn(false);
+    el.value=el.value.replace(/\s*\[…\]\s*$/,'');
+    if(!rec._userStop&&voiceRec===rec)setTimeout(startRec,250);
+  };
+  rec.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'||e.error==='audio-capture'){
+      rec._userStop=true; toast('Доступ к микрофону запрещён','error');
+    }
+  };
+  startRec();
+  toast('Говорите — текст появится в поле');
 }
 function deleteInterval(ctxKey,tid,idx){
   const ref=findTaskRef(tid,ctxKey); if(!ref)return;
