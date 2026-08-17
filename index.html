@@ -687,6 +687,12 @@ body[data-theme="dark"] .move-ex.done span{color:#4ade80}
 .btn.done{background:#10b981;border-color:#0f9d63;color:#fff}
 .btn.done:hover{background:#0f9d63}
 .move-ex span{flex:1;min-width:0}
+.btn.timer{background:#0ea5e9;border-color:#0284c7;color:#fff}
+.btn.timer:hover{background:#0284c7}
+.btn.timer.on{animation:bannerShake 1s ease-in-out .3s 3}
+.pomo-focus-task.move-tip{background:#e6f8ef;border-color:#86d9b2}
+body[data-theme="dark"] .pomo-focus-task.move-tip{background:#10331f;border-color:#1e6b3c}
+body[data-theme="linux"] .pomo-focus-task.move-tip{background:#2c4637;border-color:#4a7a58}
 .br-circle{width:150px;height:150px;border-radius:50%;border:5px solid #10b981;margin:8px auto 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color .3s}
 .br-phase{font-weight:800;font-size:15px}
 .br-time{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
@@ -1221,6 +1227,12 @@ function normalize(s){
   if(!Number.isFinite(s.move.every)||s.move.every<10) s.move.every=45;
   if(!s.move.log||typeof s.move.log!=='object') s.move.log={};
   if(!s.move.done||typeof s.move.done!=='object') s.move.done={};
+  if(!Array.isArray(s.move.custom)) s.move.custom=[];
+  s.move.custom.forEach(x=>{
+    if(typeof x.id!=='string'||!x.id) x.id=uid();
+    if(typeof x.text!=='string'||!x.text) x.text='Упражнение';
+    if(typeof x.sec!=='number'||x.sec<=0) x.sec=null;
+  });
   if(!s.notif||typeof s.notif!=='object') s.notif={};
   if(!s.sensei||typeof s.sensei!=='object') s.sensei={enabled:true,kind:true,strict:true,calm:true,quotes:true,voice:false,freq:180};
   if(typeof s.sensei.enabled!=='boolean') s.sensei.enabled=true;
@@ -1796,19 +1808,21 @@ setInterval(checkReminders,20000);
 
 /* ---- личные напоминания: вода, препараты, разминка ---- */
 const MOVE_EX=[
-  {text:'Растяжка шеи и плеч — 2 минуты',ex:'stretch'},
+  {text:'Растяжка шеи и плеч — 2 минуты',ex:'stretch',sec:120},
   {text:'Приседания — 10 раз',ex:'squat'},
   {text:'Дыхание 4-7-8 — один круг',ex:'breath'},
-  {text:'Ходьба по комнате — 3 минуты',ex:'walk'},
-  {text:'Наклоны и повороты корпуса — 1 минута',ex:'bend'},
+  {text:'Ходьба по комнате — 3 минуты',ex:'walk',sec:180},
+  {text:'Наклоны и повороты корпуса — 1 минута',ex:'bend',sec:60},
   {text:'Отжимания от стола — 8 раз',ex:'pushup'}
 ];
+function moveExList(){ return MOVE_EX.concat(state.move&&state.move.custom||[]); }
 let _lastMoveIdx=-1;
 function moveExercise(){
+  const list=moveExList();
   let i;
-  do{ i=Math.floor(Math.random()*MOVE_EX.length); }while(MOVE_EX.length>1&&i===_lastMoveIdx);
+  do{ i=Math.floor(Math.random()*list.length); }while(list.length>1&&i===_lastMoveIdx);
   _lastMoveIdx=i;
-  return MOVE_EX[i];
+  return list[i];
 }
 function personalBannerAction(job){ if(job.personal==='digest'){ openDigestModal(); return; } setTab('personal'); }
 function firePersonal(job){
@@ -1872,6 +1886,11 @@ function checkPersonal(){
     }
   }
 }
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  if(pomoRunning&&pomoEnd&&pomoEnd<=Date.now())pomoTick();
+  if(mvTimer.i>=0&&mvTimer.endAt<=Date.now())moveTimerTick();
+});
 setInterval(checkPersonal,20000);
 
 /* ============================================================ modal */
@@ -4007,11 +4026,95 @@ function moveToggleIdx(i){
 function moveNextCycle(){
   const t=todayISO();
   const arr=state.move.done[t]||(state.move.done[t]=[]);
-  if(arr.length>=MOVE_EX.length){ toast('Цикл завершён — начинаем новый','ok'); state.move.done[t]=[]; }
+  if(arr.length>=moveExList().length){ toast('Цикл завершён — начинаем новый','ok'); state.move.done[t]=[]; }
   state._lastMoveEx=moveExercise();
   save(); renderPersonal();
 }
-function moveReset(){ state.move.done[todayISO()]=[]; state._lastMoveEx=null; save(); renderPersonal(); toast('Отметки разминки сброшены'); }
+function moveReset(){ state.move.done[todayISO()]=[]; state._lastMoveEx=null; moveTimerStop(); save(); renderPersonal(); toast('Отметки разминки сброшены'); }
+/* ---- таймер упражнения (тик по wall-clock: тикает, даже если вкладка была закрыта) ---- */
+let mvTimer={i:-1,endAt:0},mvTimerInt=null;
+function moveTimerLeft(){ return mvTimer.i>=0?Math.max(0,Math.round((mvTimer.endAt-Date.now())/1000)):0; }
+function fmtClock(s){ s=Math.max(0,Math.floor(s)); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function moveTimerStart(i,sec){
+  if(mvTimer.i===i){ moveTimerStop(); return; }
+  mvTimer.i=i; mvTimer.endAt=Date.now()+sec*1000;
+  if(mvTimerInt)clearInterval(mvTimerInt);
+  mvTimerInt=setInterval(moveTimerTick,500);
+  renderPersonal();
+}
+function moveTimerStop(){ if(mvTimerInt){clearInterval(mvTimerInt);mvTimerInt=null;} mvTimer.i=-1; }
+function moveTimerTick(){
+  if(mvTimer.i<0)return;
+  const left=moveTimerLeft();
+  const btn=document.querySelector('[data-mvt="'+mvTimer.i+'"]');
+  if(btn)btn.textContent='⏱ '+fmtClock(left);
+  if(left>0)return;
+  const ex=moveExList()[mvTimer.i];
+  const name=ex?ex.text:'Упражнение';
+  moveTimerStop();
+  renderPersonal();
+  toast('«'+name+'» — время вышло, отлично!','ok');
+  beep('alarm');
+  try{ if(state.settings.notifications&&'Notification' in window&&Notification.permission==='granted')new Notification('Кайдзен · Разминка',{body:name+' — время вышло',tag:'mvt',vibrate:[350,120,350]}); }catch(e){}
+}
+function moveTimerToggle(i,sec){ moveTimer.i===i?moveTimerStop():moveTimerStart(i,sec); renderPersonal(); }
+/* ---- свои упражнения ---- */
+function openMoveCustomModal(){
+  openModal(`
+    <div class="modal-head"><h3>Своё упражнение</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Что делать</label><input id="mvName" maxlength="80" placeholder="Например: Планка, выпады, стойка на носках"></div>
+      <div class="field"><label>Тип</label><select id="mvKind">
+        <option value="count">Повторения (разы)</option>
+        <option value="time">По времени (с таймером)</option>
+      </select></div>
+      <div class="field" id="mvCountF" style="display:none"><label>Сколько раз</label><input id="mvCount" type="number" min="1" max="999" value="10"></div>
+      <div class="field" id="mvTimeF" style="display:none"><div class="row">
+        <div><label>Минуты</label><input id="mvMin" type="number" min="0" max="180" value="1"></div>
+        <div><label>Секунды</label><input id="mvSec" type="number" min="0" max="59" value="0"></div>
+      </div></div>
+      <div class="field-hint">Упражнение появится в списке разминки и в советах Сенсея. Для «по времени» в строке будет кнопка-таймер.</div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="saveMoveCustom()">${ICON.check} Добавить</button></div>`,
+    modal=>{
+      const kind=modal.querySelector('#mvKind');
+      const apply=()=>{
+        const t=kind.value;
+        modal.querySelector('#mvCountF').style.display=t==='count'?'':'none';
+        modal.querySelector('#mvTimeF').style.display=t==='time'?'':'none';
+      };
+      kind.onchange=apply; apply();
+      const i=modal.querySelector('#mvName'); if(i)i.focus();
+    });
+}
+function saveMoveCustom(){
+  const inp=$('#mvName'); if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){ toast('Укажите, что делать','error'); return; }
+  const kind=$('#mvKind').value;
+  let text=name,sec=null;
+  if(kind==='count'){
+    const n=parseInt($('#mvCount').value,10)||10;
+    text=name+' — '+n+' раз';
+  } else {
+    const tot=(parseInt($('#mvMin').value,10)||0)*60+(parseInt($('#mvSec').value,10)||0);
+    if(tot<=0){ toast('Укажите длительность','error'); return; }
+    sec=tot; text=name+' — '+fmtClock(tot);
+  }
+  if(!state.move.custom)state.move.custom=[];
+  state.move.custom.push({id:uid(),text,sec});
+  save(); closeModal(); renderPersonal();
+  toast('Упражнение добавлено','ok');
+}
+function delMoveCustom(id){
+  if(!confirm('Удалить своё упражнение?'))return;
+  const idx=(state.move.custom||[]).findIndex(x=>x.id===id);
+  if(idx<0)return;
+  const listIdx=MOVE_EX.length+idx;
+  state.move.custom.splice(idx,1);
+  if(mvTimer.i>=listIdx)moveTimerStop();
+  save(); renderPersonal();
+}
 let brTimer=null;
 function openBreathModal(){
   const B=[[4,'Вдох','#10b981'],[7,'Задержка','#f59e0b'],[8,'Выдох','#6366f1']];
@@ -5178,12 +5281,15 @@ function renderPersonal(){
   const mvToday=mv.log[today]||0;
   const mvDone=mv.done[today]||[];
   const lastEx=state._lastMoveEx||null;
+  const exList=moveExList();
+  const lastIdx=exList.indexOf(lastEx);
+  const mvtLeft=mvTimerLeft();
   const medsHtml=`<div class="p-card">
     <div class="p-card-head">${ICON.med} Препараты <span class="mini-actions"><span class="mini" title="Добавить препарат" onclick="openMedModal(null)">${ICON.plus}</span></span></div>
     ${state.meds.length?state.meds.map(medHTML).join(''):'<div class="med-empty">Препаратов пока нет. Добавьте первый — кнопкой «+».</div>'}
   </div>`;
   const moveHtml=`<div class="p-card">
-    <div class="p-card-head">${ICON.move} Разминка и движение</div>
+    <div class="p-card-head">${ICON.move} Разминка и движение <span class="mini-actions"><span class="mini" title="Добавить своё упражнение" onclick="openMoveCustomModal()">${ICON.plus}</span></span></div>
     <div class="move-row">
       <label class="chk"><input type="checkbox" ${mv.enabled?'checked':''} onchange="moveToggle(this.checked)"> Напоминать вставать и разминаться</label>
       <label class="chk"><input type="checkbox" ${state.settings.workdays?'checked':''} onchange="state.settings.workdays=this.checked;save();renderPersonal()"> Только в будни</label>
@@ -5192,10 +5298,15 @@ function renderPersonal(){
       </div>
       <span class="pomo-stat">Сегодня разминок: <b>${mvToday}</b></span>
     </div>
-    ${lastEx?`<div class="pomo-focus-task" style="background:#e6f8ef;border-color:#86d9b2">${ICON.move} Сейчас советует Сенсей: <b style="flex:1;min-width:0">${esc(lastEx.text)}</b><button class="b-btn ghost" onclick="moveDone()">Сделал</button></div>`:''}
-    <div class="move-exs">${MOVE_EX.map((ex,i)=>{const dn=mvDone.includes(i);return `<div class="move-ex${dn?' done':''}"><span>${ex.text}</span>${ex.ex==='breath'?`<button class="btn ghost ${dn?'done':''}" onclick="moveToggleIdx(${i})">${dn?'Сделано ✓':'Сделал'}</button><button class="btn ghost" onclick="openBreathModal()">${ICON.wind} Дыхание</button>`:`<button class="btn ghost ${dn?'done':''}" onclick="moveToggleIdx(${i})">${dn?'Сделано ✓':'Сделал'}</button>`}</div>`;}).join('')}</div>
+    ${lastEx&&lastIdx>=0?`<div class="pomo-focus-task move-tip">${ICON.move} Сейчас советует Сенсей: <b style="flex:1;min-width:0">${esc(lastEx.text)}</b>${lastEx.sec?`<button class="b-btn ghost ${mvTimer.i===lastIdx?'timer':''}" onclick="moveTimerToggle(${lastIdx},${lastEx.sec})">${mvTimer.i===lastIdx?'⏱ '+fmtClock(mvtLeft):'⏱ Таймер'}</button>`:''}<button class="b-btn ghost" onclick="moveDone()">Сделал</button></div>`:''}
+    <div class="move-exs">${exList.map((ex,i)=>{
+      const dn=mvDone.includes(i);
+      const tmr=ex.sec?`<button class="btn ghost ${mvTimer.i===i?'timer':''}" data-mvt="${i}" onclick="moveTimerToggle(${i},${ex.sec})">${mvTimer.i===i?'⏱ '+fmtClock(mvtLeft):'⏱ '+fmtClock(ex.sec)}</button>`:'';
+      const del=i>=MOVE_EX.length?`<button class="btn ghost" title="Удалить своё упражнение" onclick="delMoveCustom('${ex.id}')">${ICON.trash}</button>`:'';
+      return `<div class="move-ex${dn?' done':''}"><span>${esc(ex.text)}</span>${tmr}${ex.ex==='breath'?`<button class="btn ghost" onclick="openBreathModal()">${ICON.wind} Дыхание</button>`:''}<button class="btn ghost ${dn?'done':''}" onclick="moveToggleIdx(${i})">${dn?'Сделано ✓':'Сделал'}</button>${del}</div>`;
+    }).join('')}</div>
     <div class="move-row" style="margin-top:8px">
-      <span class="pomo-stat">Цикл: <b>${mvDone.length} из ${MOVE_EX.length}</b></span>
+      <span class="pomo-stat">Цикл: <b>${mvDone.length} из ${exList.length}</b></span>
       <button class="btn ghost" onclick="moveNextCycle()">⟳ Следующий цикл</button>
       <button class="btn ghost" onclick="moveReset()">Сброс</button>
     </div>
