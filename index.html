@@ -787,6 +787,7 @@ body[data-theme="dark"] .sensei-tip{background:#14281d;border-color:#2f6b4a;colo
 .lurv-chip[data-l="1"]{color:#0ea5e9}
 .lurv-chip[data-l="2"]{color:#f59e0b}
 .lurv-chip[data-l="3"]{color:#0f9d63}
+.lurv-chip[data-l="4"]{color:#94a3b8}
 .brain-wrap{display:flex;flex-direction:column;gap:14px}
 .tongue-bar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:10px}
 .tongue-view{height:400px;overflow:hidden;position:relative;background:radial-gradient(ellipse at 50% 25%,#4a1d63 0%,#2c1038 45%,#18081f 100%);border:1px solid var(--border);border-radius:10px;margin:10px 0}
@@ -2348,13 +2349,13 @@ function renderBoard(){
   });
   bindBoardEvents();
 }
-const LURV_NAMES=['Л — создан','У — заполнен','Р — согласован','В — подписан'];
-function lurvShort(l){ return ['Л','У','Р','В'][l||0]; }
-function lurvFull(l){ return LURV_NAMES[l||0]; }
+const LURV_NAMES=['Л — создан','У — заполнен','Р — согласован','В — подписан','— не требуется'];
+function lurvShort(l){ return ['Л','У','Р','В','—'][l]||'—'; }
+function lurvFull(l){ return LURV_NAMES[l]||LURV_NAMES[4]; }
 function lurvNext(ctxKey,tid){
   const ref=findTaskRef(tid,ctxKey);
   if(!ref)return;
-  ref.t.lurv=((ref.t.lurv||0)+1)%4;
+  ref.t.lurv=((ref.t.lurv||0)+1)%5;
   save(); render();
   toast('ЛУРВ: '+lurvFull(ref.t.lurv));
 }
@@ -2387,7 +2388,7 @@ function cardHTML(c,t){
   if(subs.length)chips.push(`<span class="chip" title="Подзадачи">▸ ${subDone}/${subs.length}</span>`);
   if((t.attachments||[]).length)chips.push(`<span class="chip" title="Вложения">${ICON.attach} ${t.attachments.length}</span>`);
   if((t.comments||[]).length)chips.push(`<span class="chip" title="Комментарии">${ICON.cmt} ${t.comments.length}</span>`);
-  if(t.type!=='event'&&t.repeat!=='daily')chips.push(`<span class="chip lurv-chip" data-l="${t.lurv||0}" title="ЛУРВ: ${lurvFull(t.lurv)} — клик: следующий статус" onclick="event.stopPropagation();lurvNext('${c.key}','${t.id}')">ЛУРВ: ${lurvShort(t.lurv)}</span>`);
+  if(t.type!=='event'&&t.repeat!=='daily')chips.push(`<span class="chip lurv-chip" data-l="${t.lurv!=null?t.lurv:4}" title="ЛУРВ: ${lurvFull(t.lurv)} — клик: следующий статус" onclick="event.stopPropagation();lurvNext('${c.key}','${t.id}')">ЛУРВ: ${lurvShort(t.lurv)}</span>`);
   if(view.type==='all')chips.push(`<span class="chip proj" title="Раздел">${esc(ctxLabel(c))}</span>`);
   let prog='';
   if(t.estimate&&spent>0){
@@ -2693,7 +2694,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate,focusFact){
         <div class="evt-hide"><label>Приоритет</label><select id="tkPrio">${prioOpts}</select></div>
         <div class="evt-hide"><label>Ответственный</label><input type="text" id="tkResp" list="respList" value="${t?esc(t.responsible||''):''}" placeholder="Кто делает?"><datalist id="respList">${responsibleList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
         <div><label>Статус</label><select id="tkCol">${colsOpts}</select></div>
-        <div class="evt-hide"><label>ЛУРВ</label><select id="tkLurv" class="rep-hide">${[0,1,2,3].map(l=>`<option value="${l}" ${(t?(t.lurv||0):0)===l?'selected':''}>${lurvFull(l)}</option>`).join('')}</select></div>
+        <div class="evt-hide"><label>ЛУРВ</label><select id="tkLurv" class="rep-hide">${[0,1,2,3,4].map(l=>`<option value="${l}" ${((t&&t.lurv!=null)?t.lurv:(t?0:4))===l?'selected':''}>${lurvFull(l)}</option>`).join('')}</select></div>
       </div></div>
       <div class="field evt-hide"><label>Метки (через запятую)</label><input type="text" id="tkTags" list="tagList" value="${esc(tagVal)}" placeholder="Например: срочно, клиент, аналитика"><datalist id="tagList">${tagList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
       <div class="field evt-hide"><label>Спринт</label><input type="text" id="tkSprint" list="sprintList" value="${t?esc(t.sprint||''):''}" placeholder="Например: Спринт 14"><datalist id="sprintList">${(state.sprints||[]).map(s=>`<option value="${esc(s)}">`).join('')}</datalist><div class="field-hint">Группировка задач на период: впишите название спринта — оно появится в фильтрах отчёта и диаграммы Ганта.</div></div>
@@ -3507,7 +3508,7 @@ function buildReport(){
         <td><div class="t-title">${esc(r.t.title)}${cmts?` <span class="rep-cmt" title="Комментариев: ${cmts}">${ICON.cmt} ${cmts}</span>`:''}</div>${r.t.desc?`<div class="t-desc">${esc(r.t.desc)}</div>`:''}</td>
         <td class="t-resp">${esc(r.resp||'—')}</td>
         <td>${esc(r.status)}</td>
-        <td><span class="lurv-chip" data-l="${r.t.lurv||0}" title="${lurvFull(r.t.lurv)}">${lurvFull(r.t.lurv)}</span></td>
+        <td><span class="lurv-chip" data-l="${r.t.lurv!=null?r.t.lurv:4}" title="${lurvFull(r.t.lurv)}">${lurvFull(r.t.lurv)}</span></td>
         <td style="color:${pr.color}">${pr.label}</td>
         <td class="num">${r.estimate?fmtDur(r.estimate*3600):'—'}</td>
         <td class="num" title="Факт — таймер + ручной ввод">${r.fact>0?fmtDur(r.fact):'—'}</td>
