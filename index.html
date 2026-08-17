@@ -2813,11 +2813,12 @@ function saveTask(ctxKey,tid){
   const data=collectTaskInputs();
   if(!data)return;
   if(data.sprint&&!state.sprints.includes(data.sprint))state.sprints.push(data.sprint);
+  const actualHours=data.actualHours;
+  delete data.actualHours;
   const applyFact=t=>{
     const closed=Math.floor((t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0)/1000);
-    t.actual=data.actualHours!=null?Math.max(0,Math.round(data.actualHours*3600)-closed):undefined;
+    t.actual=actualHours!=null?Math.max(0,Math.round(actualHours*3600)-closed):undefined;
   };
-  delete data.actualHours;
   if(tid){
     const ref=findTaskRef(tid,ctxKey);
     if(!ref){ toast('Задача не найдена','error'); return; }
