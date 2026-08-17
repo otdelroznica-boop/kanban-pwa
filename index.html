@@ -4120,7 +4120,7 @@ function moveTimerTick(){
   beep('alarm');
   try{ if(state.settings.notifications&&'Notification' in window&&Notification.permission==='granted')new Notification('Кайдзен · Разминка',{body:name+' — время вышло',tag:'mvt',vibrate:[350,120,350]}); }catch(e){}
 }
-function moveTimerToggle(i,sec){ moveTimer.i===i?moveTimerStop():moveTimerStart(i,sec); renderPersonal(); }
+function moveTimerToggle(i,sec){ mvTimer.i===i?moveTimerStop():moveTimerStart(i,sec); renderPersonal(); }
 /* ---- свои упражнения ---- */
 function openMoveCustomModal(){
   openModal(`
