@@ -6157,14 +6157,14 @@ function openSprintModal(name){
   const meta=name?(state.sprintMeta||{})[name]:null;
   const orgOpts=state.orgs.map(o=>`<option value="${o.id}" ${meta&&meta.orgId===o.id?'selected':''}>${esc(o.name)}</option>`).join('');
   const projOpts='<option value="">Все проекты</option>'+state.orgs.map(o=>o.projects.map(p=>`<option value="${p.id}" data-org="${o.id}" ${meta&&meta.projId===p.id?'selected':''}>${esc(o.name)} — ${esc(p.name)}</option>`).join('')).join('');
-  openModal({
-    title:name?'Привязка спринта':'Новый спринт',
-    body:`<div class="field"><label>Название спринта</label><input type="text" id="spName" maxlength="60" value="${esc(name||'')}" ${name?'readonly':''}></div>
+  openModal(`<div class="modal-head"><h3>${name?'Привязка спринта':'Новый спринт'}</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Название спринта</label><input type="text" id="spName" maxlength="60" value="${esc(name||'')}" ${name?'readonly':''}></div>
       <div class="field"><label>Организация</label><select id="spOrg" onchange="sprintProjFilter(this.value)">${orgOpts||'<option value="">Нет организаций</option>'}</select></div>
       <div class="field"><label>Проект (необязательно — «Все проекты» = вся организация)</label><select id="spProj">${projOpts}</select></div>
-      <div class="field-hint">В спринт можно добавлять задачи только своей организации и проекта. Отчёт по спринту строится по этой же привязке.</div>`,
-    foot:`<button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="sprintSave('${esc(name||'')}')">${ICON.check} Сохранить</button>`
-  });
+      <div class="field-hint">В спринт можно добавлять задачи только своей организации и проекта. Отчёт по спринту строится по этой же привязке.</div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="sprintSave('${esc(name||'')}')">${ICON.check} Сохранить</button></div>`);
   const orgSel=$('#spOrg');
   sprintProjFilter(orgSel?orgSel.value:'');
 }
