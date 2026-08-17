@@ -1323,6 +1323,7 @@ function normalize(s){
       if(!Array.isArray(t.intervals)) t.intervals=[];
       if(!t.priority) t.priority='med';
       if(!t.notified||typeof t.notified!=='object') t.notified={};
+      if(typeof t.actual==='number'&&t.actual>1000) t.actual=Math.round(t.actual/36)/100;
     });
   });
   return s;
@@ -2818,7 +2819,7 @@ function saveTask(ctxKey,tid){
   delete data.actualHours;
   const applyFact=t=>{
     const closed=Math.floor((t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0)/1000);
-    t.actual=actualHours!=null?Math.max(0,Math.round(actualHours*3600)-closed):undefined;
+    t.actual=actualHours!=null?Math.max(0,Math.round((actualHours*3600-closed)/36)/100):undefined;
   };
   if(tid){
     const ref=findTaskRef(tid,ctxKey);
