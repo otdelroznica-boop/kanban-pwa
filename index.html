@@ -5135,51 +5135,130 @@ function playReload(){
     o.connect(g); g.connect(a.destination); o.start(t+dt); o.stop(t+dt+0.08);
   }
 }
+function playExpl(){
+  const a=ac(); if(!a)return;
+  const t=a.currentTime;
+  const o=a.createOscillator(); o.type='sawtooth';
+  o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(36,t+0.4);
+  const g=a.createGain(); g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.45);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.5);
+}
 function brainDuck(){
   const W=560,H=340,horizon=H*0.60;
-  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[],splash=[],feathers=[];
+  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[],splash=[],feathers=[],bombs=[],explosions=[];
   let gun={ang:Math.PI/2,kick:0,flash:0,shells:2,reload:0};
-  const spawn=()=>{
-    if(ducks.length>=2)return;
-    const horiz=Math.random()<0.4;
+  const spawnOne=(free,k)=>{
+    const horiz=Math.random()<0.45;
     const dir=Math.random()<0.5?-1:1;
     const d={
-      x:horiz?(dir>0?30:W-30):60+Math.random()*(W-120),
-      y:horiz?horizon-20+Math.random()*12:horizon+2+Math.random()*8,
+      x:horiz?(dir>0?30-k*26:W-30+k*26):60+Math.random()*(W-120),
+      y:horiz?horizon-22+Math.random()*14+k*10:horizon+2+Math.random()*8,
       vx:dir*(horiz?(1.5+level*0.25):(0.5+Math.random()*0.8+level*0.1)),
       vy:horiz?(0.1+Math.random()*0.3):-(2.0+level*0.3)*(0.9+Math.random()*0.3),
       phase:Math.random()*6.28,
       size:Math.max(13,24-(level-1)*2),
-      dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0
+      dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0,
+      dir:dir,kami:false,blown:false
     };
     ducks.push(d);
     const tt=setTimeout(()=>{ if(!over&&ducks.includes(d))playQuack(2); },300);
     brainTimers.push(tt);
   };
+  const spawnKami=()=>{
+    const x=W/2+(Math.random()<0.5?-1:1)*(60+Math.random()*140);
+    const y=-34;
+    const dx=W/2-x, dy=H-16-y, len=Math.hypot(dx,dy)||1;
+    const spd=2.0+level*0.3;
+    const d={x,y,vx:dx/len*spd,vy:dy/len*spd,phase:0,size:Math.max(14,22-(level-1)*2),
+      dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0,dir:dx<0?-1:1,kami:true,blown:false,bombT:1.2+Math.random()*1.6};
+    ducks.push(d);
+  };
+  const spawn=()=>{
+    const free=4-ducks.length;
+    if(free<=0)return;
+    if(level>=2&&Math.random()<0.28){
+      spawnKami(); return;
+    }
+    const n=1+Math.floor(Math.random()*Math.min(free,1+(level>=3?1:0)));
+    for(let k=0;k<n;k++)spawnOne(free,k);
+  };
+  const explode=(x,y,r)=>{
+    explosions.push({x,y,r,t:0,life:26});
+    for(let i=0;i<22;i++){
+      const a=Math.random()*6.28, sp=1+Math.random()*3.5;
+      feathers.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.8,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.6,size:2.5+Math.random()*3,life:40+Math.random()*30,shade:Math.random()});
+    }
+    ducks.forEach(d=>{
+      if(typeof d.dead==='number')return;
+      const dist=Math.hypot(d.x-x,d.y-y);
+      if(dist<r&&dist>0.01){
+        const k=1-dist/r;
+        d.dead=0; d.dy=0.6+k*1.6;
+        d.spin=(Math.random()<0.5?-1:1)*(0.1+Math.random()*0.1);
+        d.sx=((d.x-x)/dist)*(2.5+k*4)+(Math.random()*1.2-0.6);
+        d.blown=true;
+      }
+    });
+  };
+  const livesDown=(reason)=>{
+    if(over)return;
+    lives--;
+    const l=$('#duckLives'); if(l)l.textContent='🦆'.repeat(Math.max(0,lives));
+    if(lives<=0){
+      over=true;
+      duckStop();
+      brainSaveScore('duck',score);
+      const res=$('#duckRes');
+      if(res)res.innerHTML='<b style="color:var(--danger)">Игра окончена — '+reason+'!</b> Попаданий: '+score+' · рекорд: '+state.brain.scores.duck.best+'<br><button class="btn primary" style="margin-top:8px" onclick="closeModal();brainDuck()">Сыграть ещё</button>';
+      toast('Утки: '+score+' попаданий');
+      const st=state.sensei;
+      if(st.enabled)senseiSay('Утки одолели тебя сегодня. Завтра — реванш!',st.strict?'strict':'calm',true);
+    } else {
+      toast(reason+'! Осталось жизней: '+lives,'error');
+    }
+  };
   const drawDuck=(ctx,d)=>{
     ctx.save(); ctx.translate(d.x,d.y);
     if(d.dead===false){
+      ctx.scale(d.dir||1,1);
       const w=Math.sin(d.phase);
-      ctx.fillStyle='#8b5e3c';
-      ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
-      ctx.fillStyle='#2e5d34';
-      ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.44,0,6.28); ctx.fill();
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.ellipse(d.size*0.55,-d.size*0.3,d.size*0.2,d.size*0.13,0.7,0,6.28); ctx.fill();
-      ctx.fillStyle='#e8a33d';
-      ctx.beginPath(); ctx.moveTo(d.size*1.22,-d.size*0.58); ctx.lineTo(d.size*1.58,-d.size*0.46); ctx.lineTo(d.size*1.22,-d.size*0.34); ctx.fill();
-      ctx.fillStyle='#111';
-      ctx.beginPath(); ctx.arc(d.size*0.98,-d.size*0.62,d.size*0.075,0,6.28); ctx.fill();
-      ctx.fillStyle='#6b4526';
-      ctx.save(); ctx.translate(-d.size*0.15,-d.size*0.1);
-      if(w>0)ctx.rotate(-0.55-w*0.8); else ctx.rotate(0.55+w*0.8);
-      ctx.beginPath(); ctx.ellipse(0,-d.size*0.6,d.size*0.52,d.size*0.2,0,0,6.28); ctx.fill();
-      ctx.restore();
+      if(d.kami){
+        ctx.fillStyle='#343b4a';
+        ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
+        ctx.fillStyle='#232935';
+        ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.44,0,6.28); ctx.fill();
+        ctx.fillStyle='#ef4444';
+        ctx.beginPath(); ctx.rect(d.size*0.3,-d.size*0.95,d.size*0.8,d.size*0.24); ctx.fill();
+        ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.ellipse(d.size*0.55,-d.size*0.3,d.size*0.2,d.size*0.13,0.7,0,6.28); ctx.fill();
+        ctx.fillStyle='#111';
+        ctx.beginPath(); ctx.arc(d.size*0.98,-d.size*0.62,d.size*0.075,0,6.28); ctx.fill();
+        ctx.fillStyle='#111827';
+        ctx.beginPath(); ctx.arc(0,d.size*0.62,d.size*0.26,0,6.28); ctx.fill();
+        ctx.fillStyle='#f59e0b';
+        ctx.beginPath(); ctx.arc(0,d.size*0.62,d.size*0.1,0,6.28); ctx.fill();
+      } else {
+        ctx.fillStyle='#8b5e3c';
+        ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
+        ctx.fillStyle='#2e5d34';
+        ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.44,0,6.28); ctx.fill();
+        ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.ellipse(d.size*0.55,-d.size*0.3,d.size*0.2,d.size*0.13,0.7,0,6.28); ctx.fill();
+        ctx.fillStyle='#e8a33d';
+        ctx.beginPath(); ctx.moveTo(d.size*1.22,-d.size*0.58); ctx.lineTo(d.size*1.58,-d.size*0.46); ctx.lineTo(d.size*1.22,-d.size*0.34); ctx.fill();
+        ctx.fillStyle='#111';
+        ctx.beginPath(); ctx.arc(d.size*0.98,-d.size*0.62,d.size*0.075,0,6.28); ctx.fill();
+        ctx.fillStyle='#6b4526';
+        ctx.save(); ctx.translate(-d.size*0.15,-d.size*0.1);
+        if(w>0)ctx.rotate(-0.55-w*0.8); else ctx.rotate(0.55+w*0.8);
+        ctx.beginPath(); ctx.ellipse(0,-d.size*0.6,d.size*0.52,d.size*0.2,0,0,6.28); ctx.fill();
+        ctx.restore();
+      }
     } else {
       ctx.save(); ctx.rotate(d.rot||d.dead);
-      ctx.fillStyle='#8b5e3c';
+      ctx.fillStyle=d.kami?'#343b4a':'#8b5e3c';
       ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
-      ctx.fillStyle='#2e5d34';
+      ctx.fillStyle=d.kami?'#232935':'#2e5d34';
       ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.44,0,6.28); ctx.fill();
       ctx.restore();
     }
@@ -5296,6 +5375,23 @@ function brainDuck(){
     ducks.forEach(d=>{
       if(typeof d.dead==='number'){
         d.y+=d.dy; d.dy+=0.3; d.dead+=0.1; d.x+=d.sx; d.rot+=d.spin;
+      } else if(d.kami&&!over){
+        const dx=W/2-d.x, dy=H-16-d.y, len=Math.hypot(dx,dy)||1;
+        const spd=2.0+level*0.3;
+        d.vx+=(dx/len*spd-d.vx)*0.03; d.vy+=(dy/len*spd-d.vy)*0.03;
+        d.x+=d.vx; d.y+=d.vy; d.phase+=0.35;
+        d.bombT-=1;
+        if(d.bombT<=0&&d.y>10&&d.y<horizon){
+          bombs.push({x:d.x,y:d.y,vy:1.6});
+          d.bombT=1.5+Math.random()*1.8;
+        }
+        if(len<16){
+          explode(d.x,d.y,58); playExpl();
+          ducks.splice(ducks.indexOf(d),1);
+          livesDown('Камикадзе долетел до тебя');
+          return;
+        }
+        if(d.y>H+20){ ducks.splice(ducks.indexOf(d),1); return; }
       } else {
         d.x+=d.vx; d.y+=d.vy; d.phase+=0.35;
         if(d.vy<0)d.vy+=(Math.sin(d.phase*0.5))*0.02;
@@ -5311,26 +5407,37 @@ function brainDuck(){
       }
       if(d.y<-70||d.x<-70||d.x>W+70){
         ducks.splice(ducks.indexOf(d),1);
-        if(typeof d.dead!=='number'&&!over){
-          lives--;
-          const l=$('#duckLives'); if(l)l.textContent='🦆'.repeat(Math.max(0,lives));
-          if(lives<=0){
-            over=true;
-            duckStop();
-            brainSaveScore('duck',score);
-            const res=$('#duckRes');
-            if(res)res.innerHTML='<b style="color:var(--danger)">Игра окончена — утки улетели!</b> Попаданий: '+score+' · рекорд: '+state.brain.scores.duck.best+'<br><button class="btn primary" style="margin-top:8px" onclick="closeModal();brainDuck()">Сыграть ещё</button>';
-            toast('Утки улетели — осталось '+score+' попаданий');
-            const st=state.sensei;
-            if(st.enabled)senseiSay('Утки одолели тебя сегодня. Завтра — реванш!',st.strict?'strict':'calm',true);
-          } else {
-            toast('Утка улетела! Осталось жизней: '+lives,'error');
-          }
-        }
+        if(!d.blown&&typeof d.dead!=='number'&&!over)livesDown('Утка улетела');
         return;
       }
       drawDuck(ctx,d);
     });
+    for(let i=bombs.length-1;i>=0;i--){
+      const b=bombs[i];
+      b.y+=b.vy; b.vy+=0.12;
+      if(b.y>=H-20){
+        explode(b.x,H-20,46); playExpl();
+        bombs.splice(i,1);
+        if(!over&&Math.hypot(b.x-W/2,4)<46)livesDown('Бомба взорвалась рядом');
+        continue;
+      }
+      ctx.fillStyle='#1f2937';
+      ctx.beginPath(); ctx.arc(b.x,b.y,6,0,6.28); ctx.fill();
+      ctx.fillStyle='#f59e0b';
+      ctx.beginPath(); ctx.arc(b.x,b.y-7,2.2,0,6.28); ctx.fill();
+    }
+    for(let i=explosions.length-1;i>=0;i--){
+      const e=explosions[i];
+      e.t++;
+      if(e.t>=e.life){ explosions.splice(i,1); continue; }
+      const pr=e.t/e.life, rad=e.r*(0.4+pr*1.6);
+      ctx.fillStyle='rgba(255,190,60,'+(0.55*(1-pr))+')';
+      ctx.beginPath(); ctx.arc(e.x,e.y,rad,0,6.28); ctx.fill();
+      ctx.fillStyle='rgba(255,120,40,'+(0.5*(1-pr))+')';
+      ctx.beginPath(); ctx.arc(e.x,e.y,rad*0.7,0,6.28); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,'+(0.4*(1-pr))+')'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(e.x,e.y,rad*1.15,0,6.28); ctx.stroke();
+    }
     for(let i=splash.length-1;i>=0;i--){
       const p=splash[i];
       p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.a-=0.02;
@@ -5398,7 +5505,7 @@ function brainDuck(){
       <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Патроны: <b id="duckShells">●●</b></span><span id="duckReload" style="color:var(--warn);font-weight:700"></span></div>
       <div class="duck-hud"><span>Жизни: <b id="duckLives">🦆🦆🦆</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
       <canvas id="duckCv" width="${W}" height="${H}" style="max-width:100%;cursor:crosshair;border-radius:10px;border:1px solid var(--border)"></canvas>
-      <div class="field-hint">Ты сидишь в кустах у пруда. Утки вылетают из кустов и летят по горизонту — крякают при взлёте, а сбитые падают в воду с брызгами. В ружье 2 патрона, перезарядка 1 секунда, бывают осечки. Упустишь 3 утки — игра окончена. Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
+      <div class="field-hint">Ты сидишь в кустах у пруда. Утки вылетают стаями — крякают при взлёте, а сбитые падают в воду с брызгами. С 2-го уровня появляются тёмные камикадзе: они пикируют прямо на тебя и сбрасывают бомбы. Сбил камикадзе — он взрывается (+2 очка): перья, взрыв и взрывная волна разбрасывает уток рядом. Можно подстрелить и бомбу — взрыв в воздухе тоже заденет стаю. Упавшая рядом бомба — потеря жизни. В ружье 2 патрона, перезарядка 1 секунда, бывают осечки. Упустишь 3 утки — игра окончена. Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
       <div id="duckRes" style="font-size:14px;margin-top:6px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
@@ -5439,6 +5546,12 @@ function brainDuck(){
           smoke.push({x:mx0+ (Math.random()-0.5)*8, y:my0+(Math.random()-0.5)*8, vx:Math.cos(gun.ang)*1.6+(Math.random()-0.5)*1.2, vy:Math.sin(gun.ang)*1.6-0.9+Math.random()*0.8, r:3.5+Math.random()*4, a:0.45});
         }
         ejects.push({x:W/2+Math.cos(gun.ang)*64, y:H-16+Math.sin(gun.ang)*64-6, vx:Math.cos(gun.ang)*3.5+2.2, vy:-2.2-Math.random()*1.4, rot:0, vr:(Math.random()-0.5)*0.55, life:80});
+        let bh=-1;
+        bombs.forEach((b,i)=>{ if(Math.hypot(cx-b.x,cy-b.y)<13)bh=i; });
+        if(bh>=0){
+          const b=bombs[bh]; bombs.splice(bh,1);
+          explode(b.x,b.y,52); playExpl();
+        } else {
         let hit=-1,bestD=1e9;
         ducks.forEach((d,i)=>{
           if(typeof d.dead==='number')return;
@@ -5446,6 +5559,16 @@ function brainDuck(){
           if(dist<d.size*1.5&&dist<bestD){ bestD=dist; hit=i; }
         });
         if(hit>=0){
+          const hd=ducks[hit];
+          if(hd.kami){
+            score+=2;
+            const nl=1+Math.floor(score/5);
+            if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
+            const sc=$('#duckScore'); if(sc)sc.textContent=score;
+            explode(hd.x,hd.y,64); playExpl();
+            ducks.splice(hit,1);
+            toast('Камикадзе взорван! +2');
+          } else {
           setTimeout(playQuack,200);
           score++;
           const nl=1+Math.floor(score/5);
@@ -5454,11 +5577,12 @@ function brainDuck(){
           ducks[hit].dead=0; ducks[hit].dy=1.2;
           ducks[hit].spin=(Math.random()<0.5?-1:1)*(0.14+Math.random()*0.09);
           ducks[hit].sx=Math.random()*2.4-1.2;
-          const hd=ducks[hit];
           for(let k=0;k<14;k++){
             const a=Math.random()*6.28, sp=1.2+Math.random()*2.8;
             feathers.push({x:hd.x,y:hd.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.6,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.5,size:3+Math.random()*3,life:55+Math.random()*35,shade:Math.random()});
           }
+          }
+        }
         }
         if(gun.shells<=0&&!over){
           gun.reload=1; playReload();
