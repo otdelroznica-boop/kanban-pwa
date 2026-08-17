@@ -4442,7 +4442,7 @@ function digestGenre(g){
 }
 function fetchDigest(showError){
   const st=$('#digStatus'); if(st)st.textContent='Загружаю брифинг…';
-  fetch(SUPABASE.url+'/functions/v1/digest?city='+encodeURIComponent(state.digest.city||'Москва')+'&genres='+encodeURIComponent((state.digest.genres||[]).join(',')),{headers:{Authorization:'Bearer '+SUPABASE.anonKey}})
+  fetch(BACKEND.url+'/functions/v1/digest?city='+encodeURIComponent(state.digest.city||'Москва')+'&genres='+encodeURIComponent((state.digest.genres||[]).join(',')),{headers:{Authorization:'Bearer '+BACKEND.anonKey}})
     .then(r=>{ if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); })
     .then(j=>{ digestCache=j; digestCacheAt=Date.now(); if(st)st.textContent='Обновлено: '+new Date().toLocaleTimeString('ru-RU'); renderDigestModal(); })
     .catch(()=>{ if(st)st.textContent='Не удалось загрузить'; if(showError)toast('Брифинг не загрузился — проверьте интернет','error'); });
