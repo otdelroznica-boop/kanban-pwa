@@ -792,7 +792,7 @@ body[data-theme="dark"] .sensei-tip{background:#14281d;border-color:#2f6b4a;colo
 .tongue-view::before,.tongue-view::after{content:'';position:absolute;top:0;bottom:0;width:110px;z-index:2;background:linear-gradient(90deg,#a11d2f,#7f1424 70%,#5c0f1b);box-shadow:0 0 18px rgba(0,0,0,.45)}
 .tongue-view::before{left:0;clip-path:polygon(0 0,100% 0,100% 78%,86% 88%,70% 78%,54% 90%,38% 78%,22% 90%,8% 78%,0 88%)}
 .tongue-view::after{right:0;clip-path:polygon(0 0,100% 0,100% 88%,92% 78%,78% 90%,62% 78%,46% 90%,30% 78%,14% 88%,0 78%)}
-.tongue-run{position:absolute;left:0;right:0;bottom:0;transform:translateY(0);white-space:pre-wrap;font-size:20px;font-weight:600;line-height:1.5;text-align:center;padding:0 130px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.55);z-index:1}
+.tongue-run{position:absolute;left:0;right:0;bottom:0;transform:translate3d(0,0,0);will-change:transform;white-space:pre-wrap;font-size:20px;font-weight:600;line-height:1.5;text-align:center;padding:0 130px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.55);z-index:1}
 .tongue-mic{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:52px;height:120px;z-index:3;pointer-events:none;opacity:.95}
 .tongue-mic::before{content:'';position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:6px;height:72px;background:linear-gradient(90deg,#2f2f35,#5a5a63 40%,#26262b);border-radius:3px}
 .tongue-mic::after{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);width:34px;height:52px;border-radius:50% 50% 46% 46%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 2px,transparent 2px 7px),radial-gradient(circle at 50% 32%,#d6d6dc,#71717a 66%,#3f3f46);box-shadow:inset 0 -9px 16px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.5)}
@@ -4510,7 +4510,7 @@ const TONGUE_LEVELS=[
   {lvl:'4-й дан',items:['Была у Фрола — Фролу на Лавра наврала, пойдёт к Лавру — Лавру на Фрола наврёт.','От топота копыт пыль по полю летит, от копыт топота по полю пыль летит.','В Чите течёт Читинка, течёт не та Читинка, что в Чите.']},
   {lvl:'5-й дан',items:['В четверг четвёртого числа в четыре с четвертью часа четыре чёрненьких чумазеньких чертёнка чертили чёрными чернилами чертёж.','Лигурийский регулировщик регулировал в Лигурии, а лигурийский лигуриец лигурийскость лигурийскую имел.']}
 ];
-let tongueTimer=null,tonguePos=0,tongueTexts=[],tongueFull=0,tongueAsked=false,tongueLevel=3;
+let tongueTimer=false,tongueRaf=null,tongueStartAt=0,tonguePos=0,tongueTexts=[],tongueFull=0,tongueAsked=false,tongueLevel=3;
 let brainTimers=[];
 function tonguePick(){
   const lvl=TONGUE_LEVELS.find(l=>l.lvl===state.brain.level)||TONGUE_LEVELS[0];
@@ -4520,16 +4520,18 @@ function tonguePick(){
   renderTongue();
 }
 function tongueSpeedVal(){ return 25+tongueLevel*12; }
-function tongueTick(){
+function tongueFrame(now){
   const el=$('#tongueRun');
   if(!el){ tongueStop(); return; }
-  tonguePos+=tongueSpeedVal()*0.05;
-  el.style.transform='translateY('+(-tonguePos)+'px)';
+  tonguePos=(now-tongueStartAt)/1000*tongueSpeedVal();
+  el.style.transform='translate3d(0,'+(-tonguePos).toFixed(2)+'px,0)';
   if(tonguePos>=tongueFull&&!tongueAsked){
     tongueAsked=true;
     tonguePause();
     const q=$('#tongueAsk'); if(q)q.style.display='flex';
+    return;
   }
+  tongueRaf=requestAnimationFrame(tongueFrame);
 }
 function tongueAnswer(yes){
   const q=$('#tongueAsk'); if(q)q.style.display='none';
@@ -4556,12 +4558,23 @@ function tongueAnswer(yes){
 }
 function tongueStart(){
   if(!tongueTexts.length)tonguePick();
-  if(tongueTimer){ clearInterval(tongueTimer); tongueTimer=null; }
-  tongueTimer=setInterval(tongueTick,50);
+  tongueStop();
+  tongueStartAt=performance.now();
+  tongueRaf=requestAnimationFrame(tongueFrame);
+  tongueTimer=true;
   const b=$('#btnTongueStart'); if(b)b.textContent='Пауза';
 }
-function tonguePause(){ if(tongueTimer){ clearInterval(tongueTimer); tongueTimer=null; } const b=$('#btnTongueStart'); if(b)b.textContent='Старт'; }
-function tongueStop(){ if(tongueTimer){ clearInterval(tongueTimer); tongueTimer=null; } tonguePos=0; const el=$('#tongueRun'); if(el)el.style.transform='translateY(0)'; const b=$('#btnTongueStart'); if(b)b.textContent='Старт'; }
+function tonguePause(){
+  if(tongueRaf){ cancelAnimationFrame(tongueRaf); tongueRaf=null; }
+  tongueTimer=false;
+  const el=$('#tongueRun'); if(el)el.style.transform='translate3d(0,'+(-tonguePos).toFixed(2)+'px,0)';
+  const b=$('#btnTongueStart'); if(b)b.textContent='Старт';
+}
+function tongueStop(){
+  if(tongueRaf){ cancelAnimationFrame(tongueRaf); tongueRaf=null; }
+  tongueTimer=false;
+  tonguePos=0; const el=$('#tongueRun'); if(el)el.style.transform='translate3d(0,0,0)'; const b=$('#btnTongueStart'); if(b)b.textContent='Старт';
+}
 function renderTongue(){
   const el=$('#tongueRun');
   if(!el)return;
