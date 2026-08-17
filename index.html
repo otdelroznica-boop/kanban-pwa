@@ -5459,7 +5459,7 @@ function renderPersonal(){
   const lastEx=state._lastMoveEx||null;
   const exList=moveExList();
   const lastIdx=exList.indexOf(lastEx);
-  const mvtLeft=mvTimerLeft();
+  const mvtLeft=moveTimerLeft();
   const medsHtml=`<div class="p-card">
     <div class="p-card-head">${ICON.med} Препараты <span class="mini-actions"><span class="mini" title="Добавить препарат" onclick="openMedModal(null)">${ICON.plus}</span></span></div>
     ${state.meds.length?state.meds.map(medHTML).join(''):'<div class="med-empty">Препаратов пока нет. Добавьте первый — кнопкой «+».</div>'}
