@@ -5143,9 +5143,26 @@ function playExpl(){
   const g=a.createGain(); g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.45);
   o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.5);
 }
+function playClang(){
+  const a=ac(); if(!a)return;
+  const t=a.currentTime;
+  const o=a.createOscillator(); o.type='square';
+  o.frequency.setValueAtTime(900,t); o.frequency.exponentialRampToValueAtTime(320,t+0.12);
+  const g=a.createGain(); g.gain.setValueAtTime(0.09,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.15);
+}
+function playMGShot(){
+  const a=ac(); if(!a)return;
+  const t=a.currentTime;
+  const o=a.createOscillator(); o.type='square';
+  o.frequency.setValueAtTime(180+Math.random()*140,t);
+  const g=a.createGain(); g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.035);
+}
 function brainDuck(){
   const W=560,H=340,horizon=H*0.60;
-  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[],splash=[],feathers=[],bombs=[],explosions=[];
+  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[],splash=[],feathers=[],bombs=[],explosions=[],bullets=[],helmets=[];
+  let weapon=1,mg={left:0,t:0,heat:0,firing:false,shootT:0},crate=null,crateT=8+Math.random()*8;
   let gun={ang:Math.PI/2,kick:0,flash:0,shells:2,reload:0};
   const spawnOne=(free,k)=>{
     const horiz=Math.random()<0.45;
@@ -5158,7 +5175,7 @@ function brainDuck(){
       phase:Math.random()*6.28,
       size:Math.max(13,24-(level-1)*2),
       dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0,
-      dir:dir,kami:false,blown:false
+      dir:dir,kami:false,blown:false,helmet:Math.random()<0.25
     };
     ducks.push(d);
     const tt=setTimeout(()=>{ if(!over&&ducks.includes(d))playQuack(2); },300);
@@ -5170,7 +5187,7 @@ function brainDuck(){
     const dx=W/2-x, dy=H-16-y, len=Math.hypot(dx,dy)||1;
     const spd=2.0+level*0.3;
     const d={x,y,vx:dx/len*spd,vy:dy/len*spd,phase:0,size:Math.max(14,22-(level-1)*2),
-      dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0,dir:dx<0?-1:1,kami:true,blown:false,bombT:1.2+Math.random()*1.6};
+      dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0,dir:dx<0?-1:1,kami:true,blown:false,bombT:1.2+Math.random()*1.6,helmet:false};
     ducks.push(d);
   };
   const spawn=()=>{
@@ -5217,6 +5234,65 @@ function brainDuck(){
       toast(reason+'! Осталось жизней: '+lives,'error');
     }
   };
+  const updateScore=(add)=>{
+    score+=add;
+    const nl=1+Math.floor(score/5);
+    if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
+    const sc=$('#duckScore'); if(sc)sc.textContent=score;
+  };
+  const hitDuck=(d)=>{
+    if(typeof d.dead==='number')return;
+    if(d.helmet){
+      d.helmet=false;
+      helmets.push({x:d.x+d.size*0.88,y:d.y-d.size*0.52,vx:Math.random()*1.4-0.7,vy:-2.2,rot:0,vr:(Math.random()<0.5?-1:1)*0.18});
+      d.vy-=2.2; d.vx*=-0.35;
+      playClang();
+      updateScore(1);
+      toast('Каска слетела — ещё один выстрел!');
+      return;
+    }
+    d.dead=0; d.dy=1.2;
+    d.spin=(Math.random()<0.5?-1:1)*(0.14+Math.random()*0.09);
+    d.sx=Math.random()*2.4-1.2;
+    for(let k=0;k<14;k++){
+      const a=Math.random()*6.28, sp=1.2+Math.random()*2.8;
+      feathers.push({x:d.x,y:d.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.6,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.5,size:3+Math.random()*3,life:55+Math.random()*35,shade:Math.random()});
+    }
+    updateScore(1);
+  };
+  const reloadNow=()=>{
+    if(over||weapon!==1||gun.reload>0)return;
+    if(gun.shells>=2){ toast('Ружьё уже заряжено'); return; }
+    gun.reload=1;
+    const rr=$('#duckReload'); if(rr)rr.textContent='Перезарядка…';
+    playReload();
+    const tt=setTimeout(()=>{ gun.shells=2; gun.reload=0; const s=$('#duckShells'); if(s)s.textContent='●●'; const r2=$('#duckReload'); if(r2)r2.textContent=''; },1000);
+    brainTimers.push(tt);
+  };
+  const updateWeaponHud=()=>{
+    const w=$('#duckWeapon'); if(!w)return;
+    w.textContent=weapon===2?('2 — Пулемёт · '+mg.left+' · '+(mg.t/1000).toFixed(1)+'с'):'1 — Дробовик';
+  };
+  const fireMG=()=>{
+    playMGShot();
+    gun.kick=7; gun.flash=2;
+    bullets.push({x:W/2+Math.cos(gun.ang)*22,y:H-16+Math.sin(gun.ang)*22,vx:Math.cos(gun.ang)*15,vy:Math.sin(gun.ang)*15,life:60});
+  };
+  const openCrate=()=>{
+    if(!crate)return;
+    const cx=crate.x, cy=crate.y; crate=null;
+    for(let i=0;i<12;i++){
+      const a=Math.random()*6.28, sp=1+Math.random()*2.5;
+      smoke.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.6,r:3+Math.random()*4,a:0.5});
+    }
+    if(Math.random()<0.6){
+      weapon=2; mg={left:1000,t:60000,heat:0,firing:false,shootT:0};
+      toast('Ящик: ПУЛЕМЁТ! 1000 патронов на 60 секунд');
+    } else {
+      toast('В ящике — камешки…');
+    }
+    updateWeaponHud();
+  };
   const drawDuck=(ctx,d)=>{
     ctx.save(); ctx.translate(d.x,d.y);
     if(d.dead===false){
@@ -5248,6 +5324,12 @@ function brainDuck(){
         ctx.beginPath(); ctx.moveTo(d.size*1.22,-d.size*0.58); ctx.lineTo(d.size*1.58,-d.size*0.46); ctx.lineTo(d.size*1.22,-d.size*0.34); ctx.fill();
         ctx.fillStyle='#111';
         ctx.beginPath(); ctx.arc(d.size*0.98,-d.size*0.62,d.size*0.075,0,6.28); ctx.fill();
+        if(d.helmet){
+          ctx.fillStyle='#3f6212';
+          ctx.beginPath(); ctx.arc(d.size*0.88,-d.size*0.52,d.size*0.5,Math.PI,0); ctx.fill();
+          ctx.fillStyle='#4d7c0f';
+          ctx.beginPath(); ctx.rect(d.size*0.88-d.size*0.5,-d.size*0.52,d.size*0.28,3); ctx.fill();
+        }
         ctx.fillStyle='#6b4526';
         ctx.save(); ctx.translate(-d.size*0.15,-d.size*0.1);
         if(w>0)ctx.rotate(-0.55-w*0.8); else ctx.rotate(0.55+w*0.8);
@@ -5271,62 +5353,73 @@ function brainDuck(){
     ctx.rotate(gun.ang);
     ctx.translate(-Math.cos(gun.ang)*gun.kick,-Math.sin(gun.ang)*gun.kick);
     const brk=gun.reload>0?1:0;
-    ctx.save();
-    if(brk){ ctx.translate(0,13); ctx.rotate(0.18); }
-    ctx.fillStyle='#4b5563';
-    ctx.beginPath(); ctx.rect(0,-15,90,9); ctx.fill();
-    ctx.beginPath(); ctx.rect(0,-3,90,9); ctx.fill();
-    ctx.fillStyle='#6b7280';
-    ctx.beginPath(); ctx.rect(82,-16,9,26); ctx.fill();
-    ctx.fillStyle='#111827';
-    ctx.beginPath(); ctx.rect(0,-18,10,36); ctx.fill();
-    if(gun.shells>0&&!brk){
-      ctx.fillStyle='#d97706';
-      ctx.beginPath(); ctx.rect(6,-12.5,26,5); ctx.fill();
-      ctx.fillStyle='#ef4444';
-      ctx.beginPath(); ctx.rect(6,-8,26,5); ctx.fill();
-    }
-    ctx.restore();
-    if(brk){
-      ctx.fillStyle='#7a4a21';
-      ctx.beginPath(); ctx.rect(-58,-9,24,18); ctx.fill();
-      ctx.fillStyle='#5b3515';
-      ctx.beginPath(); ctx.rect(-46,-6,12,12); ctx.fill();
-    } else {
-      ctx.fillStyle='#8a5a2b';
-      ctx.beginPath();
-      ctx.moveTo(-54,3);
-      ctx.quadraticCurveTo(-76,6,-92,-5);
-      ctx.quadraticCurveTo(-72,-12,-52,-9);
-      ctx.quadraticCurveTo(-58,-3,-54,3);
-      ctx.fill();
-      ctx.strokeStyle='#5f3d18'; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.fillStyle='#7a4a21';
-      ctx.beginPath(); ctx.rect(-56,-10,16,20); ctx.fill();
-      ctx.fillStyle='#3f4a5a';
-      ctx.beginPath(); ctx.rect(-40,-8,14,16); ctx.fill();
-      ctx.strokeStyle='#374151'; ctx.lineWidth=2.5;
-      ctx.beginPath(); ctx.moveTo(-46,7); ctx.quadraticCurveTo(-42,12,-37,9); ctx.stroke();
+    if(weapon===2){
+      const hot=Math.min(1,mg.heat/5);
+      ctx.fillStyle=hot>0.5?'#7f1d1d':'#374151';
+      ctx.beginPath(); ctx.rect(0,-13,110,26); ctx.fill();
+      ctx.fillStyle=hot>0.5?'#dc2626':'#4b5563';
+      ctx.beginPath(); ctx.rect(90,-14,26,28); ctx.fill();
       ctx.fillStyle='#111827';
-      ctx.beginPath(); ctx.rect(-44,-9,4,6); ctx.fill();
-    }
-    if(gun.flash>0){
-      const fx=96,fy=0;
-      ctx.fillStyle='rgba(255,220,90,'+(gun.flash/3)+')';
-      ctx.beginPath(); ctx.arc(fx,fy,24,0,6.28); ctx.fill();
-      ctx.fillStyle='#ffd54d';
-      for(let i=0;i<12;i++){
-        const a=i/12*6.28;
-        ctx.beginPath();
-        ctx.moveTo(fx,fy);
-        ctx.lineTo(fx+Math.cos(a)*36,fy+Math.sin(a)*36);
-        ctx.lineTo(fx+Math.cos(a+0.26)*11,fy+Math.sin(a+0.26)*11);
-        ctx.closePath(); ctx.fill();
+      for(let i=0;i<5;i++)ctx.fillRect(12+i*16,-10,8,20);
+      ctx.fillStyle=hot>0.5?'#b91c1c':'#6b7280';
+      ctx.beginPath(); ctx.rect(0,-17,104,34); ctx.fill();
+      if(hot>0.5){
+        ctx.fillStyle='rgba(255,120,40,'+(Math.random()*0.5)+')';
+        ctx.beginPath(); ctx.arc(108,-8,4+Math.random()*3,0,6.28); ctx.fill();
       }
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.arc(fx,fy,10,0,6.28); ctx.fill();
+      if(gun.flash>0){
+        ctx.fillStyle='rgba(255,220,90,'+(gun.flash/2)+')';
+        ctx.beginPath(); ctx.arc(120,0,18,0,6.28); ctx.fill();
+        ctx.fillStyle='#ffd54d';
+        ctx.beginPath(); ctx.arc(120,0,9,0,6.28); ctx.fill();
+      }
+    } else {
+      ctx.save();
+      if(brk){ ctx.translate(0,13); ctx.rotate(0.18); }
+      ctx.fillStyle='#4b5563';
+      ctx.beginPath(); ctx.rect(0,-12,86,10); ctx.fill();
+      ctx.fillStyle='#6b7280';
+      ctx.beginPath(); ctx.rect(78,-14,10,16); ctx.fill();
+      ctx.fillStyle='#111827';
+      ctx.beginPath(); ctx.rect(0,-16,10,22); ctx.fill();
+      if(gun.shells>0&&!brk){
+        ctx.fillStyle='#d97706';
+        ctx.beginPath(); ctx.rect(6,-10,24,4); ctx.fill();
+        ctx.fillStyle='#ef4444';
+        ctx.beginPath(); ctx.rect(6,-6,24,4); ctx.fill();
+      }
+      ctx.restore();
+      if(gun.flash>0){
+        ctx.fillStyle='rgba(255,220,90,'+(gun.flash/3)+')';
+        ctx.beginPath(); ctx.arc(92,0,22,0,6.28); ctx.fill();
+        ctx.fillStyle='#ffd54d';
+        for(let i=0;i<12;i++){
+          const a=i/12*6.28;
+          ctx.beginPath();
+          ctx.moveTo(92,0);
+          ctx.lineTo(92+Math.cos(a)*34,Math.sin(a)*34);
+          ctx.lineTo(92+Math.cos(a+0.26)*10,Math.sin(a+0.26)*10);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.arc(92,0,9,0,6.28); ctx.fill();
+      }
     }
     ctx.restore();
+    if(weapon===2){
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.5;
+      const ax=W/2+Math.cos(gun.ang)*400, ay=H-16+Math.sin(gun.ang)*400;
+      ctx.beginPath();
+      ctx.moveTo(ax-8,ay); ctx.lineTo(ax-3,ay);
+      ctx.moveTo(ax+3,ay); ctx.lineTo(ax+8,ay);
+      ctx.moveTo(ax,ay-8); ctx.lineTo(ax,ay-3);
+      ctx.moveTo(ax,ay+3); ctx.lineTo(ax,ay+8);
+      ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.beginPath(); ctx.arc(ax,ay,1.6,0,6.28); ctx.fill();
+      ctx.restore();
+    }
   };
   const draw=()=>{
     const cv=$('#duckCv');
@@ -5474,6 +5567,110 @@ function brainDuck(){
       ctx.beginPath(); ctx.moveTo(-f.size,0); ctx.lineTo(f.size,0); ctx.stroke();
       ctx.restore();
     }
+    if(crate){
+      crate.phase+=0.05;
+      crate.x+=Math.sin(crate.phase)*0.9; crate.y+=crate.vy;
+      if(crate.y>=horizon+14){
+        for(let k=0;k<10;k++)splash.push({x:crate.x+(Math.random()-0.5)*24,y:horizon+14,vx:(Math.random()-0.5)*2.6,vy:-1-Math.random()*1.8,r:2+Math.random()*2,a:0.6});
+        crate=null;
+      } else {
+        ctx.strokeStyle='rgba(220,215,205,.9)'; ctx.lineWidth=1.2;
+        for(let i=0;i<4;i++){
+          const sxp=-10+i*6.7, txp=-16+i*10.6;
+          ctx.beginPath(); ctx.moveTo(crate.x+sxp,crate.y-10); ctx.lineTo(crate.x+txp,crate.y-38); ctx.stroke();
+        }
+        ctx.fillStyle='#c0392b';
+        ctx.beginPath(); ctx.arc(crate.x,crate.y-40,26,Math.PI,0); ctx.fill();
+        ctx.fillStyle='#e74c3c';
+        for(let i=0;i<4;i++){
+          ctx.beginPath(); ctx.arc(crate.x-26+i*17,crate.y-40,8,Math.PI,0); ctx.fill();
+        }
+        ctx.fillStyle='#8a5a2b';
+        ctx.beginPath(); ctx.rect(crate.x-14,crate.y-14,28,28); ctx.fill();
+        ctx.strokeStyle='#5f3d18'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(crate.x-14,crate.y); ctx.lineTo(crate.x+14,crate.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(crate.x,crate.y-14); ctx.lineTo(crate.x,crate.y+14); ctx.stroke();
+        ctx.fillStyle='#f1c40f';
+        ctx.font='bold 8px sans-serif'; ctx.textAlign='center';
+        ctx.fillText('?!',crate.x,crate.y+3);
+      }
+    } else if(!over){
+      crateT-=33;
+      if(crateT<=0){ crate={x:60+Math.random()*(W-120),y:-40,vy:1.1+level*0.08,phase:Math.random()*6.28}; crateT=18+Math.random()*10; }
+    }
+    for(let i=bullets.length-1;i>=0;i--){
+      const b=bullets[i];
+      b.x+=b.vx; b.y+=b.vy; b.life--;
+      if(b.life<=0||b.x<-10||b.x>W+10||b.y<-10||b.y>H+10){ bullets.splice(i,1); continue; }
+      if(crate&&Math.hypot(b.x-crate.x,b.y-crate.y)<16){
+        openCrate();
+        bullets.splice(i,1); continue;
+      }
+      let bhit=-1;
+      bombs.forEach((bb,bi)=>{ if(Math.hypot(b.x-bb.x,b.y-bb.y)<13)bhit=bi; });
+      if(bhit>=0){
+        const bb=bombs[bhit]; bombs.splice(bhit,1);
+        explode(bb.x,bb.y,52); playExpl();
+        bullets.splice(i,1); continue;
+      }
+      let hb=-1,best=1e9;
+      ducks.forEach((dd,di)=>{
+        if(typeof dd.dead==='number')return;
+        const dist=Math.hypot(b.x-dd.x,b.y-dd.y);
+        if(dist<dd.size*1.6&&dist<best){ best=dist; hb=di; }
+      });
+      if(hb>=0){
+        const dd=ducks[hb];
+        if(dd.kami){
+          updateScore(2);
+          explode(dd.x,dd.y,64); playExpl();
+          ducks.splice(hb,1);
+          toast('Камикадзе взорван! +2');
+        } else {
+          hitDuck(dd);
+        }
+        bullets.splice(i,1);
+        continue;
+      }
+      ctx.strokeStyle='rgba(255,220,90,.95)'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(b.x-b.vx*2.4,b.y-b.vy*2.4); ctx.stroke();
+      ctx.strokeStyle='rgba(255,160,60,.5)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(b.x-b.vx*2.4,b.y-b.vy*2.4); ctx.lineTo(b.x-b.vx*4.4,b.y-b.vy*4.4); ctx.stroke();
+    }
+    for(let i=helmets.length-1;i>=0;i--){
+      const h=helmets[i];
+      h.x+=h.vx; h.y+=h.vy; h.vy+=0.22; h.rot+=h.vr;
+      if(h.y>=horizon+18){
+        splash.push({x:h.x,y:horizon+18,vx:0,vy:-1.2,r:2,a:0.5});
+        helmets.splice(i,1); continue;
+      }
+      ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.rot);
+      ctx.fillStyle='#3f6212';
+      ctx.beginPath(); ctx.arc(0,0,7,Math.PI,0); ctx.fill();
+      ctx.fillStyle='#4d7c0f';
+      ctx.beginPath(); ctx.rect(-7,-1,14,3); ctx.fill();
+      ctx.restore();
+    }
+    if(weapon===2){
+      mg.t-=33;
+      if(!over&&mg.firing&&mg.left>0){
+        mg.shootT-=33;
+        mg.heat=Math.min(5,mg.heat+0.033);
+        if(mg.shootT<=0){
+          fireMG();
+          mg.left--;
+          mg.shootT=95;
+          if(mg.left<=0){ toast('Пулемёт пуст'); weapon=1; mg.firing=false; }
+        }
+      } else {
+        mg.heat=Math.max(0,mg.heat-0.04);
+      }
+      if(mg.t<=0){
+        weapon=1; mg.firing=false;
+        toast('Время пулемёта вышло');
+      }
+      updateWeaponHud();
+    }
     if(gun.kick>0)gun.kick*=0.82;
     if(gun.flash>0)gun.flash--;
     drawGun(ctx);
@@ -5503,9 +5700,9 @@ function brainDuck(){
     <div class="modal-head"><h3>${ICON.brain} Охотник на уток</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
     <div class="modal-body" style="text-align:center">
       <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Патроны: <b id="duckShells">●●</b></span><span id="duckReload" style="color:var(--warn);font-weight:700"></span></div>
-      <div class="duck-hud"><span>Жизни: <b id="duckLives">🦆🦆🦆</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
+      <div class="duck-hud"><span>Оружие: <b id="duckWeapon">1 — Дробовик</b></span><span>Жизни: <b id="duckLives">🦆🦆🦆</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
       <canvas id="duckCv" width="${W}" height="${H}" style="max-width:100%;cursor:crosshair;border-radius:10px;border:1px solid var(--border)"></canvas>
-      <div class="field-hint">Ты сидишь в кустах у пруда. Утки вылетают стаями — крякают при взлёте, а сбитые падают в воду с брызгами. С 2-го уровня появляются тёмные камикадзе: они пикируют прямо на тебя и сбрасывают бомбы. Сбил камикадзе — он взрывается (+2 очка): перья, взрыв и взрывная волна разбрасывает уток рядом. Можно подстрелить и бомбу — взрыв в воздухе тоже заденет стаю. Упавшая рядом бомба — потеря жизни. В ружье 2 патрона, перезарядка 1 секунда, бывают осечки. Упустишь 3 утки — игра окончена. Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
+      <div class="field-hint">Вид от первого лица: внизу — ствол, целишься мышью. Левая кнопка — выстрел, правая (ПКМ) — перезарядка дробовика вручную, колёсико или клавиши 1/2 — смена оружия. Утки вылетают стаями, некоторые в касках — каску надо сбить первым выстрелом, потом убьёт второй. С 2-го уровня камикадзе пикируют и сбрасывают бомбы (сбивай — взрыв +2 и волна разбрасывает стаю). С неба падают ящики на парашюте — сбей, и в ящике может быть пулемёт: 1000 патронов на 60 секунд, стрельба без остановки (держи ЛКМ), после 5 секунд непрерывной стрельбы ствол раскаляется докрасна. В ружье 2 патрона, бывают осечки. Упустишь 3 утки — игра окончена. Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
       <div id="duckRes" style="font-size:14px;margin-top:6px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
@@ -5521,20 +5718,35 @@ function brainDuck(){
         if(my>H-20)my=H-20;
         gun.ang=Math.atan2(my-(H-16),mx-W/2);
       });
+      cv.addEventListener('mousedown',e=>{
+        if(e.button===0&&weapon===2&&!over)mg.firing=true;
+      });
+      window.addEventListener('mouseup',e=>{ if(e.button===0)mg.firing=false; });
+      cv.addEventListener('contextmenu',e=>{
+        e.preventDefault();
+        if(!over)reloadNow();
+      });
+      cv.addEventListener('wheel',e=>{
+        e.preventDefault();
+        if(over)return;
+        if(mg.left>0&&mg.t>0){ weapon=weapon===1?2:1; mg.firing=false; }
+        else weapon=1;
+        updateWeaponHud();
+      });
+      const keyFn=e=>{
+        if(e.key==='1'){ weapon=1; mg.firing=false; updateWeaponHud(); }
+        else if(e.key==='2'){ if(mg.left>0&&mg.t>0){ weapon=2; mg.firing=false; } else toast('Пулемёта нет'); updateWeaponHud(); }
+      };
+      window.addEventListener('keydown',keyFn);
       cv.addEventListener('click',e=>{
         if(over||gun.reload>0)return;
-        if(gun.shells<=0){ gun.reload=1; playReload(); const tt=setTimeout(()=>{ gun.shells=2; gun.reload=0; const s=$('#duckShells'); if(s)s.textContent='●●'; const r=$('#duckReload'); if(r)r.textContent=''; },1000); brainTimers.push(tt); return; }
+        if(weapon===2)return;
+        if(gun.shells<=0){ playDry(); gun.kick=2; toast('Пусто — правая кнопка: перезарядка'); return; }
         gun.shells--;
         const s=$('#duckShells'); if(s)s.textContent=gun.shells>0?'●○':'○';
         if(Math.random()<0.08){
           playDry(); gun.kick=3;
           toast('Осечка!');
-          if(gun.shells<=0&&!over){
-            gun.reload=1; playReload();
-            const rr=$('#duckReload'); if(rr)rr.textContent='Перезарядка…';
-            const tt=setTimeout(()=>{ gun.shells=2; gun.reload=0; const ss=$('#duckShells'); if(ss)ss.textContent='●●'; const r2=$('#duckReload'); if(r2)r2.textContent=''; },1000);
-            brainTimers.push(tt);
-          }
           return;
         }
         playShot(); playEject();
@@ -5551,6 +5763,8 @@ function brainDuck(){
         if(bh>=0){
           const b=bombs[bh]; bombs.splice(bh,1);
           explode(b.x,b.y,52); playExpl();
+        } else if(crate&&Math.hypot(cx-crate.x,cy-crate.y)<16){
+          openCrate();
         } else {
         let hit=-1,bestD=1e9;
         ducks.forEach((d,i)=>{
@@ -5561,34 +5775,18 @@ function brainDuck(){
         if(hit>=0){
           const hd=ducks[hit];
           if(hd.kami){
-            score+=2;
-            const nl=1+Math.floor(score/5);
-            if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
-            const sc=$('#duckScore'); if(sc)sc.textContent=score;
+            updateScore(2);
             explode(hd.x,hd.y,64); playExpl();
             ducks.splice(hit,1);
             toast('Камикадзе взорван! +2');
           } else {
-          setTimeout(playQuack,200);
-          score++;
-          const nl=1+Math.floor(score/5);
-          if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
-          const sc=$('#duckScore'); if(sc)sc.textContent=score;
-          ducks[hit].dead=0; ducks[hit].dy=1.2;
-          ducks[hit].spin=(Math.random()<0.5?-1:1)*(0.14+Math.random()*0.09);
-          ducks[hit].sx=Math.random()*2.4-1.2;
-          for(let k=0;k<14;k++){
-            const a=Math.random()*6.28, sp=1.2+Math.random()*2.8;
-            feathers.push({x:hd.x,y:hd.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.6,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.5,size:3+Math.random()*3,life:55+Math.random()*35,shade:Math.random()});
-          }
+            hitDuck(hd);
+            setTimeout(playQuack,200);
           }
         }
         }
         if(gun.shells<=0&&!over){
-          gun.reload=1; playReload();
-          const rr=$('#duckReload'); if(rr)rr.textContent='Перезарядка…';
-          const tt=setTimeout(()=>{ gun.shells=2; gun.reload=0; const ss=$('#duckShells'); if(ss)ss.textContent='●●'; const r2=$('#duckReload'); if(r2)r2.textContent=''; },1000);
-          brainTimers.push(tt);
+          toast('Патроны кончились — правая кнопка: перезарядка');
         }
       });
     },true);
