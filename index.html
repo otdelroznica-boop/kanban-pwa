@@ -182,6 +182,9 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .gantt-bar{position:absolute;top:4px;height:18px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden}
 .gantt-bar.done{background:linear-gradient(180deg,#34d399,#10b981)!important}
 .gantt-bar.late{outline:2px solid var(--danger)}
+.gantt-bar-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:600;padding:0 4px;max-width:100%}
+.gantt-bar.dragging,.gantt-bar-sub.dragging,.gantt-bar-link.dragging{opacity:.45}
+.gantt-bar.drop-ok,.gantt-bar-sub.drop-ok,.gantt-bar-link.drop-ok{outline:2px solid #22d3ee}
 .gantt-bar-sub{position:absolute;top:5px;height:16px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;overflow:hidden;opacity:.82}
 .gantt-bar-sub.done{background:linear-gradient(180deg,#34d399,#10b981)!important;opacity:1}
 .gantt-bar-link{position:absolute;top:4px;height:18px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden;border:1px dashed rgba(255,255,255,.55)}
@@ -189,6 +192,24 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .gantt-bar-link.late{outline:2px solid var(--danger)}
 .gantt-name-col .gantt-t-sub{padding-left:14px}
 .gantt-name-col .gantt-t-link{padding-left:14px;color:var(--accent2,#6366f1)}
+.sprint-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--panel)}
+.sprint-bar h2{font-size:15px;margin:0 6px 0 0}
+.sprint-sum{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;font-size:13px;background:var(--panel)}
+.sprint-sum b{font-size:14px}
+.sprint-add{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--panel)}
+.sprint-list{padding:10px 14px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.sprint-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card,#fff);font-size:13px;flex-wrap:wrap}
+.sprint-col-n{flex:1 1 220px;min-width:200px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.sprint-col-n b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sprint-col{display:flex;align-items:center;gap:6px;min-width:90px}
+.sprint-col.sp-prog{min-width:130px}
+.sprint-col.sp-acts{min-width:120px;justify-content:flex-end}
+.col-dot{display:inline-block;width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.sp-pb{flex:1;height:8px;border-radius:4px;background:var(--border);overflow:hidden;min-width:60px}
+.sp-pb>div{height:100%;border-radius:4px;transition:width .3s}
+.sp-pct{font-size:11px;color:var(--muted);min-width:32px;text-align:right}
+.sprint-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px}
+.btn.danger,.sprint-bar .danger{color:#ef4444}
 .gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);z-index:2;pointer-events:none}
 .gantt-today::before{content:'сегодня';position:absolute;top:2px;left:4px;font-size:9px;color:var(--danger);font-weight:700;white-space:nowrap}
 .gantt-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px}
@@ -868,6 +889,7 @@ body[data-theme="dark"] .bg-card{background:#1a1e33}
     <button data-t="brain">Ум</button>
     <button data-t="report">Отчёт</button>
     <button data-t="gantt">Гант</button>
+    <button data-t="sprints">Спринты</button>
   </nav>
   <div class="stats" id="stats"></div>
   <div class="spacer"></div>
@@ -947,6 +969,9 @@ body[data-theme="dark"] .bg-card{background:#1a1e33}
     </div>
     <div class="tab-page" id="tabGantt">
       <div class="gantt-wrap" id="ganttWrap"></div>
+    </div>
+    <div class="tab-page" id="tabSprints">
+      <div class="sprints-wrap" id="sprintsWrap"></div>
     </div>
     <div class="tab-page" id="tabReport">
       <div class="report-bar">
@@ -1595,6 +1620,20 @@ function removeLink(ctxKey,tid,lid){
   ref.t.links=(ref.t.links||[]).filter(l=>l.id!==lid);
   save(); openCardModal(tid,ctxKey); render();
   toast('Связь убрана');
+}
+function linkByDrag(dstCtx,dstId,srcCtx,srcId){
+  if(!dstCtx||!dstId||!srcCtx||!srcId)return;
+  const dst=findTaskRef(dstId,dstCtx), src=findTaskRef(srcId,srcCtx);
+  if(!dst||!src)return;
+  if(dst.t.id===src.t.id){ toast('Это одна и та же карточка','error'); return; }
+  if(dst.t.parentId===src.t.id||src.t.parentId===dst.t.id){ toast('Это подзадача — связь не нужна','error'); return; }
+  if(dst.c.org.id!==src.c.org.id){ toast('Можно связывать только карточки одной организации','error'); return; }
+  if((dst.t.links||[]).some(l=>l.id===src.t.id)){ toast('Уже связано','error'); return; }
+  if((src.t.links||[]).some(l=>l.id===dst.t.id)){ toast('Связь уже есть в обратную сторону','error'); return; }
+  if(!dst.t.links)dst.t.links=[];
+  dst.t.links.push({id:src.t.id,ctx:src.c.key});
+  save(); render();
+  toast('Связано: «'+src.t.title+'» → «'+dst.t.title+'»');
 }
 function syncSubs(c,t){ const col=t.columnId; subsOf(c,t).forEach(s=>s.columnId=col); }
 function totalSpent(t){
@@ -2296,7 +2335,7 @@ function deleteArchive(i){
 function setTab(t){ currentTab=t; render(); }
 function renderTabs(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===currentTab));
-  const map={board:'tabBoard',today:'tabToday',calendar:'tabCalendar',docs:'tabDocs',notes:'tabNotes',personal:'tabPersonal',brain:'tabBrain',report:'tabReport',gantt:'tabGantt'};
+  const map={board:'tabBoard',today:'tabToday',calendar:'tabCalendar',docs:'tabDocs',notes:'tabNotes',personal:'tabPersonal',brain:'tabBrain',report:'tabReport',gantt:'tabGantt',sprints:'tabSprints'};
   document.querySelectorAll('.tab-page').forEach(el=>el.classList.toggle('active',el.id===map[currentTab]));
   document.body.classList.toggle('print-report',currentTab==='report');
 }
@@ -5089,7 +5128,7 @@ function playReload(){
 }
 function brainDuck(){
   const W=560,H=340,horizon=H*0.60;
-  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[],splash=[];
+  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[],splash=[],feathers=[];
   let gun={ang:Math.PI/2,kick:0,flash:0,shells:2,reload:0};
   const spawn=()=>{
     if(ducks.length>=2)return;
@@ -5102,7 +5141,7 @@ function brainDuck(){
       vy:horiz?(0.1+Math.random()*0.3):-(2.0+level*0.3)*(0.9+Math.random()*0.3),
       phase:Math.random()*6.28,
       size:Math.max(13,24-(level-1)*2),
-      dead:false,dy:0,esc:false,laugh:false
+      dead:false,dy:0,esc:false,laugh:false,rot:0,spin:0,sx:0
     };
     ducks.push(d);
     const tt=setTimeout(()=>{ if(!over&&ducks.includes(d))playQuack(2); },300);
@@ -5128,7 +5167,7 @@ function brainDuck(){
       ctx.beginPath(); ctx.ellipse(0,-d.size*0.6,d.size*0.52,d.size*0.2,0,0,6.28); ctx.fill();
       ctx.restore();
     } else {
-      ctx.save(); ctx.rotate(d.dead);
+      ctx.save(); ctx.rotate(d.rot||d.dead);
       ctx.fillStyle='#8b5e3c';
       ctx.beginPath(); ctx.ellipse(0,0,d.size,d.size*0.6,0,0,6.28); ctx.fill();
       ctx.fillStyle='#2e5d34';
@@ -5247,7 +5286,7 @@ function brainDuck(){
     ctx.beginPath(); ctx.arc(W-8,H,34,Math.PI,0); ctx.fill();
     ducks.forEach(d=>{
       if(typeof d.dead==='number'){
-        d.y+=d.dy; d.dy+=0.35; d.dead+=0.13;
+        d.y+=d.dy; d.dy+=0.3; d.dead+=0.1; d.x+=d.sx; d.rot+=d.spin;
       } else {
         d.x+=d.vx; d.y+=d.vy; d.phase+=0.35;
         if(d.vy<0)d.vy+=(Math.sin(d.phase*0.5))*0.02;
@@ -5306,6 +5345,17 @@ function brainDuck(){
       ctx.beginPath(); ctx.rect(-5,-2,10,4); ctx.fill();
       ctx.fillStyle='#f59e0b';
       ctx.beginPath(); ctx.rect(-2.5,-1,6,2); ctx.fill();
+      ctx.restore();
+    }
+    for(let i=feathers.length-1;i>=0;i--){
+      const f=feathers[i];
+      f.x+=f.vx; f.y+=f.vy; f.vy+=0.12; f.rot+=f.vr; f.life--;
+      if(f.life<=0||f.y>H+20){ feathers.splice(i,1); continue; }
+      ctx.save(); ctx.translate(f.x,f.y); ctx.rotate(f.rot);
+      ctx.fillStyle=f.shade<0.33?'#f5f0e8':(f.shade<0.66?'#d9d2c4':'#b08968');
+      ctx.beginPath(); ctx.ellipse(0,0,f.size,f.size*0.32,0,0,6.28); ctx.fill();
+      ctx.strokeStyle='rgba(90,70,50,.5)'; ctx.lineWidth=0.8;
+      ctx.beginPath(); ctx.moveTo(-f.size,0); ctx.lineTo(f.size,0); ctx.stroke();
       ctx.restore();
     }
     if(gun.kick>0)gun.kick*=0.82;
@@ -5392,7 +5442,14 @@ function brainDuck(){
           const nl=1+Math.floor(score/5);
           if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
           const sc=$('#duckScore'); if(sc)sc.textContent=score;
-          ducks[hit].dead=0; ducks[hit].dy=1.5;
+          ducks[hit].dead=0; ducks[hit].dy=1.2;
+          ducks[hit].spin=(Math.random()<0.5?-1:1)*(0.14+Math.random()*0.09);
+          ducks[hit].sx=Math.random()*2.4-1.2;
+          const hd=ducks[hit];
+          for(let k=0;k<14;k++){
+            const a=Math.random()*6.28, sp=1.2+Math.random()*2.8;
+            feathers.push({x:hd.x,y:hd.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.6,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.5,size:3+Math.random()*3,life:55+Math.random()*35,shade:Math.random()});
+          }
         }
         if(gun.shells<=0&&!over){
           gun.reload=1; playReload();
@@ -5938,7 +5995,7 @@ function renderGantt(){
   const today=new Date(); today.setHours(0,0,0,0);
   const todayStart=new Date(today); todayStart.setDate(todayStart.getDate()-1);
   const offToday=Math.round((todayStart-start)/day);
-  const weekW=28,nameW=180,headH=26,rowH=26;
+  const weekW=36,nameW=250,headH=26,rowH=26;
   const idxOf=dt=>Math.round((new Date(dt)-start)/day);
   const W=nameW+total*weekW;
   const fmt=d=>{const dd=new Date(d);return dd.getDate()+'.'+String(dd.getMonth()+1).padStart(2,'0');};
@@ -5957,7 +6014,7 @@ function renderGantt(){
     const done=isDone(x.t);
     const lateCls=(!done&&x.t.deadline&&x.t.deadline<todayISO())?' late':'';
     const left=i0*weekW+3, w=Math.max(weekW-4,(i1-i0+1)*weekW-6);
-    const bar=`<div class="gantt-bar${done?' done':''}${lateCls}" style="left:${left}px;width:${w}px;background:${done?'linear-gradient(180deg,#34d399,#10b981)':colColor(x.t.columnId)}" title="${x.t.title} · ${colName(x.t.columnId)}" onclick="openCardModal('${x.t.id}','${x.c.key}')">${done?'✓':''}</div>`;
+    const bar=`<div class="gantt-bar${done?' done':''}${lateCls}" draggable="true" ondragstart="event.dataTransfer.setData('text/kanban','${x.c.key}|${x.t.id}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" ondragover="event.preventDefault();this.classList.add('drop-ok')" ondragleave="this.classList.remove('drop-ok')" ondrop="event.preventDefault();this.classList.remove('drop-ok');const dd=event.dataTransfer.getData('text/kanban').split('|');linkByDrag('${x.c.key}','${x.t.id}',dd[0],dd[1])" style="left:${left}px;width:${w}px;background:${done?'linear-gradient(180deg,#34d399,#10b981)':colColor(x.t.columnId)}" title="${x.t.title} · ${colName(x.t.columnId)} · перетащите на другую полосу, чтобы связать" onclick="openCardModal('${x.t.id}','${x.c.key}')">${done?'✓':''}${w>=60?`<span class="gantt-bar-t">${x.t.title}</span>`:''}</div>`;
     rows.push(`<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t">${x.t.title}</span><span class="gantt-sub">${colName(x.t.columnId)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${bar}</div></div>`);
     const x0=left+3, x1=left+w-3, ym=myIdx*rowH+rowH/2;
     x.kids.forEach(k=>{
@@ -5966,7 +6023,7 @@ function renderGantt(){
       const klate=(!kdone&&k.t.deadline&&k.t.deadline<todayISO())?' late':'';
       const kleft=ki0*weekW+3, kw=Math.max(weekW-4,(ki1-ki0+1)*weekW-6);
       const subCls=k.kind==='sub'?'gantt-bar-sub':(kdone?'gantt-bar-link-done':'gantt-bar-link');
-      const kbar=`<div class="${subCls}${kdone?' done':''}${klate}" style="left:${kleft}px;width:${kw}px;background:${kdone?'linear-gradient(180deg,#34d399,#10b981)':(k.kind==='sub'?colColor(k.t.columnId):'linear-gradient(180deg,#818cf8,#6366f1)')}" title="${(k.kind==='sub'?'Подзадача: ':'Связанная: ')+k.t.title} · ${colName(k.t.columnId)}" onclick="openCardModal('${k.t.id}','${k.c.key}')">${kdone?'✓':''}</div>`;
+      const kbar=`<div class="${subCls}${kdone?' done':''}${klate}" draggable="true" ondragstart="event.dataTransfer.setData('text/kanban','${k.c.key}|${k.t.id}');this.classList.add('dragging')" ondragend="this.classList.remove('dragging')" ondragover="event.preventDefault();this.classList.add('drop-ok')" ondragleave="this.classList.remove('drop-ok')" ondrop="event.preventDefault();this.classList.remove('drop-ok');const dd=event.dataTransfer.getData('text/kanban').split('|');linkByDrag('${k.c.key}','${k.t.id}',dd[0],dd[1])" style="left:${kleft}px;width:${kw}px;background:${kdone?'linear-gradient(180deg,#34d399,#10b981)':(k.kind==='sub'?colColor(k.t.columnId):'linear-gradient(180deg,#818cf8,#6366f1)')}" title="${(k.kind==='sub'?'Подзадача: ':'Связанная: ')+k.t.title} · ${colName(k.t.columnId)} · перетащите на другую полосу, чтобы связать" onclick="openCardModal('${k.t.id}','${k.c.key}')">${kdone?'✓':''}${kw>=60?`<span class="gantt-bar-t">${k.t.title}</span>`:''}</div>`;
       const kym=rowIdx*rowH+rowH/2;
       rows.push(`<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t ${k.kind==='sub'?'gantt-t-sub':'gantt-t-link'}">${k.kind==='sub'?'└ ':''}${k.kind==='link'?'⇄ ':''}${k.t.title}</span><span class="gantt-sub">${k.kind==='sub'?colName(k.t.columnId):ctxLabel(k.c)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${kbar}</div></div>`);
       if(k.kind==='link'){
@@ -5988,7 +6045,115 @@ function renderGantt(){
       <polygon points="${l.x2},${l.y2} ${a1.x},${a1.y} ${a2.x},${a2.y}" fill="#64748b"/>`;
   }).join('');
   const tLine=offToday>=0&&offToday<=total?`<div class="gantt-today" style="left:${nameW+offToday*weekW}px"></div>`:'';
-  el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows.join('')}${linkSvg?`<svg class="gantt-links" style="position:absolute;top:${headH}px;left:${nameW}px;width:${total*weekW}px;height:${rowIdx*rowH}px;pointer-events:none">${linkSvg}</svg>`:''}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Подзадачи — под задачей (└), связанные карточки — фиолетовые (⇄) со стрелкой-связью. Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
+  el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows.join('')}${linkSvg?`<svg class="gantt-links" style="position:absolute;top:${headH}px;left:${nameW}px;width:${total*weekW}px;height:${rowIdx*rowH}px;pointer-events:none">${linkSvg}</svg>`:''}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Подзадачи — под задачей (└), связанные карточки — фиолетовые (⇄) со стрелкой-связью. Чтобы связать карточки — перетащите одну полосу на другую (на кого уронили — тот главный). Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
+}
+/* ---- Спринты ---- */
+function renderSprints(){
+  const el=$('#sprintsWrap'); if(!el)return;
+  const sel=state._selSprint||(state.sprints&&state.sprints[0])||'';
+  const sprOpts=(state.sprints||[]).map(s=>`<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
+  const head=`<div class="sprint-bar">
+    <h2>Спринты</h2>
+    <span class="f-lbl">Спринт:</span>
+    <select id="spSel" onchange="state._selSprint=this.value;save();renderSprints()"><option value="">— выберите спринт —</option>${sprOpts}</select>
+    <button class="btn primary" onclick="sprintAdd()">Новый спринт</button>
+    <button class="btn ghost" onclick="sprintRename()">Переименовать</button>
+    <button class="btn ghost danger" onclick="sprintRemove()">Удалить</button>
+  </div>`;
+  if(!sel){
+    el.innerHTML=head+'<div class="sprint-empty">Создайте спринт и добавляйте в него задачи из любого раздела. В спринте видно статусы задач, их время и прогресс, а «Отчёт по спринту» — готовый отчёт.</div>';
+    return;
+  }
+  let tasks=[];
+  viewContexts().forEach(c=>{
+    ctxTasks(c).forEach(t=>{ if((t.sprint||'')===sel&&!t.parentId)tasks.push({c,t}); });
+  });
+  const done=tasks.filter(x=>isDone(x.t));
+  const spentAll=tasks.reduce((s,x)=>s+totalSpent(x.t),0);
+  const factAll=tasks.reduce((s,x)=>s+((typeof x.t.actual==='number'&&x.t.actual>=0)?Math.floor(x.t.actual*3600):0),0);
+  const pct=tasks.length?Math.round(tasks.reduce((s,x)=>s+taskPct(x.t),0)/tasks.length):0;
+  const sum=`<div class="sprint-sum">
+    <span>Задач: <b>${tasks.length}</b></span>
+    <span>Готово: <b>${done.length}</b></span>
+    <span>Открыто: <b>${tasks.length-done.length}</b></span>
+    <span>Прогресс: <b>${pct}%</b></span>
+    <span>Время: <b>${fmtDur(spentAll)}</b></span>
+    <span>Вручную: <b>${factAll>0?fmtDur(factAll):'—'}</b></span>
+    <span class="spacer"></span>
+    <button class="btn ghost" onclick="state._repSprint='${esc(sel)}';save();setTab('report')">Отчёт по спринту</button>
+    <button class="btn ghost" onclick="sprintCsv('${esc(sel)}')">CSV</button>
+  </div>`;
+  const addOpts=[];
+  viewContexts().forEach(c=>{
+    ctxTasks(c).forEach(t=>{
+      if(t.parentId||(t.sprint||'')===sel)return;
+      addOpts.push({c,t});
+    });
+  });
+  const addSel=addOpts.map(x=>`<option value="${x.c.key}|${x.t.id}">${ctxLabel(x.c)} · ${x.t.title}</option>`).join('');
+  const addBlock=`<div class="sprint-add"><span class="f-lbl">Добавить задачу:</span><select id="spAdd" style="max-width:420px">${addSel||'<option value="">Нет свободных задач</option>'}</select><button class="btn primary" onclick="sprintAddTask()">+ В спринт</button></div>`;
+  const rows=tasks.map(x=>{
+    const t=x.t;
+    const auto=autoSpent(t), man=(typeof t.actual==='number'&&t.actual>=0)?Math.floor(t.actual*3600):0;
+    const p=taskPct(t);
+    return `<div class="sprint-row">
+      <div class="sprint-col-n" onclick="openCardModal('${t.id}','${x.c.key}')"><b>${esc(t.title)}</b><span style="color:var(--muted);font-size:11.5px">${esc(ctxLabel(x.c))} · ${esc(colName(t.columnId))}</span></div>
+      <div class="sprint-col"><span class="col-dot" style="background:${colColor(t.columnId)}"></span>${isDone(t)?'<b style="color:#34d399">Готово</b>':esc(colName(t.columnId))}</div>
+      <div class="sprint-col">${t.deadline?esc(t.deadline):'—'}</div>
+      <div class="sprint-col">${esc(t.priority||'med')}</div>
+      <div class="sprint-col">⏱ ${fmtDur(auto)}${man>0?' · ✎ '+fmtDur(man):''}</div>
+      <div class="sprint-col sp-prog"><div class="sp-pb"><div style="width:${p}%;background:${p>=100?'#34d399':'#60a5fa'}"></div></div><span class="sp-pct">${p}%</span></div>
+      <div class="sprint-col sp-acts"><button class="btn ghost" onclick="openCardModal('${t.id}','${x.c.key}')">Открыть</button><button class="btn danger" onclick="sprintRemoveTask('${x.c.key}','${t.id}')" title="Убрать из спринта">✕</button></div>
+    </div>`;
+  }).join('');
+  el.innerHTML=head+sum+addBlock+`<div class="sprint-list">${rows||'<div class="sprint-empty">В спринте пока нет задач. Добавьте из списка выше.</div>'}</div>`;
+}
+function sprintAdd(){
+  const n=prompt('Название спринта:'); if(!n||!n.trim())return;
+  const name=n.trim();
+  if(!state.sprints)state.sprints=[];
+  if(state.sprints.includes(name)){ toast('Такой спринт уже есть','error'); return; }
+  state.sprints.push(name); state._selSprint=name; save(); renderSprints();
+}
+function sprintRename(){
+  const sel=state._selSprint; if(!sel)return;
+  const n=prompt('Новое название спринта:',sel); if(!n||!n.trim())return;
+  const name=n.trim();
+  state.sprints[state.sprints.indexOf(sel)]=name;
+  allTasks().forEach(t=>{ if(t.sprint===sel)t.sprint=name; });
+  state._selSprint=name; save(); renderSprints(); toast('Спринт переименован');
+}
+function sprintRemove(){
+  const sel=state._selSprint; if(!sel)return;
+  if(!confirm('Удалить спринт «'+sel+'»? Задачи останутся, но выйдут из спринта.'))return;
+  state.sprints=state.sprints.filter(s=>s!==sel);
+  allTasks().forEach(t=>{ if(t.sprint===sel)delete t.sprint; });
+  state._selSprint=''; save(); renderSprints();
+}
+function sprintAddTask(){
+  const sel=$('#spAdd'); if(!sel||!sel.value)return;
+  const parts=sel.value.split('|'); if(parts.length!==2)return;
+  const ref=findTaskRef(parts[1],parts[0]); if(!ref)return;
+  ref.t.sprint=state._selSprint; save(); renderSprints();
+  toast('Добавлено в спринт');
+}
+function sprintRemoveTask(ctxKey,tid){
+  const ref=findTaskRef(tid,ctxKey); if(!ref)return;
+  delete ref.t.sprint; save(); renderSprints();
+}
+function sprintCsv(name){
+  const rows=[['Спринт','Раздел','Задача','Статус','Приоритет','Срок','План (ч)','Факт таймер (ч)','Факт вручную (ч)','Всего (ч)','Прогресс %']];
+  viewContexts().forEach(c=>{
+    ctxTasks(c).forEach(t=>{
+      if(t.parentId||(t.sprint||'')!==name)return;
+      rows.push([name,ctxLabel(c),t.title,colName(t.columnId),t.priority||'med',t.deadline||'',(typeof t.estimate==='number'?t.estimate:''),Math.round(autoSpent(t)/36)/100,(typeof t.actual==='number'&&t.actual>=0?t.actual:''),Math.round(totalSpent(t)/36)/100,taskPct(t)+'%']);
+    });
+  });
+  const csv=rows.map(r=>r.map(x=>{const s=String(x==null?'':x);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='sprint-'+name.replace(/[^\wа-яё-]+/gi,'_')+'.csv'; a.click();
+  toast('CSV по спринту сохранён');
 }
 function render(){
   hideRowMenu();
@@ -6005,6 +6170,7 @@ function render(){
   else if(currentTab==='brain')renderBrain();
   else if(currentTab==='report')initReport();
   else if(currentTab==='gantt')renderGantt();
+  else if(currentTab==='sprints')renderSprints();
   updateSenseiFab();
   refreshTimerLabels();
 }
