@@ -1256,6 +1256,7 @@ function normalize(s){
   if(!Array.isArray(s.docs)) s.docs=[];
   if(!Array.isArray(s.templates)) s.templates=[];
   if(!Array.isArray(s.sprints)) s.sprints=[];
+  if(!s.sprintMeta||typeof s.sprintMeta!=='object'||Array.isArray(s.sprintMeta)) s.sprintMeta={};
   s.docs.forEach(d=>{
     if(typeof d.content!=='string') d.content='';
     if(typeof d.order!=='number') d.order=0;
@@ -6048,34 +6049,50 @@ function renderGantt(){
   el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows.join('')}${linkSvg?`<svg class="gantt-links" style="position:absolute;top:${headH}px;left:${nameW}px;width:${total*weekW}px;height:${rowIdx*rowH}px;pointer-events:none">${linkSvg}</svg>`:''}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Подзадачи — под задачей (└), связанные карточки — фиолетовые (⇄) со стрелкой-связью. Чтобы связать карточки — перетащите одну полосу на другую (на кого уронили — тот главный). Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
 }
 /* ---- Спринты ---- */
+function sprintMatches(c,meta){
+  if(!meta)return true;
+  if(c.org.id!==meta.orgId)return false;
+  if(meta.projId)return !!c.proj&&c.proj.id===meta.projId;
+  return true;
+}
+function sprintMetaLabel(name){
+  const m=(state.sprintMeta||{})[name]; if(!m)return null;
+  const o=state.orgs.find(x=>x.id===m.orgId);
+  if(!o)return null;
+  return m.projId?(o.name+' — '+(o.projects.find(p=>p.id===m.projId)||{name:'?'}).name):o.name;
+}
 function renderSprints(){
   const el=$('#sprintsWrap'); if(!el)return;
   const sel=state._selSprint||(state.sprints&&state.sprints[0])||'';
   const sprOpts=(state.sprints||[]).map(s=>`<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
+  const meta=(state.sprintMeta||{})[sel];
+  const metaTxt=sprintMetaLabel(sel);
   const head=`<div class="sprint-bar">
     <h2>Спринты</h2>
     <span class="f-lbl">Спринт:</span>
     <select id="spSel" onchange="state._selSprint=this.value;save();renderSprints()"><option value="">— выберите спринт —</option>${sprOpts}</select>
-    <button class="btn primary" onclick="sprintAdd()">Новый спринт</button>
+    <button class="btn primary" onclick="openSprintModal(null)">Новый спринт</button>
     <button class="btn ghost" onclick="sprintRename()">Переименовать</button>
     <button class="btn ghost danger" onclick="sprintRemove()">Удалить</button>
   </div>`;
   if(!sel){
-    el.innerHTML=head+'<div class="sprint-empty">Создайте спринт и добавляйте в него задачи из любого раздела. В спринте видно статусы задач, их время и прогресс, а «Отчёт по спринту» — готовый отчёт.</div>';
+    el.innerHTML=head+'<div class="sprint-empty">Создайте спринт (с привязкой к организации и проекту) и добавляйте в него задачи. В спринте видно статусы задач, их время и прогресс, а «Отчёт по спринту» — готовый отчёт.</div>';
     return;
   }
-  let tasks=[];
+  const tasksAll=[];
   viewContexts().forEach(c=>{
-    ctxTasks(c).forEach(t=>{ if((t.sprint||'')===sel&&!t.parentId)tasks.push({c,t}); });
+    if(!sprintMatches(c,meta))return;
+    ctxTasks(c).forEach(t=>{ if((t.sprint||'')===sel&&!t.parentId)tasksAll.push({c,t}); });
   });
-  const done=tasks.filter(x=>isDone(x.t));
-  const spentAll=tasks.reduce((s,x)=>s+totalSpent(x.t),0);
-  const factAll=tasks.reduce((s,x)=>s+((typeof x.t.actual==='number'&&x.t.actual>=0)?Math.floor(x.t.actual*3600):0),0);
-  const pct=tasks.length?Math.round(tasks.reduce((s,x)=>s+taskPct(x.t),0)/tasks.length):0;
+  const done=tasksAll.filter(x=>isDone(x.t));
+  const spentAll=tasksAll.reduce((s,x)=>s+totalSpent(x.t),0);
+  const factAll=tasksAll.reduce((s,x)=>s+((typeof x.t.actual==='number'&&x.t.actual>=0)?Math.floor(x.t.actual*3600):0),0);
+  const pct=tasksAll.length?Math.round(tasksAll.reduce((s,x)=>s+taskPct(x.t),0)/tasksAll.length):0;
   const sum=`<div class="sprint-sum">
-    <span>Задач: <b>${tasks.length}</b></span>
+    <span>Привязка: <b>${metaTxt?esc(metaTxt):'не задана'}</b></span>${!metaTxt?`<button class="btn ghost" onclick="openSprintModal('${esc(sel)}')">Привязать к орг/проекту</button>`:''}
+    <span>Задач: <b>${tasksAll.length}</b></span>
     <span>Готово: <b>${done.length}</b></span>
-    <span>Открыто: <b>${tasks.length-done.length}</b></span>
+    <span>Открыто: <b>${tasksAll.length-done.length}</b></span>
     <span>Прогресс: <b>${pct}%</b></span>
     <span>Время: <b>${fmtDur(spentAll)}</b></span>
     <span>Вручную: <b>${factAll>0?fmtDur(factAll):'—'}</b></span>
@@ -6085,13 +6102,19 @@ function renderSprints(){
   </div>`;
   const addOpts=[];
   viewContexts().forEach(c=>{
+    if(!sprintMatches(c,meta))return;
     ctxTasks(c).forEach(t=>{
       if(t.parentId||(t.sprint||'')===sel)return;
       addOpts.push({c,t});
     });
   });
   const addSel=addOpts.map(x=>`<option value="${x.c.key}|${x.t.id}">${ctxLabel(x.c)} · ${x.t.title}</option>`).join('');
-  const addBlock=`<div class="sprint-add"><span class="f-lbl">Добавить задачу:</span><select id="spAdd" style="max-width:420px">${addSel||'<option value="">Нет свободных задач</option>'}</select><button class="btn primary" onclick="sprintAddTask()">+ В спринт</button></div>`;
+  const addBlock=`<div class="sprint-add"><span class="f-lbl">Добавить задачу:</span><select id="spAdd" style="max-width:420px">${addSel||'<option value="">Нет свободных задач в этой организации</option>'}</select><button class="btn primary" onclick="sprintAddTask()">+ В спринт</button></div>`;
+  const q=(state._spQ||'').toLowerCase();
+  const col=state._spCol||'';
+  const tasks=tasksAll.filter(x=>(!q||x.t.title.toLowerCase().includes(q))&&(!col||x.t.columnId===col));
+  const colOpts='<option value="">Все статусы</option>'+state.columns.map(c=>`<option value="${c.id}" ${col===c.id?'selected':''}>${esc(c.name)}</option>`).join('');
+  const filtBlock=`<div class="sprint-add"><span class="f-lbl">Фильтр по задачам:</span><input type="text" id="spQ" placeholder="Поиск по названию..." value="${esc(state._spQ||'')}" oninput="state._spQ=this.value;renderSprints()" style="max-width:260px"><select id="spCol" onchange="state._spCol=this.value;renderSprints()">${colOpts}</select><span style="color:var(--muted);font-size:12px">показано ${tasks.length} из ${tasksAll.length}</span></div>`;
   const rows=tasks.map(x=>{
     const t=x.t;
     const auto=autoSpent(t), man=(typeof t.actual==='number'&&t.actual>=0)?Math.floor(t.actual*3600):0;
@@ -6106,14 +6129,42 @@ function renderSprints(){
       <div class="sprint-col sp-acts"><button class="btn ghost" onclick="openCardModal('${t.id}','${x.c.key}')">Открыть</button><button class="btn danger" onclick="sprintRemoveTask('${x.c.key}','${t.id}')" title="Убрать из спринта">✕</button></div>
     </div>`;
   }).join('');
-  el.innerHTML=head+sum+addBlock+`<div class="sprint-list">${rows||'<div class="sprint-empty">В спринте пока нет задач. Добавьте из списка выше.</div>'}</div>`;
+  el.innerHTML=head+sum+filtBlock+addBlock+`<div class="sprint-list">${rows||'<div class="sprint-empty">'+(tasksAll.length?'Ничего не найдено по фильтру':'В спринте пока нет задач. Добавьте из списка выше.')+'</div>'}</div>`;
 }
-function sprintAdd(){
-  const n=prompt('Название спринта:'); if(!n||!n.trim())return;
-  const name=n.trim();
+function openSprintModal(name){
+  const meta=name?(state.sprintMeta||{})[name]:null;
+  const orgOpts=state.orgs.map(o=>`<option value="${o.id}" ${meta&&meta.orgId===o.id?'selected':''}>${esc(o.name)}</option>`).join('');
+  const projOpts='<option value="">Все проекты</option>'+state.orgs.map(o=>o.projects.map(p=>`<option value="${p.id}" data-org="${o.id}" ${meta&&meta.projId===p.id?'selected':''}>${esc(o.name)} — ${esc(p.name)}</option>`).join('')).join('');
+  openModal({
+    title:name?'Привязка спринта':'Новый спринт',
+    body:`<div class="field"><label>Название спринта</label><input type="text" id="spName" maxlength="60" value="${esc(name||'')}" ${name?'readonly':''}></div>
+      <div class="field"><label>Организация</label><select id="spOrg" onchange="sprintProjFilter(this.value)">${orgOpts||'<option value="">Нет организаций</option>'}</select></div>
+      <div class="field"><label>Проект (необязательно — «Все проекты» = вся организация)</label><select id="spProj">${projOpts}</select></div>
+      <div class="field-hint">В спринт можно добавлять задачи только своей организации и проекта. Отчёт по спринту строится по этой же привязке.</div>`,
+    foot:`<button class="btn ghost" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="sprintSave('${esc(name||'')}')">${ICON.check} Сохранить</button>`
+  });
+  const orgSel=$('#spOrg');
+  sprintProjFilter(orgSel?orgSel.value:'');
+}
+function sprintProjFilter(orgId){
+  if(!orgId)return;
+  document.querySelectorAll('#spProj option').forEach(o=>{ o.hidden=!!(o.value&&o.dataset.org!==orgId); });
+}
+function sprintSave(name){
+  const nameEl=$('#spName'), orgEl=$('#spOrg'), projEl=$('#spProj');
+  if(!nameEl||!orgEl)return;
+  const n=(nameEl.value||'').trim();
+  if(!n){ toast('Укажите название','error'); return; }
+  if(!orgEl.value){ toast('Выберите организацию','error'); return; }
   if(!state.sprints)state.sprints=[];
-  if(state.sprints.includes(name)){ toast('Такой спринт уже есть','error'); return; }
-  state.sprints.push(name); state._selSprint=name; save(); renderSprints();
+  if(!name&&state.sprints.includes(n)){ toast('Такой спринт уже есть','error'); return; }
+  if(!state.sprintMeta)state.sprintMeta={};
+  if(!name){
+    state.sprints.push(n);
+  }
+  state.sprintMeta[n]={orgId:orgEl.value,projId:projEl.value||null};
+  state._selSprint=n; save(); closeModal(); renderSprints();
+  toast(name?'Привязка обновлена':'Спринт создан');
 }
 function sprintRename(){
   const sel=state._selSprint; if(!sel)return;
@@ -6121,12 +6172,14 @@ function sprintRename(){
   const name=n.trim();
   state.sprints[state.sprints.indexOf(sel)]=name;
   allTasks().forEach(t=>{ if(t.sprint===sel)t.sprint=name; });
+  if(state.sprintMeta&&state.sprintMeta[sel]){ state.sprintMeta[name]=state.sprintMeta[sel]; delete state.sprintMeta[sel]; }
   state._selSprint=name; save(); renderSprints(); toast('Спринт переименован');
 }
 function sprintRemove(){
   const sel=state._selSprint; if(!sel)return;
   if(!confirm('Удалить спринт «'+sel+'»? Задачи останутся, но выйдут из спринта.'))return;
   state.sprints=state.sprints.filter(s=>s!==sel);
+  if(state.sprintMeta)delete state.sprintMeta[sel];
   allTasks().forEach(t=>{ if(t.sprint===sel)delete t.sprint; });
   state._selSprint=''; save(); renderSprints();
 }
@@ -6142,11 +6195,13 @@ function sprintRemoveTask(ctxKey,tid){
   delete ref.t.sprint; save(); renderSprints();
 }
 function sprintCsv(name){
-  const rows=[['Спринт','Раздел','Задача','Статус','Приоритет','Срок','План (ч)','Факт таймер (ч)','Факт вручную (ч)','Всего (ч)','Прогресс %']];
+  const meta=(state.sprintMeta||{})[name];
+  const rows=[['Спринт','Организация','Проект','Задача','Статус','Приоритет','Срок','План (ч)','Факт таймер (ч)','Факт вручную (ч)','Всего (ч)','Прогресс %']];
   viewContexts().forEach(c=>{
+    if(!sprintMatches(c,meta))return;
     ctxTasks(c).forEach(t=>{
       if(t.parentId||(t.sprint||'')!==name)return;
-      rows.push([name,ctxLabel(c),t.title,colName(t.columnId),t.priority||'med',t.deadline||'',(typeof t.estimate==='number'?t.estimate:''),Math.round(autoSpent(t)/36)/100,(typeof t.actual==='number'&&t.actual>=0?t.actual:''),Math.round(totalSpent(t)/36)/100,taskPct(t)+'%']);
+      rows.push([name,c.org.name,c.proj?c.proj.name:'—',t.title,colName(t.columnId),t.priority||'med',t.deadline||'',(typeof t.estimate==='number'?t.estimate:''),Math.round(autoSpent(t)/36)/100,(typeof t.actual==='number'&&t.actual>=0?t.actual:''),Math.round(totalSpent(t)/36)/100,taskPct(t)+'%']);
     });
   });
   const csv=rows.map(r=>r.map(x=>{const s=String(x==null?'':x);return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\n');
