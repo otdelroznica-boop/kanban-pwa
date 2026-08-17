@@ -164,6 +164,27 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 #tabToday{overflow:auto;padding:18px 22px}
 #tabCalendar{overflow:auto;padding:18px 22px}
 #tabReport{overflow:hidden}
+#tabGantt{overflow:auto;padding:16px}
+.gantt-box{border:1px solid var(--border);border-radius:10px;background:var(--card-bg);overflow:hidden}
+.gantt-scroll{overflow:auto;max-height:calc(100vh - 250px)}
+.gantt-canvas{min-width:100%}
+.gantt-row{display:flex;border-bottom:1px solid var(--border)}
+.gantt-head .gantt-name-col{font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.gantt-head{background:var(--panel)}
+.gantt-name-col{position:sticky;left:0;z-index:3;background:var(--card-bg);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:12.5px;font-weight:600;overflow:hidden;white-space:nowrap;flex-shrink:0}
+.gantt-name-col .gantt-t{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.gantt-name-col .gantt-sub{font-size:10px;color:var(--muted);font-weight:400;flex-shrink:0}
+.gantt-cells{display:flex;height:100%}
+.gantt-cell{height:100%;border-left:1px solid var(--border);font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.gantt-cell.wk{background:rgba(245,158,11,.06)}
+.gantt-line{position:relative;border-left:1px solid var(--border);flex-shrink:0}
+.gantt-bar{position:absolute;top:4px;height:18px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden}
+.gantt-bar.done{background:linear-gradient(180deg,#34d399,#10b981)!important}
+.gantt-bar.late{outline:2px solid var(--danger)}
+.gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);z-index:2;pointer-events:none}
+.gantt-today::before{content:'сегодня';position:absolute;top:2px;left:4px;font-size:9px;color:var(--danger);font-weight:700;white-space:nowrap}
+.gantt-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px}
+.gantt-hint{font-size:11.5px;color:var(--muted);padding:8px 12px;border-top:1px solid var(--border);background:var(--panel)}
 #tabDocs{overflow:hidden;padding:0}
 
 .docs-wrap{display:flex;flex:1;min-height:0}
@@ -338,6 +359,10 @@ body[data-theme="dark"] .chip.today{background:#3a3020;border-color:#6b5525}
 .timer-btn.start:hover{background:#e8f7ee;color:var(--ok)}
 .timer-btn.stop:hover{background:#fde8e8;color:var(--danger)}
 .card.running-card{animation:timerpulse 1s ease-in-out infinite;border:1.5px solid rgba(245,158,11,.55)}
+.card.rep-done{border-left-color:#10b981!important;box-shadow:inset 0 0 0 1.5px #10b981}
+.card.rep-pending{border-left-color:#ef4444!important;box-shadow:inset 0 0 0 1.5px rgba(239,68,68,.55)}
+body[data-theme="dark"] .card.rep-done{box-shadow:inset 0 0 0 1.5px #34d399}
+body[data-theme="dark"] .card.rep-pending{box-shadow:inset 0 0 0 1.5px rgba(248,113,113,.75)}
 @keyframes timerpulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0)}50%{box-shadow:0 0 0 6px rgba(245,158,11,.18)}}
 .card.running-card .card-meta,.card.running-card .card-desc,.card.running-card .card-pct,.card.running-card .cli-block,.card.running-card .card-footer,.card.running-card .prog{display:none!important}
 .card.running-card .card-timer{margin-top:4px;padding:10px 12px;background:rgba(245,158,11,.13);border-color:rgba(245,158,11,.4)}
@@ -545,6 +570,7 @@ body[data-theme="dark"] .btn.danger{background:#3a2226}
 .b-btn:hover{filter:brightness(1.12)}
 .b-snooze{display:none;background:#fff;color:#1e2233;border-radius:7px;padding:5px 8px;font-size:12px;font-weight:600;border:none;outline:none;cursor:pointer}
 .modal.evt-mode .evt-hide{display:none!important}
+.modal.rep-mode .rep-hide{display:none!important}
 .chip.evt{color:#4338ca;background:#e0e4ff;border-color:#9ca9f8}
 .chip.rep{color:#92400e;background:#ffead1;border-color:#f2b06b}
 .chip.nb{color:var(--muted);background:var(--soft);border-style:dashed}
@@ -767,6 +793,7 @@ body[data-theme="dark"] .tongue-view{background:#1a1e33}
 .tongue-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tongue-ctrl input[type=range]{flex:1;min-width:140px}
 .tongue-speed-lbl{font-size:12px;color:var(--muted);white-space:nowrap}
+.tongue-ask{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 12px;background:rgba(59,130,246,.08);border:1px solid var(--accent);border-radius:10px;margin:6px 0;font-size:14.5px;font-weight:600;color:var(--text)}
 .bg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .bg-card{background:#f8f9fd;border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 body[data-theme="dark"] .bg-card{background:#1a1e33}
@@ -818,6 +845,7 @@ body[data-theme="dark"] .bg-card{background:#1a1e33}
     <button data-t="personal">Личное</button>
     <button data-t="brain">Ум</button>
     <button data-t="report">Отчёт</button>
+    <button data-t="gantt">Гант</button>
   </nav>
   <div class="stats" id="stats"></div>
   <div class="spacer"></div>
@@ -894,6 +922,9 @@ body[data-theme="dark"] .bg-card{background:#1a1e33}
     </div>
     <div class="tab-page" id="tabBrain">
       <div class="brain-wrap" id="brainWrap"></div>
+    </div>
+    <div class="tab-page" id="tabGantt">
+      <div class="gantt-wrap" id="ganttWrap"></div>
     </div>
     <div class="tab-page" id="tabReport">
       <div class="report-bar">
@@ -1531,6 +1562,12 @@ function toast(msg,type){
   $('#toasts').appendChild(el);
   setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),350); },3200);
 }
+window.addEventListener('error',e=>{
+  try{
+    if(e&&e.message&&/script error/i.test(e.message))return;
+    toast('Ошибка: '+(e&&e.message?e.message:'?')+' — обновите страницу (Ctrl+F5)','error');
+  }catch(_){}
+});
 let audioCtx=null;
 const SOUND_PATTERNS={
   classic:[[880,0],[1174,0.22],[1568,0.44]],
@@ -1894,11 +1931,11 @@ document.addEventListener('visibilitychange',()=>{
 setInterval(checkPersonal,20000);
 
 /* ============================================================ modal */
-function openModal(html,onMount){
+function openModal(html,onMount,noOverlay){
   const ov=$('#modalOverlay');
   ov.innerHTML='<div class="modal">'+html+'</div>';
   ov.style.display='flex';
-  ov.onclick=e=>{ if(e.target===ov)closeModal(); };
+  if(!noOverlay)ov.onclick=e=>{ if(e.target===ov)closeModal(); };
   if(onMount)onMount(ov.firstElementChild);
 }
 function closeModal(){
@@ -2164,7 +2201,7 @@ function deleteArchive(i){
 function setTab(t){ currentTab=t; render(); }
 function renderTabs(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===currentTab));
-  const map={board:'tabBoard',today:'tabToday',calendar:'tabCalendar',docs:'tabDocs',notes:'tabNotes',personal:'tabPersonal',brain:'tabBrain',report:'tabReport'};
+  const map={board:'tabBoard',today:'tabToday',calendar:'tabCalendar',docs:'tabDocs',notes:'tabNotes',personal:'tabPersonal',brain:'tabBrain',report:'tabReport',gantt:'tabGantt'};
   document.querySelectorAll('.tab-page').forEach(el=>el.classList.toggle('active',el.id===map[currentTab]));
   document.body.classList.toggle('print-report',currentTab==='report');
 }
@@ -2294,6 +2331,7 @@ function cardHTML(c,t){
   const today=isToday(t);
   const done=isDone(t);
   const cc=colColor(t.columnId),cb=colLight(t.columnId);
+  const repSt=t.repeat==='daily'?(t.repeatDone===todayISO()?'rep-done':'rep-pending'):'';
   const pr=PRIO[t.priority||'med'];
   const cl=t.checklist||[];
   const clDone=cl.filter(i=>i.done).length;
@@ -2315,7 +2353,7 @@ function cardHTML(c,t){
   if(subs.length)chips.push(`<span class="chip" title="Подзадачи">▸ ${subDone}/${subs.length}</span>`);
   if((t.attachments||[]).length)chips.push(`<span class="chip" title="Вложения">${ICON.attach} ${t.attachments.length}</span>`);
   if((t.comments||[]).length)chips.push(`<span class="chip" title="Комментарии">${ICON.cmt} ${t.comments.length}</span>`);
-  chips.push(`<span class="chip lurv-chip" data-l="${t.lurv||0}" title="ЛУРВ: ${lurvFull(t.lurv)} — клик: следующий статус" onclick="event.stopPropagation();lurvNext('${c.key}','${t.id}')">ЛУРВ: ${lurvShort(t.lurv)}</span>`);
+  if(t.type!=='event'&&t.repeat!=='daily')chips.push(`<span class="chip lurv-chip" data-l="${t.lurv||0}" title="ЛУРВ: ${lurvFull(t.lurv)} — клик: следующий статус" onclick="event.stopPropagation();lurvNext('${c.key}','${t.id}')">ЛУРВ: ${lurvShort(t.lurv)}</span>`);
   if(view.type==='all')chips.push(`<span class="chip proj" title="Раздел">${esc(ctxLabel(c))}</span>`);
   let prog='';
   if(t.estimate&&spent>0){
@@ -2341,7 +2379,7 @@ function cardHTML(c,t){
   const who=t.responsible?`<span class="who">${ICON.user} ${esc(t.responsible)}</span>`:'';
   const prFlag=`<span class="chip" style="color:${pr.color};background:${pr.color}1f;border:none" title="Приоритет: ${pr.label}">${ICON.flag} ${pr.label}</span>`;
   const pct=taskPct(t);
-  return `<div class="card ${dragged&&dragged.t.id===t.id?'dragging':''}${running?' running-card':''}" draggable="true" data-ctx="${c.key}" data-tid="${t.id}"
+  return `<div class="card ${repSt}${dragged&&dragged.t.id===t.id?' dragging':''}${running?' running-card':''}" draggable="true" data-ctx="${c.key}" data-tid="${t.id}"
     style="background:${cb};border-left:4px solid ${cc}${running?`;animation-delay:${-(Date.now()%1000)/1000}s`:''}"
     onclick="openCardModal('${t.id}','${c.key}')">
     <div class="card-top">
@@ -2616,7 +2654,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
         <div class="evt-hide"><label>Приоритет</label><select id="tkPrio">${prioOpts}</select></div>
         <div class="evt-hide"><label>Ответственный</label><input type="text" id="tkResp" list="respList" value="${t?esc(t.responsible||''):''}" placeholder="Кто делает?"><datalist id="respList">${responsibleList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
         <div><label>Статус</label><select id="tkCol">${colsOpts}</select></div>
-        <div class="evt-hide"><label>ЛУРВ</label><select id="tkLurv">${[0,1,2,3].map(l=>`<option value="${l}" ${(t?(t.lurv||0):0)===l?'selected':''}>${lurvFull(l)}</option>`).join('')}</select></div>
+        <div class="evt-hide"><label>ЛУРВ</label><select id="tkLurv" class="rep-hide">${[0,1,2,3].map(l=>`<option value="${l}" ${(t?(t.lurv||0):0)===l?'selected':''}>${lurvFull(l)}</option>`).join('')}</select></div>
       </div></div>
       <div class="field evt-hide"><label>Метки (через запятую)</label><input type="text" id="tkTags" list="tagList" value="${esc(tagVal)}" placeholder="Например: срочно, клиент, аналитика"><datalist id="tagList">${tagList.map(r=>`<option value="${esc(r)}">`).join('')}</datalist></div>
       <div class="field evt-hide"><div class="row">
@@ -2643,7 +2681,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
       ${t&&t.parentId?'':`<div class="field"><div class="row">
         <div><label>Постоянная задача</label><select id="tkRepeat"><option value="">Нет</option><option value="daily" ${repSel}>Ежедневно</option></select></div>
         <div><label>Напоминать в</label><input type="time" id="tkRepeatTime" value="${t&&t.repeatTime?esc(t.repeatTime):'09:00'}"></div>
-        <label class="chk" style="align-self:flex-end;padding-bottom:9px"><input type="checkbox" id="tkNoBill" ${t&&t.noBill?'checked':''}> Общая (не в зачёте)</label>
+        <label class="chk evt-hide rep-hide" style="align-self:flex-end;padding-bottom:9px"><input type="checkbox" id="tkNoBill" ${t&&t.noBill?'checked':''}> Общая (не в зачёте)</label>
       </div>
       <div class="field-hint">Ежедневная: напоминание каждый день в указанное время; после выполнения вернётся в работу на следующий день. Общая — не учитывается в отчёте по времени.</div></div>`}
       ${t&&!t.parentId?`<div class="field evt-hide"><label>Чек-лист</label><div class="log-block">${clRows}</div>
@@ -2686,6 +2724,12 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
       };
       seg.querySelectorAll('button').forEach(b=>b.onclick=()=>applyTy(b.dataset.ty));
       applyTy((t&&t.type)||'task');
+    }
+    const rep=modal.querySelector('#tkRepeat');
+    if(rep){
+      const applyRep=v=>modal.classList.toggle('rep-mode',v==='daily');
+      rep.onchange=()=>applyRep(rep.value);
+      applyRep((t&&t.repeat)||'');
     }
   });
 }
@@ -4444,23 +4488,49 @@ const TONGUE_LEVELS=[
   {lvl:'4-й дан',items:['Была у Фрола — Фролу на Лавра наврала, пойдёт к Лавру — Лавру на Фрола наврёт.','От топота копыт пыль по полю летит, от копыт топота по полю пыль летит.','В Чите течёт Читинка, течёт не та Читинка, что в Чите.']},
   {lvl:'5-й дан',items:['В четверг четвёртого числа в четыре с четвертью часа четыре чёрненьких чумазеньких чертёнка чертили чёрными чернилами чертёж.','Лигурийский регулировщик регулировал в Лигурии, а лигурийский лигуриец лигурийскость лигурийскую имел.']}
 ];
-let tongueTimer=null,tonguePos=0,tongueTexts=[],tongueHalf=0;
+let tongueTimer=null,tonguePos=0,tongueTexts=[],tongueFull=0,tongueAsked=false,tongueLevel=3;
 let brainTimers=[];
 function tonguePick(){
   const lvl=TONGUE_LEVELS.find(l=>l.lvl===state.brain.level)||TONGUE_LEVELS[0];
-  const items=[...lvl.items];
-  for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [items[i],items[j]]=[items[j],items[i]]; }
-  tongueTexts=[...items,...items];
-  tonguePos=0;
+  tongueTexts=[lvl.items[Math.floor(Math.random()*lvl.items.length)]];
+  tonguePos=0; tongueAsked=false;
   tongueStop();
   renderTongue();
 }
+function tongueSpeedVal(){ return 25+tongueLevel*12; }
 function tongueTick(){
   const el=$('#tongueRun');
   if(!el){ tongueStop(); return; }
-  tonguePos+=tongueSpeed*0.05;
-  if(tongueHalf>0&&tonguePos>=tongueHalf)tonguePos-=tongueHalf;
+  tonguePos+=tongueSpeedVal()*0.05;
   el.style.transform='translateY('+(-tonguePos)+'px)';
+  if(tonguePos>=tongueFull&&!tongueAsked){
+    tongueAsked=true;
+    tonguePause();
+    const q=$('#tongueAsk'); if(q)q.style.display='flex';
+  }
+}
+function tongueAnswer(yes){
+  const q=$('#tongueAsk'); if(q)q.style.display='none';
+  if(yes){
+    tongueLevel=Math.min(10,tongueLevel+1);
+    state.brain.reads++;
+    const t=todayISO();
+    if(state.brain.readsDay!==t){ state.brain.readsDay=t; state.brain.readsToday=0; }
+    state.brain.readsToday++;
+    save();
+    const l=$('#tongueLvl'); if(l)l.textContent=tongueLevel+' ('+(tongueSpeedVal()<60?'медленно':tongueSpeedVal()<100?'средне':'быстро')+')';
+    toast('Успел! Сложность выше — '+tongueLevel,'ok');
+    const st=state.sensei;
+    if(st.enabled)senseiSay('Быстрая дикция — твоя стихия. Держи темп!',st.kind?'kind':'calm',true);
+  } else {
+    tongueLevel=Math.max(1,tongueLevel-1);
+    const l=$('#tongueLvl'); if(l)l.textContent=tongueLevel+' ('+(tongueSpeedVal()<60?'медленно':tongueSpeedVal()<100?'средне':'быстро')+')';
+    toast('Не успел — сбавили темп до '+tongueLevel);
+    const st=state.sensei;
+    if(st.enabled)senseiSay('Не спеши. Чёткость важнее скорости — повторим.',st.calm?'calm':'kind',true);
+  }
+  tonguePick();
+  tongueStart();
 }
 function tongueStart(){
   if(!tongueTexts.length)tonguePick();
@@ -4470,16 +4540,13 @@ function tongueStart(){
 }
 function tonguePause(){ if(tongueTimer){ clearInterval(tongueTimer); tongueTimer=null; } const b=$('#btnTongueStart'); if(b)b.textContent='Старт'; }
 function tongueStop(){ if(tongueTimer){ clearInterval(tongueTimer); tongueTimer=null; } tonguePos=0; const el=$('#tongueRun'); if(el)el.style.transform='translateY(0)'; const b=$('#btnTongueStart'); if(b)b.textContent='Старт'; }
-function tongueSpeedSet(v){
-  tongueSpeed=parseInt(v,10)||60;
-  const l=$('#tongueSpeedLbl'); if(l)l.textContent=tongueSpeed<35?'медленно':tongueSpeed<80?'средне':'быстро';
-}
 function renderTongue(){
   const el=$('#tongueRun');
   if(!el)return;
-  el.textContent=tongueTexts.length?tongueTexts.join('\n\n'):'Нажмите «Новая скороговорка», чтобы начать';
+  el.textContent=tongueTexts.length?tongueTexts.join('\n\n'):'Нажмите «Новая лента», чтобы начать';
   el.style.transform='translateY(0)';
-  tongueHalf=el.scrollHeight/2;
+  tongueFull=el.scrollHeight;
+  const l=$('#tongueLvl'); if(l)l.textContent=tongueLevel+' ('+(tongueSpeedVal()<60?'медленно':tongueSpeedVal()<100?'средне':'быстро')+')';
 }
 function brainDone(){
   const lvl=state.brain.level;
@@ -4496,7 +4563,6 @@ function brainDone(){
   toast('Круг пройден!','ok');
 }
 function brainSetLevel(v){ state.brain.level=v; save(); tonguePick(); }
-function brainSetSpeed(v){ state.brain.speed=parseInt(v,10)||60; save(); }
 function renderBrain(){
   const el=$('#brainWrap'); if(!el)return;
   const b=state.brain;
@@ -4512,19 +4578,22 @@ function renderBrain(){
       <div class="field" style="width:130px"><label>Уровень</label>
         <select onchange="brainSetLevel(this.value)">${TONGUE_LEVELS.map(l=>`<option value="${l.lvl}" ${l.lvl===b.level?'selected':''}>${l.lvl}</option>`).join('')}</select>
       </div>
-      <button class="btn ghost" onclick="tonguePick()">${ICON.brain} Новая лента</button>
-      <div class="field" style="flex:1;min-width:180px"><label>Скорость движения</label>
-        <div class="tongue-ctrl"><input type="range" min="10" max="120" step="5" value="${b.speed}" oninput="tongueSpeedSet(this.value)" onchange="brainSetSpeed(this.value)"><span class="tongue-speed-lbl" id="tongueSpeedLbl">${b.speed<35?'медленно':b.speed<80?'средне':'быстро'}</span></div>
-      </div>
+      <button class="btn ghost" onclick="tonguePick()">${ICON.brain} Новая скороговорка</button>
+      <span class="tongue-prog">Сложность: <b id="tongueLvl"></b></span>
     </div>
-    <div class="tongue-view"><div class="tongue-run" id="tongueRun">Нажмите «Новая лента», чтобы начать</div></div>
+    <div class="tongue-view"><div class="tongue-run" id="tongueRun">Нажмите «Старт», чтобы начать</div></div>
+    <div class="tongue-ask" id="tongueAsk" style="display:none">
+      <span>Лента ушла. Ты успел прочитать?</span>
+      <button class="btn primary" onclick="tongueAnswer(true)">Да, успел ✓</button>
+      <button class="btn ghost" onclick="tongueAnswer(false)">Нет</button>
+    </div>
     <div class="tongue-ctrl">
       <button class="btn primary" id="btnTongueStart" onclick="tongueTimer?tonguePause():tongueStart()">Старт</button>
       <button class="btn ghost" onclick="tongueStop()">Сброс</button>
       <button class="btn" onclick="brainDone()">Круг пройден ✓</button>
       <span class="tongue-prog">Сегодня: <b>${b.readsToday}</b> · всего: <b>${b.reads}</b></span>
     </div>
-    <div class="field-hint" style="margin-top:8px">Все скороговорки уровня собраны в одну ленту — читайте вслух, не отставая. Лента закольцована, каждый полный проход — один круг. Когда одолели уровень, переходите к следующему: кю — ученические ранги, дан — мастерские.</div>
+    <div class="field-hint" style="margin-top:8px">Скороговорка поднимается вверх — успей прочитать, пока лента не ушла. Ответишь «успел» — сложность выше (лента быстрее), «не успел» — сбавим темп. Каждый успешный проход засчитывается.</div>
   </div>
   <div class="p-card">
     <div class="p-card-head">${ICON.brain} Мини-тренировки — 3 минуты в день</div>
@@ -4708,13 +4777,32 @@ function playQuack(){
     o.connect(g); g.connect(a.destination); o.start(t+dt); o.stop(t+dt+0.1);
   });
 }
+function playEject(){
+  const a=ac(); if(!a)return;
+  const t=a.currentTime;
+  const o=a.createOscillator(); o.type='triangle';
+  o.frequency.setValueAtTime(2500,t); o.frequency.exponentialRampToValueAtTime(1300,t+0.08);
+  const g=a.createGain(); g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.07,t+0.005); g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+0.1);
+}
+function playReload(){
+  const a=ac(); if(!a)return;
+  const t=a.currentTime;
+  for(let i=0;i<3;i++){
+    const dt=i*0.28;
+    const o=a.createOscillator(); o.type='square';
+    o.frequency.setValueAtTime(520+Math.random()*220,t+dt);
+    const g=a.createGain(); g.gain.setValueAtTime(0.001,t+dt); g.gain.exponentialRampToValueAtTime(0.09,t+dt+0.012); g.gain.exponentialRampToValueAtTime(0.001,t+dt+0.06);
+    o.connect(g); g.connect(a.destination); o.start(t+dt); o.stop(t+dt+0.08);
+  }
+}
 function brainDuck(){
   const W=560,H=340;
-  let score=0,level=1,left=60,over=false,ducks=[];
-  let gun={ang:Math.PI/2,kick:0,flash:0};
+  let score=0,level=1,left=60,lives=3,over=false,ducks=[],smoke=[],ejects=[];
+  let gun={ang:Math.PI/2,kick:0,flash:0,shells:2,reload:0};
   const spawn=()=>{
-    if(ducks.length>=1+level)return;
-    ducks.push({
+    if(ducks.length>=2)return;
+    const d={
       x:40+Math.random()*(W-80),
       y:H-30+Math.random()*18,
       vx:(Math.random()<0.5?-1:1)*(0.6+Math.random()*1.2)*(1+level*0.12),
@@ -4722,7 +4810,10 @@ function brainDuck(){
       phase:Math.random()*6.28,
       size:Math.max(13,24-(level-1)*2),
       dead:false,dy:0
-    });
+    };
+    ducks.push(d);
+    const tt=setTimeout(()=>{ if(!over&&ducks.includes(d))playQuack(); },350);
+    brainTimers.push(tt);
   };
   const drawDuck=(ctx,d)=>{
     ctx.save(); ctx.translate(d.x,d.y);
@@ -4759,33 +4850,61 @@ function brainDuck(){
     ctx.translate(W/2,H-16);
     ctx.rotate(gun.ang);
     ctx.translate(-Math.cos(gun.ang)*gun.kick,-Math.sin(gun.ang)*gun.kick);
-    ctx.fillStyle='#7a4a21';
-    ctx.beginPath(); ctx.rect(-50,-9,32,18); ctx.fill();
-    ctx.strokeStyle='#5b3515'; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.fillStyle='#5b3515';
-    ctx.beginPath(); ctx.rect(-20,-6,14,12); ctx.fill();
-    ctx.fillStyle='#374151';
-    ctx.beginPath(); ctx.rect(-2,-15,10,30); ctx.fill();
+    const brk=gun.reload>0?1:0;
+    ctx.save();
+    if(brk){ ctx.translate(0,13); ctx.rotate(0.18); }
     ctx.fillStyle='#4b5563';
-    ctx.beginPath(); ctx.rect(0,-14,96,9); ctx.fill();
-    ctx.beginPath(); ctx.rect(0,-3,96,9); ctx.fill();
+    ctx.beginPath(); ctx.rect(0,-15,90,9); ctx.fill();
+    ctx.beginPath(); ctx.rect(0,-3,90,9); ctx.fill();
     ctx.fillStyle='#6b7280';
-    ctx.beginPath(); ctx.rect(86,-15,10,30); ctx.fill();
+    ctx.beginPath(); ctx.rect(82,-16,9,26); ctx.fill();
+    ctx.fillStyle='#111827';
+    ctx.beginPath(); ctx.rect(0,-18,10,36); ctx.fill();
+    if(gun.shells>0&&!brk){
+      ctx.fillStyle='#d97706';
+      ctx.beginPath(); ctx.rect(6,-12.5,26,5); ctx.fill();
+      ctx.fillStyle='#ef4444';
+      ctx.beginPath(); ctx.rect(6,-8,26,5); ctx.fill();
+    }
+    ctx.restore();
+    if(brk){
+      ctx.fillStyle='#7a4a21';
+      ctx.beginPath(); ctx.rect(-58,-9,24,18); ctx.fill();
+      ctx.fillStyle='#5b3515';
+      ctx.beginPath(); ctx.rect(-46,-6,12,12); ctx.fill();
+    } else {
+      ctx.fillStyle='#8a5a2b';
+      ctx.beginPath();
+      ctx.moveTo(-54,3);
+      ctx.quadraticCurveTo(-76,6,-92,-5);
+      ctx.quadraticCurveTo(-72,-12,-52,-9);
+      ctx.quadraticCurveTo(-58,-3,-54,3);
+      ctx.fill();
+      ctx.strokeStyle='#5f3d18'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle='#7a4a21';
+      ctx.beginPath(); ctx.rect(-56,-10,16,20); ctx.fill();
+      ctx.fillStyle='#3f4a5a';
+      ctx.beginPath(); ctx.rect(-40,-8,14,16); ctx.fill();
+      ctx.strokeStyle='#374151'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(-46,7); ctx.quadraticCurveTo(-42,12,-37,9); ctx.stroke();
+      ctx.fillStyle='#111827';
+      ctx.beginPath(); ctx.rect(-44,-9,4,6); ctx.fill();
+    }
     if(gun.flash>0){
-      const fx=102,fy=0;
+      const fx=96,fy=0;
       ctx.fillStyle='rgba(255,220,90,'+(gun.flash/3)+')';
-      ctx.beginPath(); ctx.arc(fx,fy,22,0,6.28); ctx.fill();
+      ctx.beginPath(); ctx.arc(fx,fy,24,0,6.28); ctx.fill();
       ctx.fillStyle='#ffd54d';
-      for(let i=0;i<10;i++){
-        const a=i/10*6.28;
+      for(let i=0;i<12;i++){
+        const a=i/12*6.28;
         ctx.beginPath();
         ctx.moveTo(fx,fy);
-        ctx.lineTo(fx+Math.cos(a)*34,fy+Math.sin(a)*34);
-        ctx.lineTo(fx+Math.cos(a+0.28)*10,fy+Math.sin(a+0.28)*10);
+        ctx.lineTo(fx+Math.cos(a)*36,fy+Math.sin(a)*36);
+        ctx.lineTo(fx+Math.cos(a+0.26)*11,fy+Math.sin(a+0.26)*11);
         ctx.closePath(); ctx.fill();
       }
       ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.arc(fx,fy,9,0,6.28); ctx.fill();
+      ctx.beginPath(); ctx.arc(fx,fy,10,0,6.28); ctx.fill();
     }
     ctx.restore();
   };
@@ -4813,15 +4932,55 @@ function brainDuck(){
         d.x+=d.vx; d.y+=d.vy; d.phase+=0.35;
         d.vy+=(Math.sin(d.phase*0.5))*0.02;
       }
-      if(d.y>H+40||d.y<-60||d.x<-60||d.x>W+60){ ducks.splice(ducks.indexOf(d),1); return; }
+      if(d.y>H+40||d.y<-60||d.x<-60||d.x>W+60){
+        ducks.splice(ducks.indexOf(d),1);
+        if(typeof d.dead!=='number'&&!over){
+          lives--;
+          const l=$('#duckLives'); if(l)l.textContent='🦆'.repeat(Math.max(0,lives));
+          if(lives<=0){
+            over=true;
+            duckStop();
+            brainSaveScore('duck',score);
+            const res=$('#duckRes');
+            if(res)res.innerHTML='<b style="color:var(--danger)">Игра окончена — утки улетели!</b> Попаданий: '+score+' · рекорд: '+state.brain.scores.duck.best+'<br><button class="btn primary" style="margin-top:8px" onclick="closeModal();brainDuck()">Сыграть ещё</button>';
+            toast('Утки улетели — осталось '+score+' попаданий');
+            const st=state.sensei;
+            if(st.enabled)senseiSay('Утки одолели тебя сегодня. Завтра — реванш!',st.strict?'strict':'calm',true);
+          } else {
+            toast('Утка улетела! Осталось жизней: '+lives,'error');
+          }
+        }
+        return;
+      }
       drawDuck(ctx,d);
     });
+    for(let i=smoke.length-1;i>=0;i--){
+      const p=smoke[i];
+      p.x+=p.vx; p.y+=p.vy; p.r+=0.35; p.a-=0.018;
+      if(p.a<=0){ smoke.splice(i,1); continue; }
+      ctx.fillStyle='rgba(205,208,215,'+Math.max(0,p.a)+')';
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill();
+    }
+    for(let i=ejects.length-1;i>=0;i--){
+      const g=ejects[i];
+      g.x+=g.vx; g.y+=g.vy; g.vy+=0.25; g.rot+=g.vr; g.life--;
+      if(g.life<=0||g.y>H+30){ ejects.splice(i,1); continue; }
+      ctx.save(); ctx.translate(g.x,g.y); ctx.rotate(g.rot);
+      ctx.fillStyle='#d97706';
+      ctx.beginPath(); ctx.rect(-5,-2,10,4); ctx.fill();
+      ctx.fillStyle='#f59e0b';
+      ctx.beginPath(); ctx.rect(-2.5,-1,6,2); ctx.fill();
+      ctx.restore();
+    }
     if(gun.kick>0)gun.kick*=0.82;
     if(gun.flash>0)gun.flash--;
     drawGun(ctx);
+    if(gun.reload>0){
+      const t=$('#duckReload'); if(t)t.textContent='Перезарядка…';
+    }
   };
   const loop=setInterval(draw,33);
-  const spawnT=setInterval(()=>{ if(!over)spawn(); },1500);
+  const spawnT=setInterval(()=>{ if(!over)spawn(); },2600);
   const timerT=setInterval(()=>{
     left--;
     const t=$('#duckTime'); if(t)t.textContent=left+' с';
@@ -4829,7 +4988,8 @@ function brainDuck(){
       over=true;
       duckStop();
       brainSaveScore('duck',score);
-      const res=$('#duckRes'); if(res)res.textContent='Время вышло! Попаданий: '+score+' · рекорд: '+state.brain.scores.duck.best;
+      const res=$('#duckRes');
+      if(res)res.innerHTML='<b>Время вышло!</b> Попаданий: '+score+' · рекорд: '+state.brain.scores.duck.best+'<br><button class="btn primary" style="margin-top:8px" onclick="closeModal();brainDuck()">Сыграть ещё</button>';
       toast('Утки: '+score+' — рекорд '+state.brain.scores.duck.best);
       const st=state.sensei;
       if(st.enabled)senseiSay(score>=25?'Меткий стрелок!':'Хорошая охота. Скорость глаз — это навык.',st.kind?'kind':'calm',true);
@@ -4838,11 +4998,12 @@ function brainDuck(){
   brainTimers.push(loop,spawnT,timerT);
   function duckStop(){ clearInterval(loop); clearInterval(spawnT); clearInterval(timerT); }
   openModal(`
-    <div class="modal-head"><h3>${ICON.brain} Охотник на уток — 60 секунд</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
+    <div class="modal-head"><h3>${ICON.brain} Охотник на уток</h3><button class="modal-close" onclick="closeModal()">${ICON.close}</button></div>
     <div class="modal-body" style="text-align:center">
-      <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
+      <div class="duck-hud"><span>Счёт: <b id="duckScore">0</b></span><span>Уровень: <b id="duckLevel">1</b></span><span>Патроны: <b id="duckShells">●●</b></span><span id="duckReload" style="color:var(--warn);font-weight:700"></span></div>
+      <div class="duck-hud"><span>Жизни: <b id="duckLives">🦆🦆🦆</b></span><span>Время: <b id="duckTime">60 с</b></span></div>
       <canvas id="duckCv" width="${W}" height="${H}" style="max-width:100%;cursor:crosshair;border-radius:10px;border:1px solid var(--border)"></canvas>
-      <div class="field-hint">Дикие утки вылетают из кустов — наводите двустволку и бейте, пока не улетели! Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
+      <div class="field-hint">Утки вылетают из кустов снизу и крякают. В ружье 2 патрона — перезарядка 1 секунда. Упустишь 3 утки — игра окончена. Каждые 5 попаданий уровень выше: утки быстрее и меньше.</div>
       <div id="duckRes" style="font-size:14px;margin-top:6px"></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
@@ -4859,11 +5020,19 @@ function brainDuck(){
         gun.ang=Math.atan2(my-(H-16),mx-W/2);
       });
       cv.addEventListener('click',e=>{
-        if(over)return;
-        playShot();
+        if(over||gun.reload>0)return;
+        if(gun.shells<=0){ gun.reload=1; playReload(); const tt=setTimeout(()=>{ gun.shells=2; gun.reload=0; const s=$('#duckShells'); if(s)s.textContent='●●'; const r=$('#duckReload'); if(r)r.textContent=''; },1000); brainTimers.push(tt); return; }
+        gun.shells--;
+        const s=$('#duckShells'); if(s)s.textContent=gun.shells>0?'●○':'○';
+        playShot(); playEject();
         gun.kick=10; gun.flash=3;
         const r=cv.getBoundingClientRect();
         const cx=(e.clientX-r.left)*W/r.width, cy=(e.clientY-r.top)*H/r.height;
+        const mx0=W/2+Math.cos(gun.ang)*100, my0=H-16+Math.sin(gun.ang)*100;
+        for(let i=0;i<9;i++){
+          smoke.push({x:mx0+ (Math.random()-0.5)*8, y:my0+(Math.random()-0.5)*8, vx:Math.cos(gun.ang)*1.6+(Math.random()-0.5)*1.2, vy:Math.sin(gun.ang)*1.6-0.9+Math.random()*0.8, r:3.5+Math.random()*4, a:0.45});
+        }
+        ejects.push({x:W/2+Math.cos(gun.ang)*64, y:H-16+Math.sin(gun.ang)*64-6, vx:Math.cos(gun.ang)*3.5+2.2, vy:-2.2-Math.random()*1.4, rot:0, vr:(Math.random()-0.5)*0.55, life:80});
         let hit=-1,bestD=1e9;
         ducks.forEach((d,i)=>{
           if(typeof d.dead==='number')return;
@@ -4875,12 +5044,17 @@ function brainDuck(){
           score++;
           const nl=1+Math.floor(score/5);
           if(nl!==level){ level=nl; const l=$('#duckLevel'); if(l)l.textContent=level; }
-          const s=$('#duckScore'); if(s)s.textContent=score;
+          const sc=$('#duckScore'); if(sc)sc.textContent=score;
           ducks[hit].dead=0; ducks[hit].dy=1.5;
-          spawn();
+        }
+        if(gun.shells<=0&&!over){
+          gun.reload=1; playReload();
+          const rr=$('#duckReload'); if(rr)rr.textContent='Перезарядка…';
+          const tt=setTimeout(()=>{ gun.shells=2; gun.reload=0; const ss=$('#duckShells'); if(ss)ss.textContent='●●'; const r2=$('#duckReload'); if(r2)r2.textContent=''; },1000);
+          brainTimers.push(tt);
         }
       });
-    });
+    },true);
 }
 /* ---- Тетрис ---- */
 let tetGame=null;
@@ -4995,7 +5169,7 @@ function brainTetris(){
       drawNext();
       tickT=setInterval(tick,700);
       brainTimers.push(tickT);
-    });
+    },true);
 }
 function tetMove(dx){ if(tetGame&&tetGame.move){ tetGame.move(dx); tetGame.draw(); } }
 function tetRot(){ if(tetGame&&tetGame.rotate){ tetGame.rotate(); tetGame.draw(); } }
@@ -5074,6 +5248,7 @@ function brainSolitaire(){
       if(st.enabled)senseiSay('Косынка собрана! Терпение и логика — твои союзники.',st.kind?'kind':'calm',true);
     }
   };
+  const openColTop=i=>{ const cl=cols[i]; if(cl.length&&!cl[cl.length-1].up)cl[cl.length-1].up=true; };
   const putBase=card=>{ if(canBase(card)){ baseOf(card.s).cards.push(card); return true; } return false; };
   const putCard=(card,colIdx,pos)=>{
     const col=cols[colIdx];
@@ -5088,7 +5263,7 @@ function brainSolitaire(){
     const first=src[j];
     const chain=src.splice(j);
     if(dstI==='base'){
-      if(chain.length===1&&canBase(first)){ baseOf(first.s).cards.push(first); return true; }
+      if(chain.length===1&&canBase(first)){ baseOf(first.s).cards.push(first); openColTop(i); return true; }
       src.splice(j,0,...chain); return false;
     }
     const col=cols[colIdx];
@@ -5097,7 +5272,7 @@ function brainSolitaire(){
       if(!col.length&&first.r==='K')ok=true;
       else if(col.length&&canCol(first,col[col.length-1]))ok=true;
     } else if(col[pos]&&canCol(first,col[pos]))ok=true;
-    if(ok){ col.splice(pos,0,...chain); return true; }
+    if(ok){ col.splice(pos,0,...chain); openColTop(i); return true; }
     src.splice(j,0,...chain);
     return false;
   };
@@ -5151,6 +5326,7 @@ function brainSolitaire(){
         sel=null; render(); return;
       }
       if(c&&c.up){ sel={src:'col',i,j}; render(); }
+      else if(c&&!c.up){ c.up=true; sel=null; render(); }
       return;
     }
   };
@@ -5158,7 +5334,7 @@ function brainSolitaire(){
     if(src==='col'){
       const col=cols[i];
       const c=col[j];
-      if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(col.splice(j,1)[0]); sel=null; render(); checkWin(); }
+      if(c&&c.up&&canBase(c)){ baseOf(c.s).cards.push(col.splice(j,1)[0]); openColTop(i); sel=null; render(); checkWin(); }
     } else if(src==='waste'){
       const sv=stockView(); const c=sv[i];
       if(c&&canBase(c)){ baseOf(c.s).cards.push(stock.splice((sIdx+i)%stock.length,1)[0]); sel=null; render(); checkWin(); }
@@ -5172,7 +5348,7 @@ function brainSolitaire(){
       <div class="field-hint" style="margin-top:8px">Перетаскивайте карты мышью, как в классической «Косынке». Двойной клик — карта на базу, клик по колоде — взять 3 карты.</div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="solClick('new',0,0)">${ICON.brain} Новая игра</button><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
-    modal=>{ build(); render(); });
+    modal=>{ build(); render(); },true);
 }
 function renderPersonal(){
   const el=$('#personalWrap'); if(!el)return;
@@ -5370,6 +5546,51 @@ function dailyRollover(){
     }
   }));
 }
+function renderGantt(){
+  const el=$('#ganttWrap'); if(!el)return;
+  const items=[];
+  viewContexts().forEach(c=>ctxTasks(c).forEach(t=>{
+    if(t.parentId)return;
+    const s=t.startDate||t.deadline, e=t.deadline||t.startDate;
+    if(!s||!e)return;
+    items.push({c,t,s,e});
+  }));
+  if(!items.length){
+    el.innerHTML='<div class="gantt-empty">Нет задач с датами. Укажите «Начало» и «Срок» у карточек — они появятся на диаграмме.</div>';
+    return;
+  }
+  items.sort((a,b)=>a.s<b.s?-1:1);
+  const day=86400000;
+  const start=new Date(items.reduce((m,x)=>x.s<m?x.s:m,items[0].s));
+  start.setDate(start.getDate()-1);
+  const end=new Date(items.reduce((m,x)=>x.e>m?x.e:m,items[0].e));
+  end.setDate(end.getDate()+7);
+  const total=Math.round((end-start)/day)+1;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayStart=new Date(today); todayStart.setDate(todayStart.getDate()-1);
+  const offToday=Math.round((todayStart-start)/day);
+  const weekW=28,nameW=180,headH=26,rowH=26;
+  const idxOf=dt=>Math.round((new Date(dt)-start)/day);
+  const W=nameW+total*weekW;
+  const fmt=d=>{const dd=new Date(d);return dd.getDate()+'.'+String(dd.getMonth()+1).padStart(2,'0');};
+  let headCells='';
+  for(let i=0;i<total;i++){
+    const d=new Date(start); d.setDate(d.getDate()+i);
+    const dow=d.getDay();
+    headCells+=`<div class="gantt-cell${dow===0||dow===6?' wk':''}" style="width:${weekW}px">${dow===1?fmt(d):''}</div>`;
+  }
+  const head=`<div class="gantt-row gantt-head" style="height:${headH}px"><div class="gantt-name-col" style="width:${nameW}px">Задача</div><div class="gantt-cells" style="width:${total*weekW}px">${headCells}</div></div>`;
+  const rows=items.map(x=>{
+    const i0=idxOf(x.s),i1=idxOf(x.e);
+    const done=isDone(x.t);
+    const lateCls=(!done&&x.t.deadline&&x.t.deadline<todayISO())?' late':'';
+    const left=i0*weekW+3, w=Math.max(weekW-4,(i1-i0+1)*weekW-6);
+    const bar=`<div class="gantt-bar${done?' done':''}${lateCls}" style="left:${left}px;width:${w}px;background:${done?'linear-gradient(180deg,#34d399,#10b981)':colColor(x.t.columnId)}" title="${x.t.title} · ${colName(x.t.columnId)}" onclick="openCardModal('${x.c.key}','${x.t.id}')">${done?'✓':''}</div>`;
+    return `<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t">${x.t.title}</span><span class="gantt-sub">${colName(x.t.columnId)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${bar}</div></div>`;
+  }).join('');
+  const tLine=offToday>=0&&offToday<=total?`<div class="gantt-today" style="left:${nameW+offToday*weekW}px"></div>`:'';
+  el.innerHTML=`<div class="gantt-box"><div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
+}
 function render(){
   hideRowMenu();
   dailyRollover();
@@ -5384,6 +5605,7 @@ function render(){
   else if(currentTab==='personal')renderPersonal();
   else if(currentTab==='brain')renderBrain();
   else if(currentTab==='report')initReport();
+  else if(currentTab==='gantt')renderGantt();
   updateSenseiFab();
   refreshTimerLabels();
 }
