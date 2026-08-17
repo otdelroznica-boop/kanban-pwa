@@ -182,6 +182,13 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .gantt-bar{position:absolute;top:4px;height:18px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden}
 .gantt-bar.done{background:linear-gradient(180deg,#34d399,#10b981)!important}
 .gantt-bar.late{outline:2px solid var(--danger)}
+.gantt-bar-sub{position:absolute;top:5px;height:16px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;overflow:hidden;opacity:.82}
+.gantt-bar-sub.done{background:linear-gradient(180deg,#34d399,#10b981)!important;opacity:1}
+.gantt-bar-link{position:absolute;top:4px;height:18px;border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden;border:1px dashed rgba(255,255,255,.55)}
+.gantt-bar-link.done{background:linear-gradient(180deg,#34d399,#10b981)!important;border-style:solid}
+.gantt-bar-link.late{outline:2px solid var(--danger)}
+.gantt-name-col .gantt-t-sub{padding-left:14px}
+.gantt-name-col .gantt-t-link{padding-left:14px;color:var(--accent2,#6366f1)}
 .gantt-today{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);z-index:2;pointer-events:none}
 .gantt-today::before{content:'сегодня';position:absolute;top:2px;left:4px;font-size:9px;color:var(--danger);font-weight:700;white-space:nowrap}
 .gantt-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px}
@@ -482,6 +489,11 @@ body[data-theme="dark"] .report-table tr.total td{background:#33301f}
 body[data-theme="dark"] .report-table .rep-cmt{background:#1d3322;color:#7dd08a;border-color:#2e5a38}
 .report-table .t-desc{color:var(--muted);font-size:12px;margin-top:2px}
 .report-table .t-resp{white-space:nowrap}
+.report-table .rep-exp{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin:0 4px 0 -6px;border:1px solid var(--border);border-radius:5px;background:var(--soft);color:var(--muted);font-size:11px;cursor:pointer;vertical-align:-2px}
+.report-table .rep-exp:hover{color:var(--accent);border-color:var(--accent)}
+.report-table .rep-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--soft);border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:700;margin-left:5px;vertical-align:1px}
+.report-table tr.rep-sub td{background:var(--bg);opacity:.9}
+.report-table .rep-sub-title{padding-left:14px;font-weight:500}
 .report-empty{padding:60px;text-align:center;color:var(--muted);font-size:14px}
 .charts{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:16px}
 .chart{flex:1;min-width:300px;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:12px 14px}
@@ -1238,6 +1250,7 @@ function normalize(s){
   if(!['classic','alarm','bell','siren'].includes(s.settings.soundType)) s.settings.soundType='classic';
   if(!['cards','list'].includes(s.settings.view)) s.settings.view='cards';
   if(typeof s.settings.workdays!=='boolean') s.settings.workdays=true;
+  if(typeof s.settings.reportSubs!=='boolean') s.settings.reportSubs=true;
   if(typeof s.respFilter!=='string') s.respFilter='';
   if(typeof s.tagFilter!=='string') s.tagFilter='';
   if(typeof s.selPrio!=='string') s.selPrio='';
@@ -1515,9 +1528,12 @@ function ctxColor(c){ return c.proj?c.proj.color:c.org.color; }
 function ctxOpenCount(c){ return ctxTasks(c).filter(t=>!t.parentId&&t.columnId!==doneColId()).length; }
 function ctxTotalCount(c){ return ctxTasks(c).filter(t=>!t.parentId).length; }
 function taskPct(t){
+  const ref=allRefs().find(r=>r.t===t);
+  const links=ref?resolveLinks(ref.c,t):[];
   const subs=allTasks().filter(s=>s.parentId===t.id);
-  if(!subs.length)return isDone(t)?100:0;
-  return Math.round(subs.reduce((s,x)=>s+(isDone(x)?100:0),0)/subs.length);
+  const parts=subs.concat(links.map(x=>x.t));
+  if(!parts.length)return isDone(t)?100:0;
+  return Math.round(parts.reduce((s,x)=>s+(isDone(x)?100:0),0)/parts.length);
 }
 function ctxPct(c){
   const tasks=ctxTasks(c).filter(t=>!t.parentId);
@@ -1545,12 +1561,52 @@ function allRefs(){
 }
 function allTasks(){ return allRefs().map(r=>r.t); }
 function subsOf(c,t){ return ctxTasks(c).filter(x=>x.parentId===t.id); }
+function linkTargets(c,t){
+  const orgId=c.org.id;
+  return contexts().filter(x=>x.org.id===orgId).flatMap(x=>ctxTasks(x).map(tt=>({x,tt}))).filter(({x,tt})=>{
+    if(tt.id===t.id)return false;
+    if(tt.parentId===t.id||t.parentId===tt.id)return false;
+    if(tt.parentId)return false;
+    if((t.links||[]).some(l=>l.id===tt.id))return false;
+    return true;
+  });
+}
+function resolveLinks(c,t){
+  return (t.links||[]).map(l=>{
+    const x=ctxFromKey(l.ctx);
+    if(!x||x.org.id!==c.org.id)return null;
+    const tt=ctxTasks(x).find(q=>q.id===l.id);
+    return tt?{c:x,t:tt}:null;
+  }).filter(Boolean);
+}
+function addLink(ctxKey,tid){
+  const ref=findTaskRef(tid,ctxKey); if(!ref)return;
+  const sel=$('#tkLinkAdd'); if(!sel||!sel.value)return;
+  const parts=sel.value.split('|'); if(parts.length!==2)return;
+  const lctx=parts[0],lid=parts[1];
+  if(!ref.t.links)ref.t.links=[];
+  if(ref.t.links.some(l=>l.id===lid)){ toast('Карточка уже связана','error'); return; }
+  ref.t.links.push({id:lid,ctx:lctx});
+  save(); openCardModal(tid,ctxKey); render();
+  toast('Карточка связана');
+}
+function removeLink(ctxKey,tid,lid){
+  const ref=findTaskRef(tid,ctxKey); if(!ref)return;
+  ref.t.links=(ref.t.links||[]).filter(l=>l.id!==lid);
+  save(); openCardModal(tid,ctxKey); render();
+  toast('Связь убрана');
+}
 function syncSubs(c,t){ const col=t.columnId; subsOf(c,t).forEach(s=>s.columnId=col); }
 function totalSpent(t){
   const closed=(t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0);
   const man=(typeof t.actual==='number'&&t.actual>=0)?t.actual:0;
   const running=t.timer?(Date.now()-t.timer.start):0;
   return Math.floor((closed+man*1000+running)/1000);
+}
+function autoSpent(t){
+  const closed=(t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0);
+  const running=t.timer?(Date.now()-t.timer.start):0;
+  return Math.floor((closed+running)/1000);
 }
 function isDone(t){ return t.columnId===doneColId(); }
 function isOverdue(t){
@@ -1723,6 +1779,7 @@ function openSettingsModal(){
       <div class="field"><label>Системные уведомления</label>
         <button class="btn ${state.settings.notifications?'primary':'ghost'}" id="setNotif" style="width:100%;justify-content:center">${state.settings.notifications?'Включены — нажмите, чтобы проверить':'Включить уведомления'}</button>
       </div>
+      <div class="field"><label class="chk" style="padding:6px 0"><input type="checkbox" id="setSubs" ${state.settings.reportSubs!==false?'checked':''}> Показывать подзадачи в отчёте и Ганте</label></div>
     </div>
     <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Закрыть</button></div>`,
     modal=>{
@@ -1732,6 +1789,8 @@ function openSettingsModal(){
       sd.onchange=()=>{ state.settings.soundType=sd.value; save(); };
       modal.querySelector('#setSoundPrev').onclick=()=>beep(state.settings.soundType||'classic');
       modal.querySelector('#setNotif').onclick=enableNotifs;
+      const ss=modal.querySelector('#setSubs');
+      if(ss)ss.onchange=()=>{ state.settings.reportSubs=ss.checked; save(); if(currentTab==='report')initReport(); else if(currentTab==='gantt')renderGantt(); };
     });
 }
 function openHelpModal(){
@@ -2387,6 +2446,8 @@ function cardHTML(c,t){
   if((t.tags||[]).length)chips.push(...t.tags.map(tg=>`<span class="chip" style="color:#fff;background:${tagColor(tg)};border:none" title="Метка">${ICON.tag} ${esc(tg)}</span>`));
   if(cl.length)chips.push(`<span class="chip" title="Чек-лист">${ICON.check} ${clDone}/${cl.length}</span>`);
   if(subs.length)chips.push(`<span class="chip" title="Подзадачи">▸ ${subDone}/${subs.length}</span>`);
+  const lnkCount=resolveLinks(c,t).length;
+  if(lnkCount)chips.push(`<span class="chip" title="Связанные карточки (части большой задачи) — клик: открыть карточку" onclick="event.stopPropagation();openCardModal('${c.key}','${t.id}')">⇄ ${lnkCount}</span>`);
   if((t.attachments||[]).length)chips.push(`<span class="chip" title="Вложения">${ICON.attach} ${t.attachments.length}</span>`);
   if((t.comments||[]).length)chips.push(`<span class="chip" title="Комментарии">${ICON.cmt} ${t.comments.length}</span>`);
   if(t.type!=='event'&&t.repeat!=='daily')chips.push(`<span class="chip lurv-chip" data-l="${t.lurv!=null?t.lurv:4}" title="ЛУРВ: ${lurvFull(t.lurv)} — клик: следующий статус" onclick="event.stopPropagation();lurvNext('${c.key}','${t.id}')">ЛУРВ: ${lurvShort(t.lurv)}</span>`);
@@ -2676,6 +2737,13 @@ function openCardModal(tid,ctxKey,presetCol,presetDate,focusFact){
       <button class="log-del" onclick="toggleSubDone('${ctxKey}','${t.id}','${s.id}')" title="Выполнено">${ICON.check}</button>
       <button class="log-del" title="В архив" onclick="deleteTask('${ctxKey}','${s.id}')">${ICON.trash}</button></div>`;
   }).join('')||'<div class="log-empty">Подзадач нет.</div>'):'';
+  const linkOpts=t&&!t.parentId?(linkTargets(c,t).map(({x,tt})=>`<option value="${x.key}|${tt.id}">${esc(ctxLabel(x))} — ${esc(tt.title)}</option>`).join('')):'';
+  const linkRowsHtml=t&&!t.parentId?(resolveLinks(c,t).map(({c:lc,t:lt})=>{
+    const lsd=isDone(lt);
+    return `<div class="log-row"><span class="td-dot" style="background:${lsd?'var(--ok)':'var(--border)'}"></span><span class="log-note" style="${lsd?'text-decoration:line-through;color:var(--muted)':''}">${esc(lt.title)} <span style="color:var(--muted);font-size:11px">· ${esc(ctxLabel(lc))} · ${esc(colName(lt.columnId))}</span></span>
+      <button class="log-del" onclick="openCardModal('${lt.id}','${lc.key}')" title="Открыть">${ICON.settings}</button>
+      <button class="log-del" title="Убрать связь" onclick="removeLink('${ctxKey}','${t.id}','${lt.id}')">${ICON.trash}</button></div>`;
+  }).join('')||'<div class="log-empty">Нет связанных карточек.</div>'):'';
   const attRows=t&&(t.attachments||[]).length?t.attachments.map(a=>`<div class="att-row">
     <a class="att-name" href="${a.dataUrl}" download="${esc(a.name)}">${ICON.attach} ${esc(a.name)}</a>
     <span class="att-size">${(a.size/1024).toFixed(1)} КБ</span>
@@ -2711,7 +2779,8 @@ function openCardModal(tid,ctxKey,presetCol,presetDate,focusFact){
       <div class="field-hint">Дата и время — для встреч и событий, попадёт в календарь. Напоминание сработает и для события, и для срока.</div></div>
       <div class="field"><div class="row">
         <div><label>План (часы)</label><input type="number" id="tkEst" min="0" step="0.5" value="${t&&t.estimate?t.estimate:''}" placeholder="0"></div>
-        <div><label>Факт (часы — вручную)</label><input type="number" id="tkFact" min="0" step="0.5" value="${t&&totalSpent(t)>0?Math.max(0,Math.round(totalSpent(t)/36)/100).toFixed(2):''}" placeholder="введите вручную"></div>
+        <div><label>Факт — таймер (авто)</label><input type="number" id="tkFactAuto" min="0" step="0.5" readonly value="${t?Math.round(autoSpent(t)/36)/100:''}" title="Считается сам из замеров таймера"></div>
+        <div><label>Факт — вручную</label><input type="number" id="tkFact" min="0" step="0.5" value="${t&&typeof t.actual==='number'&&t.actual>0?Math.round(t.actual*100)/100:''}" placeholder="добавить руками"></div>
         <div style="flex:2"><label>Замер</label>
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums" id="tkSpent">${fmtDur(spent)}</span>
@@ -2720,7 +2789,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate,focusFact){
             <span id="tkTimerLive" style="color:var(--warn);font-weight:700;font-variant-numeric:tabular-nums">${running?'Идёт замер…':''}</span>
           </div></div>
       </div>
-      <div class="field-hint">План — ставите сами (у события по умолчанию 1 час). Факт можно ввести вручную в часах — сложится с замерами таймера.</div></div>
+      <div class="field-hint">План — ставите сами (у события по умолчанию 1 час). «Таймер» — сколько намеряли замеры (читается автоматически). «Вручную» — часы, которые добавляете сами; итог = таймер + вручную. Поля больше не вычитаются друг из друга.</div></div>
       ${t&&t.parentId?'':`<div class="field"><div class="row">
         <div><label>Постоянная задача</label><select id="tkRepeat"><option value="">Нет</option><option value="daily" ${repSel}>Ежедневно</option></select></div>
         <div><label>Напоминать в</label><input type="time" id="tkRepeatTime" value="${t&&t.repeatTime?esc(t.repeatTime):'09:00'}"></div>
@@ -2731,6 +2800,9 @@ function openCardModal(tid,ctxKey,presetCol,presetDate,focusFact){
         <div class="add-inline"><input type="text" id="tkCheckInput" placeholder="Новый пункт чек-листа..."><button class="btn ghost" onclick="addCheck('${ctxKey}','${t.id}')">${ICON.plus} Добавить</button></div></div>
       <div class="field evt-hide"><label>Подзадачи</label><div class="log-block">${subRows}</div>
         <div class="add-inline"><input type="text" id="tkSubInput" placeholder="Название подзадачи..."><button class="btn ghost" onclick="addSubTask('${ctxKey}','${t.id}')">${ICON.plus} Добавить</button></div></div>
+      ${t&&!t.parentId?`<div class="field evt-hide"><label>Связанные карточки — части большой задачи</label><div class="log-block">${linkRowsHtml}</div>
+        <div class="add-inline"><select id="tkLinkAdd" style="flex:1">${linkOpts||'<option value="">Нет доступных карточек в этой организации</option>'}</select><button class="btn ghost" onclick="addLink('${ctxKey}','${t.id}')">⇄ Связать</button></div>
+        <div class="field-hint">Связанная карточка живёт сама по себе (двигается по колонкам независимо), но без её выполнения главная не даст 100%: таймер, факт и время подзадач идут в общую задачу. В Ганте они связаны стрелкой.</div></div>`:''}
       <div class="field evt-hide"><label>Вложения</label><div class="log-block">${attRows}</div>
         <div class="add-inline"><button class="btn ghost" onclick="$('#tkFile').click()">${ICON.attach} Прикрепить файл</button><input type="file" id="tkFile" multiple style="display:none"></div></div>
       <div class="field evt-hide"><label>Комментарии</label><div class="log-block">${cmtRows}</div>
@@ -2818,8 +2890,7 @@ function saveTask(ctxKey,tid){
   const actualHours=data.actualHours;
   delete data.actualHours;
   const applyFact=t=>{
-    const closed=Math.floor((t.intervals||[]).filter(i=>i.end).reduce((s,i)=>s+(i.end-i.start),0)/1000);
-    t.actual=actualHours!=null?Math.max(0,Math.round((actualHours*3600-closed)/36)/100):undefined;
+    t.actual=actualHours!=null&&actualHours>0?Math.round(actualHours*100)/100:undefined;
   };
   if(tid){
     const ref=findTaskRef(tid,ctxKey);
@@ -3426,11 +3497,26 @@ function taskSpent(t,fromMs,toMs){
 function reportRows(f){
   const rows=[];
   filteredTasks(f).forEach(({c,t})=>{
-    const {spent,count}=taskSpent(t,f.fromMs,f.toMs);
-    if(spent>0||f.includeEmpty)rows.push({c,t,spent,count,estimate:t.estimate,resp:t.responsible,status:colName(t.columnId),fact:totalSpent(t)});
+    const subs=ctxTasks(c).filter(s=>s.parentId===t.id);
+    let spent=0,count=0,auto=0,man=0;
+    const own=taskSpent(t,f.fromMs,f.toMs);
+    spent+=own.spent; count+=own.count; auto+=autoSpent(t); man+=(typeof t.actual==='number'&&t.actual>0)?Math.floor(t.actual*3600):0;
+    const subsRows=[];
+    subs.forEach(s=>{
+      const r=taskSpent(s,f.fromMs,f.toMs);
+      spent+=r.spent; count+=r.count;
+      subsRows.push({c,t:s,spent:r.spent,count:r.count,estimate:s.estimate,resp:s.responsible,status:colName(s.columnId),fact:totalSpent(s),auto:autoSpent(s),man:(typeof s.actual==='number'&&s.actual>0)?Math.floor(s.actual*3600):0,sub:true});
+    });
+    if(spent>0||f.includeEmpty||subsRows.length)rows.push({c,t,spent,count,estimate:t.estimate,resp:t.responsible,status:colName(t.columnId),fact:totalSpent(t),auto,man,sub:false,subs:subsRows,own:own.spent});
   });
   rows.sort((a,b)=>b.spent-a.spent);
   return rows;
+}
+function toggleRepSubs(ctxKey,tid){
+  if(!state._repOpen)state._repOpen={};
+  const k=ctxKey+'|'+tid;
+  state._repOpen[k]=!state._repOpen[k];
+  buildReport();
 }
 function splitDays(fromMs,toMs){
   const res=[];
@@ -3487,7 +3573,8 @@ function buildReport(){
     <div class="rs">Задач с временем: <b>${tasksWith}</b></div>
     <div class="rs">Замеров: <b>${totalCount}</b></div>
     <div class="rs">Всего времени: <b>${fmtDur(totalSec)}</b></div>
-    <div class="rs">Факт вручную: <b>${fmtDur(rows.reduce((s,r)=>s+((typeof r.t.actual==='number'&&r.t.actual>0)?Math.floor(r.t.actual):0),0))}</b></div>`;
+    <div class="rs">Факт — таймер: <b>${fmtDur(rows.reduce((s,r)=>s+r.auto,0))}</b></div>
+    <div class="rs">Факт — вручную: <b>${fmtDur(rows.reduce((s,r)=>s+r.man,0))}</b></div>`;
   let html=`<div class="report-summary">${summary}</div>`;
   html+=chartHTML(chartData(f));
   if(!rows.length){ html+=`<div class="report-empty">За выбранный период нет данных.</div>`; body.innerHTML=html; return; }
@@ -3497,6 +3584,8 @@ function buildReport(){
   </tr></thead><tbody>`;
   const grouped=new Map();
   rows.forEach(r=>{ if(!grouped.has(r.c.key))grouped.set(r.c.key,[]); grouped.get(r.c.key).push(r); });
+  const showSubs=state.settings.reportSubs!==false;
+  if(!state._repOpen)state._repOpen={};
   contexts().forEach(c=>{
     const gr=grouped.get(c.key); if(!gr)return;
     const sub=gr.reduce((s,r)=>s+r.spent,0);
@@ -3505,20 +3594,35 @@ function buildReport(){
     gr.forEach(r=>{
       const pr=PRIO[r.t.priority||'med'];
       const cmts=(r.t.comments||[]).length;
+      const exp=showSubs&&r.subs.length?`<button class="rep-exp" onclick="event.stopPropagation();toggleRepSubs('${r.c.key}','${r.t.id}')" title="${state._repOpen[r.c.key+'|'+r.t.id]?'Свернуть':'Раскрыть подзадачи'}">${state._repOpen[r.c.key+'|'+r.t.id]?'▾':'▸'}</button>`:'';
       html+=`<tr style="cursor:pointer" onclick="openCardModal('${r.t.id}','${r.c.key}')">
-        <td><div class="t-title">${esc(r.t.title)}${cmts?` <span class="rep-cmt" title="Комментариев: ${cmts}">${ICON.cmt} ${cmts}</span>`:''}</div>${r.t.desc?`<div class="t-desc">${esc(r.t.desc)}</div>`:''}</td>
+        <td><div class="t-title">${exp} ${esc(r.t.title)}${r.subs.length?` <span class="rep-cnt" title="Подзадачи">${r.subs.length}</span>`:''}${cmts?` <span class="rep-cmt" title="Комментариев: ${cmts}">${ICON.cmt} ${cmts}</span>`:''}</div>${r.t.desc?`<div class="t-desc">${esc(r.t.desc)}</div>`:''}</td>
         <td class="t-resp">${esc(r.resp||'—')}</td>
         <td>${esc(r.status)}</td>
         <td><span class="lurv-chip" data-l="${r.t.lurv!=null?r.t.lurv:4}" title="${lurvFull(r.t.lurv)}">${lurvFull(r.t.lurv)}</span></td>
         <td style="color:${pr.color}">${pr.label}</td>
         <td class="num">${r.estimate?fmtDur(r.estimate*3600):'—'}</td>
-        <td class="num" title="Факт — таймер + ручной ввод">${r.fact>0?fmtDur(r.fact):'—'}</td>
+        <td class="num" title="Факт — таймер (замеры) + вручную"><div>⏱ ${fmtDur(r.auto)}</div>${r.man>0?`<div>✎ ${fmtDur(r.man)}</div>`:''}</td>
         <td class="num">${r.count}</td>
         <td class="num"><b>${fmtDur(r.spent)}</b></td>
       </tr>`;
+      if(showSubs&&state._repOpen[r.c.key+'|'+r.t.id])r.subs.forEach(s=>{
+        const sp=PRIO[s.t.priority||'med'];
+        html+=`<tr class="rep-sub" style="cursor:pointer" onclick="openCardModal('${s.t.id}','${s.c.key}')">
+          <td><div class="t-title rep-sub-title">└ ${esc(s.t.title)}</div></td>
+          <td class="t-resp">${esc(s.resp||'—')}</td>
+          <td>${esc(s.status)}</td>
+          <td><span class="lurv-chip" data-l="${s.t.lurv!=null?s.t.lurv:4}" title="${lurvFull(s.t.lurv)}">${lurvFull(s.t.lurv)}</span></td>
+          <td style="color:${sp.color}">${sp.label}</td>
+          <td class="num">${s.estimate?fmtDur(s.estimate*3600):'—'}</td>
+          <td class="num" title="Факт — таймер + вручную"><div>⏱ ${fmtDur(s.auto)}</div>${s.man>0?`<div>✎ ${fmtDur(s.man)}</div>`:''}</td>
+          <td class="num">${s.count}</td>
+          <td class="num">${fmtDur(s.spent)}</td>
+        </tr>`;
+      });
     });
   });
-  html+=`<tr class="total"><td colspan="5">Итого</td><td class="num"></td><td class="num">${fmtDur(rows.reduce((s,r)=>s+(r.fact||0),0))}</td><td class="num">${totalCount}</td><td class="num">${fmtDur(totalSec)}</td></tr>`;
+  html+=`<tr class="total"><td colspan="5">Итого</td><td class="num"></td><td class="num"><div>⏱ ${fmtDur(rows.reduce((s,r)=>s+r.auto,0))}</div>${rows.some(r=>r.man>0)?`<div>✎ ${fmtDur(rows.reduce((s,r)=>s+r.man,0))}</div>`:''}</td><td class="num">${totalCount}</td><td class="num">${fmtDur(totalSec)}</td></tr>`;
   html+='</tbody></table>';
   body.innerHTML=html;
 }
@@ -3526,11 +3630,18 @@ function reportCsv(){
   const f=repFilters();
   f.fromMs=new Date(f.from+'T00:00:00').getTime(); f.toMs=new Date(f.to+'T23:59:59.999').getTime();
   const rows=reportRows(f);
-  let csv='\uFEFFРаздел;Задача;Что делали (описание);Ответственный;Приоритет;Статус;ЛУРВ;Оценка;Факт;Замеров;Время (чч:мм:сс)\n';
-  rows.forEach(r=>{
+  const showSubs=state.settings.reportSubs!==false;
+  let csv='\uFEFFРаздел;Задача;Что делали (описание);Ответственный;Приоритет;Статус;ЛУРВ;Оценка;Факт таймер;Факт вручную;Замеров;Время (чч:мм:сс)\n';
+  const csvLine=r=>{
     const dur=new Date(r.spent*1000).toISOString().substr(11,8);
     const q=s=>'"'+(s||'').replace(/"/g,'""')+'"';
-    csv+=q(ctxLabel(r.c))+';'+q(r.t.title)+';'+q(r.t.desc)+';'+q(r.resp||'')+';'+q((PRIO[r.t.priority||'med']).label)+';'+q(r.status)+';'+q(lurvFull(r.t.lurv))+';'+q(r.estimate?fmtDur(r.estimate*3600):'')+';'+q(r.fact>0?fmtDur(r.fact):'')+';'+r.count+';'+dur+'\n';
+    csv+=q(ctxLabel(r.c))+';'+q((r.sub?'— ':'')+r.t.title)+';'+q(r.t.desc)+';'+q(r.resp||'')+';'+q((PRIO[r.t.priority||'med']).label)+';'+q(r.status)+';'+q(lurvFull(r.t.lurv))+';'+q(r.estimate?fmtDur(r.estimate*3600):'')+';'+q(r.auto>0?fmtDur(r.auto):'')+';'+q(r.man>0?fmtDur(r.man):'')+';'+r.count+';'+dur+'\n';
+  };
+  rows.forEach(r=>{
+    if(showSubs&&r.subs.length){
+      csvLine(Object.assign({},r,{spent:r.own,auto:autoSpent(r.t),man:(typeof r.t.actual==='number'&&r.t.actual>0)?Math.floor(r.t.actual*3600):0}));
+      r.subs.forEach(csvLine);
+    }else csvLine(r);
   });
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
@@ -3544,9 +3655,16 @@ function reportExcel(){
   const f=repFilters();
   f.fromMs=new Date(f.from+'T00:00:00').getTime(); f.toMs=new Date(f.to+'T23:59:59.999').getTime();
   const rows=reportRows(f);
-  let t='<table border="1" cellpadding="4" cellspacing="0"><tr style="background:#eef0ff"><th>Раздел</th><th>Задача</th><th>Описание</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Оценка</th><th>Факт</th><th>Замеров</th><th>Время (сек)</th><th>Время</th></tr>';
+  const showSubs=state.settings.reportSubs!==false;
+  let t='<table border="1" cellpadding="4" cellspacing="0"><tr style="background:#eef0ff"><th>Раздел</th><th>Задача</th><th>Описание</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Оценка</th><th>Факт таймер</th><th>Факт вручную</th><th>Замеров</th><th>Время (сек)</th><th>Время</th></tr>';
+  const xlsLine=r=>{
+    t+=`<tr><td>${esc(ctxLabel(r.c))}</td><td>${esc(r.t.title)}</td><td>${esc(r.t.desc||'')}</td><td>${esc(r.resp||'')}</td><td>${esc(r.status)}</td><td>${esc(lurvFull(r.t.lurv))}</td><td>${r.estimate?fmtDur(r.estimate*3600):''}</td><td>${r.auto>0?fmtDur(r.auto):''}</td><td>${r.man>0?fmtDur(r.man):''}</td><td>${r.count}</td><td>${r.spent}</td><td>${fmtDur(r.spent)}</td></tr>`;
+  };
   rows.forEach(r=>{
-    t+=`<tr><td>${esc(ctxLabel(r.c))}</td><td>${esc(r.t.title)}</td><td>${esc(r.t.desc||'')}</td><td>${esc(r.resp||'')}</td><td>${esc(r.status)}</td><td>${esc(lurvFull(r.t.lurv))}</td><td>${r.estimate?fmtDur(r.estimate*3600):''}</td><td>${r.fact>0?fmtDur(r.fact):''}</td><td>${r.count}</td><td>${r.spent}</td><td>${fmtDur(r.spent)}</td></tr>`;
+    if(showSubs&&r.subs.length){
+      xlsLine(Object.assign({},r,{spent:r.own,auto:autoSpent(r.t),man:(typeof r.t.actual==='number'&&r.t.actual>0)?Math.floor(r.t.actual*3600):0}));
+      r.subs.forEach(s=>xlsLine(Object.assign({},s,{t:{...s.t,title:'— '+s.t.title}})));
+    }else xlsLine(r);
   });
   t+='</table>';
   const htmlDoc=`<html><head><meta charset="utf-8"></head><body>${t}</body></html>`;
@@ -5782,6 +5900,7 @@ function renderGantt(){
   const spOpts='<option value="">Все спринты</option>'+state.sprints.map(s=>`<option value="${esc(s)}" ${gf.sprint===s?'selected':''}>${esc(s)}</option>`).join('');
   const filters=`<div class="gantt-filters"><span class="f-lbl">Организация:</span><select id="gtOrg" onchange="state._ganttOrg=this.value;save();renderGantt()">${orgOpts}</select><span class="f-lbl">Спринт:</span><select id="gtSprint" onchange="state._ganttSprint=this.value;save();renderGantt()">${spOpts}</select></div>`;
   const items=[];
+  const showSubs=state.settings.reportSubs!==false;
   viewContexts().forEach(c=>{
     if(gf.orgId&&c.org.id!==gf.orgId)return;
     ctxTasks(c).forEach(t=>{
@@ -5789,7 +5908,20 @@ function renderGantt(){
       if(gf.sprint&&(t.sprint||'')!==gf.sprint)return;
       const s=t.startDate||t.deadline, e=t.deadline||t.startDate;
       if(!s||!e)return;
-      items.push({c,t,s,e});
+      const kids=[];
+      if(showSubs)ctxTasks(c).filter(x=>x.parentId===t.id).forEach(sb=>{
+        if(gf.sprint&&(sb.sprint||'')!==gf.sprint)return;
+        if(!sb.startDate&&!sb.deadline)return;
+        kids.push({c,t:sb,s:sb.startDate||sb.deadline,e:sb.deadline||sb.startDate,kind:'sub'});
+      });
+      resolveLinks(c,t).forEach(l=>{
+        if(l.c.org.id!==c.org.id)return;
+        if(!l.t.startDate&&!l.t.deadline)return;
+        if(gf.sprint&&(l.t.sprint||'')!==gf.sprint)return;
+        kids.push({c:l.c,t:l.t,s:l.t.startDate||l.t.deadline,e:l.t.deadline||l.t.startDate,kind:'link'});
+      });
+      kids.sort((a,b)=>a.s<b.s?-1:1);
+      items.push({c,t,s,e,kind:'main',kids});
     });
   });
   if(!items.length){
@@ -5817,16 +5949,46 @@ function renderGantt(){
     headCells+=`<div class="gantt-cell${dow===0||dow===6?' wk':''}" style="width:${weekW}px">${dow===1?fmt(d):''}</div>`;
   }
   const head=`<div class="gantt-row gantt-head" style="height:${headH}px"><div class="gantt-name-col" style="width:${nameW}px">Задача</div><div class="gantt-cells" style="width:${total*weekW}px">${headCells}</div></div>`;
-  const rows=items.map(x=>{
+  const rows=[]; const links=[];
+  let rowIdx=0;
+  items.forEach(x=>{
+    const myIdx=rowIdx++;
     const i0=idxOf(x.s),i1=idxOf(x.e);
     const done=isDone(x.t);
     const lateCls=(!done&&x.t.deadline&&x.t.deadline<todayISO())?' late':'';
     const left=i0*weekW+3, w=Math.max(weekW-4,(i1-i0+1)*weekW-6);
     const bar=`<div class="gantt-bar${done?' done':''}${lateCls}" style="left:${left}px;width:${w}px;background:${done?'linear-gradient(180deg,#34d399,#10b981)':colColor(x.t.columnId)}" title="${x.t.title} · ${colName(x.t.columnId)}" onclick="openCardModal('${x.t.id}','${x.c.key}')">${done?'✓':''}</div>`;
-    return `<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t">${x.t.title}</span><span class="gantt-sub">${colName(x.t.columnId)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${bar}</div></div>`;
+    rows.push(`<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t">${x.t.title}</span><span class="gantt-sub">${colName(x.t.columnId)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${bar}</div></div>`);
+    const x0=left+3, x1=left+w-3, ym=myIdx*rowH+rowH/2;
+    x.kids.forEach(k=>{
+      const ki0=idxOf(k.s),ki1=idxOf(k.e);
+      const kdone=isDone(k.t);
+      const klate=(!kdone&&k.t.deadline&&k.t.deadline<todayISO())?' late':'';
+      const kleft=ki0*weekW+3, kw=Math.max(weekW-4,(ki1-ki0+1)*weekW-6);
+      const subCls=k.kind==='sub'?'gantt-bar-sub':(kdone?'gantt-bar-link-done':'gantt-bar-link');
+      const kbar=`<div class="${subCls}${kdone?' done':''}${klate}" style="left:${kleft}px;width:${kw}px;background:${kdone?'linear-gradient(180deg,#34d399,#10b981)':(k.kind==='sub'?colColor(k.t.columnId):'linear-gradient(180deg,#818cf8,#6366f1)')}" title="${(k.kind==='sub'?'Подзадача: ':'Связанная: ')+k.t.title} · ${colName(k.t.columnId)}" onclick="openCardModal('${k.t.id}','${k.c.key}')">${kdone?'✓':''}</div>`;
+      const kym=rowIdx*rowH+rowH/2;
+      rows.push(`<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t ${k.kind==='sub'?'gantt-t-sub':'gantt-t-link'}">${k.kind==='sub'?'└ ':''}${k.kind==='link'?'⇄ ':''}${k.t.title}</span><span class="gantt-sub">${k.kind==='sub'?colName(k.t.columnId):ctxLabel(k.c)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${kbar}</div></div>`);
+      if(k.kind==='link'){
+        const kx0=kleft+3, kx1=kleft+kw-3;
+        if(kx1>=x0)links.push({x1:x1,y1:ym,x2:kx0,y2:kym});
+        else links.push({x1:kx1,y1:kym,x2:x0,y2:ym});
+      }
+      rowIdx++;
+    });
+  });
+  const linkSvg=links.map(l=>{
+    const dx=l.x2-l.x1, dy=l.y2-l.y1;
+    const len=Math.max(1,Math.sqrt(dx*dx+dy*dy));
+    const ux=dx/len, uy=dy/len;
+    const mx=l.x2-ux*8, my=l.y2-uy*8;
+    const a1={x:l.x2-uy*4-ux*8,y:l.y2+ux*4-uy*8};
+    const a2={x:l.x2+uy*4-ux*8,y:l.y2-ux*4-uy*8};
+    return `<line x1="${l.x1}" y1="${l.y1}" x2="${mx}" y2="${my}" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5 3"/>
+      <polygon points="${l.x2},${l.y2} ${a1.x},${a1.y} ${a2.x},${a2.y}" fill="#64748b"/>`;
   }).join('');
   const tLine=offToday>=0&&offToday<=total?`<div class="gantt-today" style="left:${nameW+offToday*weekW}px"></div>`:'';
-  el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
+  el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows.join('')}${linkSvg?`<svg class="gantt-links" style="position:absolute;top:${headH}px;left:${nameW}px;width:${total*weekW}px;height:${rowIdx*rowH}px;pointer-events:none">${linkSvg}</svg>`:''}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Подзадачи — под задачей (└), связанные карточки — фиолетовые (⇄) со стрелкой-связью. Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
 }
 function render(){
   hideRowMenu();
