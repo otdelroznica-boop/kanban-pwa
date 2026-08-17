@@ -214,6 +214,14 @@ body[data-theme="dark"] .all-item.active{background:#2a2f4a;border-color:#3a4162
 .gantt-today::before{content:'сегодня';position:absolute;top:2px;left:4px;font-size:9px;color:var(--danger);font-weight:700;white-space:nowrap}
 .gantt-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px}
 .gantt-hint{font-size:11.5px;color:var(--muted);padding:8px 12px;border-top:1px solid var(--border);background:var(--panel)}
+.gantt-nodates{border-top:1px solid var(--border);background:var(--soft);padding:10px 12px}
+.gantt-nodates-h{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px}
+.gantt-nodates-list{display:flex;flex-direction:column;gap:4px}
+.gantt-nodate-row{display:flex;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card,#fff);font-size:13px;cursor:pointer;flex-wrap:wrap}
+.gantt-nodate-row:hover{border-color:var(--accent)}
+.gantt-nodate-row b{flex:1 1 160px;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt-nd-col{font-size:12px;color:var(--muted)}
+.gantt-nd-time{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 #tabDocs{overflow:hidden;padding:0}
 
 .docs-wrap{display:flex;flex:1;min-height:0}
@@ -5982,8 +5990,22 @@ function renderGantt(){
       items.push({c,t,s,e,kind:'main',kids});
     });
   });
+  const nd=[];
+  viewContexts().forEach(c=>{
+    if(gf.orgId&&c.org.id!==gf.orgId)return;
+    ctxTasks(c).forEach(t=>{
+      if(t.parentId)return;
+      if(gf.sprint&&(t.sprint||'')!==gf.sprint)return;
+      if(!t.startDate&&!t.deadline)nd.push({c,t});
+    });
+  });
+  const ndHtml=nd.length?`<div class="gantt-nodates"><div class="gantt-nodates-h">Задачи без дат — не размещаются на диаграмме. Укажите «Начало» или «Срок», чтобы полоса появилась:</div><div class="gantt-nodates-list">${nd.map(x=>{
+    const t=x.t;
+    const auto=autoSpent(t);
+    return `<div class="gantt-nodate-row" onclick="openCardModal('${t.id}','${x.c.key}')"><span class="col-dot" style="background:${colColor(t.columnId)}"></span><b>${esc(t.title)}</b><span style="color:var(--muted);font-size:11.5px">${esc(ctxLabel(x.c))}</span><span class="gantt-nd-col">${esc(colName(t.columnId))}</span><span class="gantt-nd-time">⏱ ${fmtDur(auto)}</span></div>`;
+  }).join('')}</div></div>`:'';
   if(!items.length){
-    el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-empty">Нет задач с датами. Укажите «Начало» и «Срок» у карточек — они появятся на диаграмме.</div></div>`;
+    el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-empty">Нет задач с датами.</div>${ndHtml}</div>`;
     return;
   }
   items.sort((a,b)=>a.s<b.s?-1:1);
@@ -6046,7 +6068,7 @@ function renderGantt(){
       <polygon points="${l.x2},${l.y2} ${a1.x},${a1.y} ${a2.x},${a2.y}" fill="#64748b"/>`;
   }).join('');
   const tLine=offToday>=0&&offToday<=total?`<div class="gantt-today" style="left:${nameW+offToday*weekW}px"></div>`:'';
-  el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows.join('')}${linkSvg?`<svg class="gantt-links" style="position:absolute;top:${headH}px;left:${nameW}px;width:${total*weekW}px;height:${rowIdx*rowH}px;pointer-events:none">${linkSvg}</svg>`:''}${tLine}</div></div><div class="gantt-hint">Полосы — от «Начала» до «Срока». Подзадачи — под задачей (└), связанные карточки — фиолетовые (⇄) со стрелкой-связью. Чтобы связать карточки — перетащите одну полосу на другую (на кого уронили — тот главный). Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
+  el.innerHTML=`<div class="gantt-box">${filters}<div class="gantt-scroll"><div class="gantt-canvas" style="width:${W}px;position:relative">${head}${rows.join('')}${linkSvg?`<svg class="gantt-links" style="position:absolute;top:${headH}px;left:${nameW}px;width:${total*weekW}px;height:${rowIdx*rowH}px;pointer-events:none">${linkSvg}</svg>`:''}${tLine}</div></div>${ndHtml}<div class="gantt-hint">Полосы — от «Начала» до «Срока». Подзадачи — под задачей (└), связанные карточки — фиолетовые (⇄) со стрелкой-связью. Чтобы связать карточки — перетащите одну полосу на другую (на кого уронили — тот главный). Красная линия — сегодня. Зелёные — выполненные. Клик по полосе открывает карточку.</div></div>`;
 }
 /* ---- Спринты ---- */
 function sprintMatches(c,meta){
