@@ -2364,7 +2364,7 @@ function cardHTML(c,t){
   chips.push(`<span class="chip ${overdue?'overdue':today?'today':done?'done':''}" title="${done?'Завершено: '+fmtDate(t.completedDate):overdue?'Просрочено':''}">${ICON.calendar} Дедлайн: ${fmtDate(t.deadline)}</span>`);
   if(t.dueDateTime)chips.push(`<span class="chip ${t.dueDateTime<new Date().toISOString().slice(0,16)?'overdue':''}" title="Событие/встреча">${ICON.clock} ${fmtDT(t.dueDateTime)}</span>`);
   if(t.estimate)chips.push(`<span class="chip" title="План (оценка) — ставится вручную">${ICON.clock} План: ${fmtDur(t.estimate*3600)}</span>`);
-  if(spent>0)chips.push(`<span class="chip" title="Факт — из таймера, можно править">${ICON.clock} Факт: ${fmtDur(spent)}</span>`);
+  if(spent>0)chips.push(`<span class="chip" style="cursor:pointer" title="Факт — из таймера. Клик: ввести факт вручную" onclick="event.stopPropagation();openCardModal('${t.id}','${c.key}',null,null,true)">${ICON.clock} Факт: ${fmtDur(spent)} ✎</span>`);
   if(spent>0)chips.push(`<span class="chip ${running?'running':''}" title="Затрачено${running?' — идёт замер':''}">${ICON.clock} ${fmtDur(spent)}</span>`);
   if(t.reminder)chips.push(`<span class="chip" title="Напоминание">${ICON.bell} ${t.reminder<60?t.reminder+'м':t.reminder/60>=24?Math.round(t.reminder/1440)+'дн':Math.round(t.reminder/60)+'ч'}</span>`);
   if((t.tags||[]).length)chips.push(...t.tags.map(tg=>`<span class="chip" style="color:#fff;background:${tagColor(tg)};border:none" title="Метка">${ICON.tag} ${esc(tg)}</span>`));
@@ -2597,7 +2597,7 @@ function doImportCards(){
 }
 
 /* ============================================================ task modal */
-function openCardModal(tid,ctxKey,presetCol,presetDate){
+function openCardModal(tid,ctxKey,presetCol,presetDate,focusFact){
   const ref=findTaskRef(tid,ctxKey);
   const t=ref?ref.t:null;
   const c=ref?ref.c:(ctxKey?ctxFromKey(ctxKey):null);
@@ -2688,7 +2688,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
       <div class="field-hint">Дата и время — для встреч и событий, попадёт в календарь. Напоминание сработает и для события, и для срока.</div></div>
       <div class="field"><div class="row">
         <div><label>План (часы)</label><input type="number" id="tkEst" min="0" step="0.5" value="${t&&t.estimate?t.estimate:''}" placeholder="0"></div>
-        <div><label>Факт (часы)</label><input type="number" id="tkFact" min="0" step="0.5" value="${t&&totalSpent(t)>0?Math.max(0,Math.round(totalSpent(t)/36)/100).toFixed(2):''}" placeholder="из таймера"></div>
+        <div><label>Факт (часы — вручную)</label><input type="number" id="tkFact" min="0" step="0.5" value="${t&&totalSpent(t)>0?Math.max(0,Math.round(totalSpent(t)/36)/100).toFixed(2):''}" placeholder="введите вручную"></div>
         <div style="flex:2"><label>Замер</label>
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums" id="tkSpent">${fmtDur(spent)}</span>
@@ -2696,7 +2696,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
             <span id="tkTimerLive" style="color:var(--warn);font-weight:700;font-variant-numeric:tabular-nums">${running?'Идёт замер…':''}</span>
           </div></div>
       </div>
-      <div class="field-hint">План — ставите сами (у события по умолчанию 1 час). Факт заполняется из таймера; можно поправить вручную в часах.</div></div>
+      <div class="field-hint">План — ставите сами (у события по умолчанию 1 час). Факт можно ввести вручную в часах — сложится с замерами таймера.</div></div>
       ${t&&t.parentId?'':`<div class="field"><div class="row">
         <div><label>Постоянная задача</label><select id="tkRepeat"><option value="">Нет</option><option value="daily" ${repSel}>Ежедневно</option></select></div>
         <div><label>Напоминать в</label><input type="time" id="tkRepeatTime" value="${t&&t.repeatTime?esc(t.repeatTime):'09:00'}"></div>
@@ -2722,6 +2722,7 @@ function openCardModal(tid,ctxKey,presetCol,presetDate){
     </div>`,modal=>{
     const btn=modal.querySelector('#tkTimerBtn');
     if(btn&&t)btn.onclick=()=>toggleTimer(ctxKey,t.id,true);
+    if(focusFact){ const ff=modal.querySelector('#tkFact'); if(ff){ ff.focus(); ff.select(); } }
     const inp=modal.querySelector('#tkTitle');
     if(inp){ inp.focus(); if(!t)inp.select(); }
     const f=modal.querySelector('#tkFile');
@@ -3329,7 +3330,7 @@ function reportRows(f){
   const rows=[];
   filteredTasks(f).forEach(({c,t})=>{
     const {spent,count}=taskSpent(t,f.fromMs,f.toMs);
-    if(spent>0||f.includeEmpty)rows.push({c,t,spent,count,estimate:t.estimate,resp:t.responsible,status:colName(t.columnId)});
+    if(spent>0||f.includeEmpty)rows.push({c,t,spent,count,estimate:t.estimate,resp:t.responsible,status:colName(t.columnId),fact:totalSpent(t)});
   });
   rows.sort((a,b)=>b.spent-a.spent);
   return rows;
@@ -3388,13 +3389,14 @@ function buildReport(){
   const summary=`<div class="rs">Период: <b>${fmtDate(f.from)} — ${fmtDate(f.to)}</b></div>
     <div class="rs">Задач с временем: <b>${tasksWith}</b></div>
     <div class="rs">Замеров: <b>${totalCount}</b></div>
-    <div class="rs">Всего времени: <b>${fmtDur(totalSec)}</b></div>`;
+    <div class="rs">Всего времени: <b>${fmtDur(totalSec)}</b></div>
+    <div class="rs">Факт вручную: <b>${fmtDur(rows.reduce((s,r)=>s+((typeof r.t.actual==='number'&&r.t.actual>0)?Math.floor(r.t.actual):0),0))}</b></div>`;
   let html=`<div class="report-summary">${summary}</div>`;
   html+=chartHTML(chartData(f));
   if(!rows.length){ html+=`<div class="report-empty">За выбранный период нет данных.</div>`; body.innerHTML=html; return; }
   html+=`<table class="report-table"><thead><tr>
     <th style="width:34%">Задача</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Приоритет</th>
-    <th class="num">Оценка</th><th class="num">Замеров</th><th class="num">Время за период</th>
+    <th class="num">Оценка</th><th class="num">Факт</th><th class="num">Замеров</th><th class="num">Время за период</th>
   </tr></thead><tbody>`;
   const grouped=new Map();
   rows.forEach(r=>{ if(!grouped.has(r.c.key))grouped.set(r.c.key,[]); grouped.get(r.c.key).push(r); });
@@ -3402,7 +3404,7 @@ function buildReport(){
     const gr=grouped.get(c.key); if(!gr)return;
     const sub=gr.reduce((s,r)=>s+r.spent,0);
     const pct=ctxPct(c);
-    html+=`<tr class="ctx-head"><td colspan="8">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}${pct===null?'':` · Выполнение: ${pct}%`}</span></td></tr>`;
+    html+=`<tr class="ctx-head"><td colspan="9">${esc(ctxLabel(c))} <span style="font-weight:500;color:var(--muted)">· ${fmtDur(sub)}${pct===null?'':` · Выполнение: ${pct}%`}</span></td></tr>`;
     gr.forEach(r=>{
       const pr=PRIO[r.t.priority||'med'];
       const cmts=(r.t.comments||[]).length;
@@ -3413,12 +3415,13 @@ function buildReport(){
         <td><span class="lurv-chip" data-l="${r.t.lurv||0}" title="${lurvFull(r.t.lurv)}">${lurvFull(r.t.lurv)}</span></td>
         <td style="color:${pr.color}">${pr.label}</td>
         <td class="num">${r.estimate?fmtDur(r.estimate*3600):'—'}</td>
+        <td class="num" title="Факт — таймер + ручной ввод">${r.fact>0?fmtDur(r.fact):'—'}</td>
         <td class="num">${r.count}</td>
         <td class="num"><b>${fmtDur(r.spent)}</b></td>
       </tr>`;
     });
   });
-  html+=`<tr class="total"><td colspan="5">Итого</td><td class="num"></td><td class="num">${totalCount}</td><td class="num">${fmtDur(totalSec)}</td></tr>`;
+  html+=`<tr class="total"><td colspan="5">Итого</td><td class="num"></td><td class="num">${fmtDur(rows.reduce((s,r)=>s+(r.fact||0),0))}</td><td class="num">${totalCount}</td><td class="num">${fmtDur(totalSec)}</td></tr>`;
   html+='</tbody></table>';
   body.innerHTML=html;
 }
@@ -3426,11 +3429,11 @@ function reportCsv(){
   const f=repFilters();
   f.fromMs=new Date(f.from+'T00:00:00').getTime(); f.toMs=new Date(f.to+'T23:59:59.999').getTime();
   const rows=reportRows(f);
-  let csv='\uFEFFРаздел;Задача;Что делали (описание);Ответственный;Приоритет;Статус;ЛУРВ;Оценка;Замеров;Время (чч:мм:сс)\n';
+  let csv='\uFEFFРаздел;Задача;Что делали (описание);Ответственный;Приоритет;Статус;ЛУРВ;Оценка;Факт;Замеров;Время (чч:мм:сс)\n';
   rows.forEach(r=>{
     const dur=new Date(r.spent*1000).toISOString().substr(11,8);
     const q=s=>'"'+(s||'').replace(/"/g,'""')+'"';
-    csv+=q(ctxLabel(r.c))+';'+q(r.t.title)+';'+q(r.t.desc)+';'+q(r.resp||'')+';'+q((PRIO[r.t.priority||'med']).label)+';'+q(r.status)+';'+q(lurvFull(r.t.lurv))+';'+q(r.estimate?fmtDur(r.estimate*3600):'')+';'+r.count+';'+dur+'\n';
+    csv+=q(ctxLabel(r.c))+';'+q(r.t.title)+';'+q(r.t.desc)+';'+q(r.resp||'')+';'+q((PRIO[r.t.priority||'med']).label)+';'+q(r.status)+';'+q(lurvFull(r.t.lurv))+';'+q(r.estimate?fmtDur(r.estimate*3600):'')+';'+q(r.fact>0?fmtDur(r.fact):'')+';'+r.count+';'+dur+'\n';
   });
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
@@ -3444,9 +3447,9 @@ function reportExcel(){
   const f=repFilters();
   f.fromMs=new Date(f.from+'T00:00:00').getTime(); f.toMs=new Date(f.to+'T23:59:59.999').getTime();
   const rows=reportRows(f);
-  let t='<table border="1" cellpadding="4" cellspacing="0"><tr style="background:#eef0ff"><th>Раздел</th><th>Задача</th><th>Описание</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Оценка</th><th>Замеров</th><th>Время (сек)</th><th>Время</th></tr>';
+  let t='<table border="1" cellpadding="4" cellspacing="0"><tr style="background:#eef0ff"><th>Раздел</th><th>Задача</th><th>Описание</th><th>Ответственный</th><th>Статус</th><th>ЛУРВ</th><th>Оценка</th><th>Факт</th><th>Замеров</th><th>Время (сек)</th><th>Время</th></tr>';
   rows.forEach(r=>{
-    t+=`<tr><td>${esc(ctxLabel(r.c))}</td><td>${esc(r.t.title)}</td><td>${esc(r.t.desc||'')}</td><td>${esc(r.resp||'')}</td><td>${esc(r.status)}</td><td>${esc(lurvFull(r.t.lurv))}</td><td>${r.estimate?fmtDur(r.estimate*3600):''}</td><td>${r.count}</td><td>${r.spent}</td><td>${fmtDur(r.spent)}</td></tr>`;
+    t+=`<tr><td>${esc(ctxLabel(r.c))}</td><td>${esc(r.t.title)}</td><td>${esc(r.t.desc||'')}</td><td>${esc(r.resp||'')}</td><td>${esc(r.status)}</td><td>${esc(lurvFull(r.t.lurv))}</td><td>${r.estimate?fmtDur(r.estimate*3600):''}</td><td>${r.fact>0?fmtDur(r.fact):''}</td><td>${r.count}</td><td>${r.spent}</td><td>${fmtDur(r.spent)}</td></tr>`;
   });
   t+='</table>';
   const htmlDoc=`<html><head><meta charset="utf-8"></head><body>${t}</body></html>`;
@@ -5694,7 +5697,7 @@ function renderGantt(){
     const done=isDone(x.t);
     const lateCls=(!done&&x.t.deadline&&x.t.deadline<todayISO())?' late':'';
     const left=i0*weekW+3, w=Math.max(weekW-4,(i1-i0+1)*weekW-6);
-    const bar=`<div class="gantt-bar${done?' done':''}${lateCls}" style="left:${left}px;width:${w}px;background:${done?'linear-gradient(180deg,#34d399,#10b981)':colColor(x.t.columnId)}" title="${x.t.title} · ${colName(x.t.columnId)}" onclick="openCardModal('${x.c.key}','${x.t.id}')">${done?'✓':''}</div>`;
+    const bar=`<div class="gantt-bar${done?' done':''}${lateCls}" style="left:${left}px;width:${w}px;background:${done?'linear-gradient(180deg,#34d399,#10b981)':colColor(x.t.columnId)}" title="${x.t.title} · ${colName(x.t.columnId)}" onclick="openCardModal('${x.t.id}','${x.c.key}')">${done?'✓':''}</div>`;
     return `<div class="gantt-row" style="height:${rowH}px"><div class="gantt-name-col" style="width:${nameW}px"><span class="gantt-t">${x.t.title}</span><span class="gantt-sub">${colName(x.t.columnId)}</span></div><div class="gantt-line" style="width:${total*weekW}px">${bar}</div></div>`;
   }).join('');
   const tLine=offToday>=0&&offToday<=total?`<div class="gantt-today" style="left:${nameW+offToday*weekW}px"></div>`:'';
